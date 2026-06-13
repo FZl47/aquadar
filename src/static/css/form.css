@@ -1,0 +1,163 @@
+
+::placeholder {
+    font-family: 'Vazir';
+    font-size: 80%;
+    color: #aaa;
+}
+
+
+
+label {
+    font-size: 80%;
+    text-align: right;
+    color: #444;
+    display: block;
+}
+
+.form {
+    padding: 30px;
+    border-radius: 6px;
+    background: #FFF;
+    box-shadow: 0 4px 15px #ddd
+}
+
+.label-detail{
+    color: #aaa;
+    font-size: 80%;
+    margin-top: 3px;
+    margin-right: 15px;
+}
+
+.form-effect {
+    position: relative;
+    z-index: 1;
+}
+
+.form-effect::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    opacity: .5;
+    transform: rotate(4deg);
+    z-index: -1;
+    border-radius: inherit;
+}
+
+.form-effect::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit;
+    opacity: .3;
+    transform: rotate(8deg);
+    z-index: -1;
+    border-radius: inherit;
+}
+
+
+.form .field {
+    position: relative;
+    height: 50px;
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 6px;
+}
+
+.field input,
+.field button {
+    /*height: 100%;*/
+    /*width: 100%;*/
+    border: none;
+    font-size: 16px;
+    font-weight: 400;
+    border-radius: 6px;
+}
+
+.field button {
+    padding: 6px 19px;
+}
+
+.field input {
+    width: 300px;
+    text-align: right;
+    outline: none;
+    padding: 8px 9px;
+    margin: 6px 0;
+    border: 1px solid #e5e5e5;
+}
+
+.field input:focus {
+    border-bottom-width: 2px;
+}
+
+.eye-icon {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #8b8b8b;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.field button {
+    color: #fff;
+    background-color: #0171d3;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-family: 'Vazir';
+}
+
+.field button:hover {
+    background-color: #0063b9;
+}
+
+.field-outline button {
+    color: rgba(1, 113, 211, 0.4);
+    background-color: #fff;
+    border: 1px solid rgba(1, 113, 211, 0.4);
+}
+
+.field-outline button:hover {
+    color: rgba(1, 113, 211, 0.8);
+    border: 1px solid rgba(1, 113, 211, 0.8);
+    background: #fff;
+}
+
+.form-link {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.form-link span,
+.form-link a {
+    font-size: 14px;
+    font-weight: 400;
+    color: #232836;
+}
+
+.form a {
+    color: #0171d3;
+    text-decoration: none;
+}
+
+.form-content a:hover {
+    text-decoration: underline;
+}
+
+.field-required{
+    color: #ef4141;
+}
+
+.form-control{
+    margin-bottom: 8px;
+}
+
+@media screen and (max-width: 400px) {
+    .form {
+        padding: 20px 10px;
+    }
+
+}

@@ -1,0 +1,206 @@
+{% extends 'base/base_template.html' %}
+{% load static i18n %}
+
+{% block Title %}
+    {% trans "Notification Detail" %} - {{ object.title }}
+{% endblock %}
+
+{% block BodyClass %}
+    has-rtl nk-body bg-white npc-default has-aside
+{% endblock %}
+
+{% block Content %}
+    <div class="nk-app-root">
+        <div class="nk-main">
+            <div class="nk-wrap">
+
+                {% include 'base/components/header.html' %}
+
+                <div class="nk-content">
+                    <div class="container wide-xl">
+                        <div class="nk-content-inner">
+
+                            {% include 'base/components/menu.html' %}
+
+                            <div class="nk-content-body">
+                                <!-- Header -->
+                                <div class="nk-block-head nk-block-head-sm">
+                                    <div class="nk-block-between g-3">
+                                        <div class="nk-block-head-content">
+                                            <h3 class="nk-block-title page-title">
+                                                {% trans "Notification Detail" %}
+                                                <b>{{ object.title }}</b>
+                                            </h3>
+                                            <nav>
+                                                <ul class="breadcrumb breadcrumb-arrow">
+                                                    <li class="breadcrumb-item">
+                                                        <a href="{% url 'public:index' %}">{% trans "Home Page" %}</a>
+                                                    </li>
+                                                    <li class="breadcrumb-item">
+                                                        {% if perms.notification.view_notificationuser %}
+                                                            <a href="{% url 'notification:notification__list' %}">
+                                                                {% trans "Notifications" %}
+                                                            </a>
+                                                        {% else %}
+                                                            <a href="{% url 'notification:notification_personal__list' %}">
+                                                                {% trans "Notifications" %}
+                                                            </a>
+                                                        {% endif %}
+                                                    </li>
+                                                    <li class="breadcrumb-item active">
+                                                        {{ object.title }}
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Content -->
+                                <div class="nk-block">
+                                    <div class="row gy-5">
+
+                                        <!-- Basic Info -->
+                                        <div class="col-12">
+                                            <div class="nk-block-head">
+                                                <div class="nk-block-head-content">
+                                                    <h5 class="nk-block-title title">
+                                                        {% trans "Basic Information" %}
+                                                    </h5>
+                                                </div>
+                                            </div>
+
+                                            <div class="card">
+                                                <ul class="data-list is-compact">
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Title" %}</div>
+                                                            <div class="data-value">{{ object.title }}</div>
+                                                        </div>
+                                                    </li>
+
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "User" %}</div>
+                                                            <div class="data-value">
+                                                                <a href="{{ object.to_user.get_absolute_url }}">
+                                                                    {{ object.to_user.get_full_name|default:object.to_user.username }}
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Send Notification" %}</div>
+                                                            <div class="data-value">
+                                                                {% if object.send_notify %}
+                                                                    <span>
+                                                                        <em class="icon ni ni-check-c text-success"></em>
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span>
+                                                                        <em class="icon ni ni-cross-c text-danger"></em>
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Visited Status" %}</div>
+                                                            <div class="data-value">
+                                                                {% if object.is_visited %}
+                                                                    <span class="tb-status text-success">
+                                                                    {% trans "Visited" %}
+                                                                </span>
+                                                                {% else %}
+                                                                    <span class="tb-status text-warning">
+                                                                    {% trans "Not Visited" %}
+                                                                </span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Link" %}</div>
+                                                            <div class="data-value">
+                                                                {% if object.get_link %}
+                                                                    <a href="{{ object.get_link }}" target="_blank">
+                                                                        <em class="icon ni ni-eye fs-20px"></em>
+                                                                    </a>
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Image" %}</div>
+                                                            <div class="data-value">
+                                                                {% if object.image %}
+                                                                    <a href="{{ object.image.url }}" target="_blank">
+                                                                        <em class="icon ni ni-eye fs-20px"></em>
+                                                                    </a>
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Description" %}</div>
+                                                            <div class="data-value">
+                                                                <p>{{ object.description|default:"-" }}</p>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Created At" %}</div>
+                                                            <div class="data-value">
+                                                            <span class="datetime-convert">
+                                                                {{ object.get_created_at }}
+                                                            </span>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+
+                                                    <li class="data-item">
+                                                        <div class="data-col">
+                                                            <div class="data-label">{% trans "Extra Data (JSON)" %}</div>
+                                                            <div class="data-value">
+                                                                <pre>{{ object.kwargs|default:"-" }}</pre>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% include 'base/components/footer.html' %}
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base/base_template.html' %}
+{% load static i18n %}
+
+{% block Title %}
+    {% trans "Create Notification" %}
+{% endblock %}
+
+{% block BodyClass %}
+    has-rtl nk-body bg-white npc-default has-aside
+{% endblock %}
+
+{% block Content %}
+    <div class="nk-app-root">
+        <div class="nk-main">
+            <div class="nk-wrap">
+
+                {% include 'base/components/header.html' %}
+
+                <div class="nk-content">
+                    <div class="container wide-xl">
+                        <div class="nk-content-inner">
+
+                            {% include 'base/components/menu.html' %}
+
+                            <div class="nk-content-body">
+                                <div class="nk-block-head nk-block-head-sm">
+                                    <div class="nk-block-between g-3">
+                                        <div class="nk-block-head-content">
+                                            <h3 class="nk-block-title page-title">
+                                                {% trans "Create Notification" %}
+                                            </h3>
+                                            <nav>
+                                                <ul class="breadcrumb breadcrumb-arrow">
+                                                    <li class="breadcrumb-item">
+                                                        <a href="{% url 'public:index' %}">
+                                                            {% trans "Home Page" %}
+                                                        </a>
+                                                    </li>
+                                                    <li class="breadcrumb-item">
+                                                        <a>{% trans "Notifications" %}</a>
+                                                    </li>
+                                                    <li class="breadcrumb-item active">
+                                                        {% trans "Create Notification" %}
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="nk-block nk-block-lg">
+                                    <div class="card">
+                                        <div class="card-inner">
+                                            <div class="card-head">
+                                                <h5 class="card-title">
+                                                    {% trans "Notification Information" %}
+                                                </h5>
+                                            </div>
+
+                                            <form action=""
+                                                  method="post"
+                                                  enctype="multipart/form-data"
+                                                  class="form-validate is-alter"
+                                                  id="form-el">
+                                                {% csrf_token %}
+
+                                                <div class="row g-4">
+
+                                                    <!-- Title -->
+                                                    <div class="col-lg-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="title">
+                                                                {% trans "Title" %}
+                                                                <span class="text-danger">*</span>
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <input type="text"
+                                                                       class="form-control"
+                                                                       name="title"
+                                                                       id="title"
+                                                                       placeholder="{% trans 'Title' %}"
+                                                                       required>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- To User -->
+                                                    <div class="col-lg-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="to_user">
+                                                                {% trans "User" %}
+                                                                <span class="text-danger">*</span>
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <select name="to_user"
+                                                                        id="to_user"
+                                                                        class="form-control form-select js-select2"
+                                                                        data-search="on"
+                                                                        required>
+                                                                    <option value="">
+                                                                        {% trans "Select User" %}
+                                                                    </option>
+                                                                    {% for user in users %}
+                                                                        <option value="{{ user.id }}">
+                                                                            {{ user.get_full_name|default:user.username }}
+                                                                        </option>
+                                                                    {% endfor %}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Image -->
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="image">
+                                                                {% trans "Image" %}
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <div class="form-file">
+                                                                    <input type="file"
+                                                                           name="image"
+                                                                           class="form-file-input"
+                                                                           id="image">
+                                                                    <label class="form-file-label" for="image">
+                                                                        {% trans "Choose image" %}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <!-- Description -->
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="description">
+                                                                {% trans "Description" %}
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <textarea name="description"
+                                                                          id="description"
+                                                                          class="form-control"
+                                                                          rows="4"
+                                                                          placeholder="{% trans 'Description' %}"></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- kwargs -->
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label" for="kwargs">
+                                                                {% trans "Extra Data (JSON)" %}
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <textarea name="kwargs"
+                                                                          id="kwargs"
+                                                                          class="form-control"
+                                                                          rows="3"
+                                                                          placeholder='{"key": "value"}'></textarea>
+                                                            </div>
+                                                            <small class="form-text text-muted">
+                                                                {% trans "Optional JSON data for notification" %}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Send Notify -->
+                                                    <div class="col-lg-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label">
+                                                                {% trans "Send Notification" %}
+                                                            </label>
+                                                            <div class="form-control-wrap">
+                                                                <div class="custom-control custom-switch">
+                                                                    <input type="checkbox"
+                                                                           class="custom-control-input"
+                                                                           name="send_notify"
+                                                                           id="send_notify"
+                                                                           checked>
+                                                                    <label class="custom-control-label"
+                                                                           for="send_notify">
+                                                                        {% trans "Enable" %}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Submit -->
+                                                    <div class="col-12 text-left">
+                                                        <div class="form-group">
+                                                            <button type="submit"
+                                                                    class="btn btn-lg btn-primary">
+                                                                {% trans "Create Notification" %}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% include 'base/components/footer.html' %}
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

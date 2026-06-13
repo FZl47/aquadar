@@ -1,0 +1,211 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}لیست آبیاران{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e0e7ef;
+    }
+    .page-header h3 { margin: 0; font-size: 22px; font-weight: bold; }
+
+    .waterman-card {
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+    }
+    .waterman-card .card-header {
+        padding: 16px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8faff;
+        border-bottom: 1px solid #e8edf5;
+    }
+    .waterman-card .card-header .name {
+        font-size: 18px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .waterman-card .card-body { padding: 16px 20px; }
+
+    .status-badge-active {
+        background: #d4edda;
+        color: #155724;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+    }
+    .status-badge-inactive {
+        background: #f8f9fa;
+        color: #6c757d;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+
+    .weather-section {
+        background: linear-gradient(135deg, #e8f4fd, #f0f9ff);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        border: 1px solid #bee3f8;
+    }
+    .weather-section .weather-title {
+        font-size: 13px;
+        color: #4a90a4;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    .weather-items {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .weather-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 13px;
+    }
+    .weather-item .val { font-size: 22px; font-weight: bold; color: #2c7be5; }
+    .weather-item .lbl { color: #888; font-size: 11px; }
+
+    .active-runs-list { margin-top: 10px; }
+    .active-run-item {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 6px;
+        padding: 6px 12px;
+        margin: 4px 0;
+        font-size: 13px;
+        color: #856404;
+    }
+
+    .no-weather { color: #aaa; font-size: 13px; font-style: italic; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+    .empty-state i { font-size: 50px; display: block; margin-bottom: 15px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container mt-4">
+    <div class="page-header">
+        <h3><i class="icon-group"></i> لیست آبیاران و وضعیت آبیاری</h3>
+        <a href="{% url 'public:index' %}" class="btn btn-secondary">
+            <i class="icon-arrow-right"></i> بازگشت به داشبورد
+        </a>
+    </div>
+
+    {% if waterman_data %}
+        {% for item in waterman_data %}
+            <div class="waterman-card">
+                <div class="card-header">
+                    <div class="name">
+                        <i class="icon-user" style="font-size:24px;color:#4a90a4;"></i>
+                        {{ item.user.get_full_name|default:item.user.username }}
+                        {% if item.user.phonenumber %}
+                            <small style="color:#aaa;font-size:13px;">{{ item.user.phonenumber }}</small>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if item.active_runs_count > 0 %}
+                            <span class="status-badge-active">
+                                <i class="icon-tint"></i>
+                                در حال آبیاری ({{ item.active_runs_count }} ردیف)
+                            </span>
+                        {% else %}
+                            <span class="status-badge-inactive">
+                                <i class="icon-minus-sign"></i>
+                                بدون آبیاری فعال
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if item.active_runs %}
+                        <div><b>آبیاری های فعال:</b></div>
+                        <div class="active-runs-list">
+                            {% for run in item.active_runs %}
+                                <div class="active-run-item">
+                                    <i class="icon-road"></i>
+                                    منطقه: <b>{{ run.outlet.plot.zone.farm.name }}</b>
+                                    &nbsp;|&nbsp; بخش: <b>{{ run.outlet.plot.zone.name }}</b>
+                                    &nbsp;|&nbsp; زمین: <b>{{ run.outlet.plot.name }}</b>
+                                    &nbsp;|&nbsp; کیز: <b>{{ run.outlet.number }}</b>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Weather section -->
+                    {% if item.last_weather %}
+                        <div class="weather-section">
+                            <div class="weather-title">
+                                <i class="icon-cloud"></i>
+                                آخرین اطلاعات آب و هوایی
+                                {% if item.last_weather.run %}
+                                    ({{ item.last_weather.get_created_at }})
+                                {% endif %}
+                            </div>
+                            <div class="weather-items">
+                                {% if item.last_weather.temperature_c is not None %}
+                                    <div class="weather-item">
+                                        <span class="val">{{ item.last_weather.temperature_c }}°</span>
+                                        <span class="lbl">دما (سانتیگراد)</span>
+                                    </div>
+                                {% endif %}
+                                {% if item.last_weather.wind_speed is not None %}
+                                    <div class="weather-item">
+                                        <span class="val">{{ item.last_weather.wind_speed }}</span>
+                                        <span class="lbl">سرعت باد (km/h)</span>
+                                    </div>
+                                {% endif %}
+                                {% if item.last_weather.humidity is not None %}
+                                    <div class="weather-item">
+                                        <span class="val">{{ item.last_weather.humidity }}%</span>
+                                        <span class="lbl">رطوبت</span>
+                                    </div>
+                                {% endif %}
+                                {% if item.last_weather.gps_lat and item.last_weather.gps_lng %}
+                                    <div class="weather-item">
+                                        <span class="val" style="font-size:14px;">
+                                            {{ item.last_weather.gps_lat|floatformat:4 }},
+                                            {{ item.last_weather.gps_lng|floatformat:4 }}
+                                        </span>
+                                        <span class="lbl">موقعیت GPS</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="no-weather mt-2">
+                            <i class="icon-info-sign"></i>
+                            اطلاعات آب و هوایی ثبت نشده است
+                        </p>
+                    {% endif %}
+
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="icon-group"></i>
+            <p>هیچ آبیاری یافت نشد</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,233 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-02 02:39+0330\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: .\apps\account\admin.py:58
+msgid "Personal info"
+msgstr "اطلاعات شخصی"
+
+#: .\apps\account\admin.py:66
+msgid "Role & Permissions"
+msgstr "نوع کاربر & دسترسی ها"
+
+#: .\apps\account\admin.py:77
+msgid "Important dates"
+msgstr "تاریخ"
+
+#: .\apps\account\forms.py:21
+msgid "Passwords not same"
+msgstr "گذرواژه ها مشابه هم نیستند"
+
+#: .\apps\account\models.py:23
+msgid "The Email field must be set"
+msgstr "فیلد ایمیل باید پر شود"
+
+#: .\apps\account\models.py:43
+msgid "Superuser must have is_staff=True."
+msgstr ""
+
+#: .\apps\account\models.py:45
+msgid "Superuser must have is_superuser=True."
+msgstr ""
+
+#: .\apps\account\models.py:52
+msgid "Supervisor User"
+msgstr "کاربر ناظر"
+
+#: .\apps\account\models.py:53
+msgid "Waterman User"
+msgstr "کاربر ابیار"
+
+#: .\apps\account\models.py:56
+msgid "No name"
+msgstr "بدون نام"
+
+#: .\apps\account\models.py:58
+msgid "Phonenumber"
+msgstr "شماره تلفن"
+
+#: .\apps\account\templates\account\login.html:6
+msgid "Login"
+msgstr "ورود"
+
+#: .\apps\account\views.py:31
+msgid "User not found"
+msgstr "کاربر یافت نشد"
+
+#: .\apps\account\views.py:41
+msgid "Welcome"
+msgstr "خوش امدید"
+
+#: .\apps\account\views.py:70
+msgid "Current password is wrong"
+msgstr "گذرواژه فعلی اشتباه هست"
+
+#: .\apps\account\views.py:73
+msgid "Your password changed successfully!"
+msgstr "گذرواژه شما با موفقیت تغییر کرد"
+
+#: .\apps\core\forms\utils.py:12
+msgid "Incorrect Data"
+msgstr "دیتای نامعتبر"
+
+#: .\apps\core\utils\validators.py:10
+msgid "Invalid Phonenumber"
+msgstr "شماره تلفن نامعتبر است"
+
+#: .\apps\core\views\mixins.py:63 .\apps\core\views\mixins.py:108
+#: .\apps\core\views\mixins.py:222
+msgid "The operation was successful."
+msgstr "عملیات با موفقیت انجام شد"
+
+#: .\apps\public\models.py:160 .\apps\public\models.py:200
+#: .\apps\public\views.py:373
+msgid "Not Started"
+msgstr "شروع نشده است"
+
+#: .\apps\public\models.py:161 .\apps\public\models.py:201
+#: .\apps\public\models.py:223
+#: .\apps\public\templates\public\dashboard\supervisor.html:242
+#: .\apps\public\views.py:374
+msgid "Running"
+msgstr "در حال اجرا"
+
+#: .\apps\public\models.py:162 .\apps\public\models.py:202
+#: .\apps\public\models.py:224 .\apps\public\views.py:375
+msgid "Completed"
+msgstr "تمام شده است"
+
+#: .\apps\public\models.py:225
+msgid "Canceled"
+msgstr "لغو شده است"
+
+#: .\apps\public\models.py:296 .\apps\public\models.py:303
+msgid "Irrigation Issue"
+msgstr "مشکل در ابیاری"
+
+#: .\apps\public\models.py:298
+#, python-format
+msgid ""
+"An issue was detected in irrigation for farm %(farm)s, zone %(zone)s, plot "
+"%(plot)s, and outlet %(outlet)s. Please check and resolve it as soon as "
+"possible."
+msgstr ""
+"مشکلی در سیستم آبیاری منطقه %(farm)s، بخش  %(zone)s، قطعه %(plot)s و ردیف  "
+"%(outlet)s شناسایی شد. لطفاً در اسرع وقت آن را بررسی و رفع نمایید."
+
+#: .\apps\public\models.py:308
+msgid "Start"
+msgstr "شروع"
+
+#: .\apps\public\models.py:309
+msgid "End"
+msgstr "پایان"
+
+#: .\apps\public\models.py:343
+msgid "Low"
+msgstr "کم"
+
+#: .\apps\public\models.py:344
+msgid "Medium"
+msgstr "متوسط"
+
+#: .\apps\public\models.py:345
+msgid "High"
+msgstr "زیاد"
+
+#: .\apps\public\models.py:385
+msgid "Pending"
+msgstr "در انتظار"
+
+#: .\apps\public\models.py:386
+msgid "In Progress"
+msgstr "در حال بررسی"
+
+#: .\apps\public\models.py:387
+msgid "Resolved"
+msgstr "حل شده"
+
+#: .\apps\public\models.py:388
+msgid "Hold"
+msgstr "نگه داشته شده"
+
+#: .\apps\public\templates\public\dashboard\waterman.html:6
+msgid "Waterman"
+msgstr "ابیار"
+
+#: .\apps\public\templates\public\dashboard\waterman.html:6
+msgid "Dashboard"
+msgstr "داشبورد"
+
+#: .\apps\public\views.py:320
+msgid "Code number is empty"
+msgstr "کد خالی است"
+
+#: .\apps\public\views.py:325
+msgid "Code number is invalid"
+msgstr "کد نامعتبر است"
+
+#: .\apps\public\views.py:342
+msgid "Code number is wrong"
+msgstr "کد اشتباه است"
+
+#: .\apps\public\views.py:393
+msgid ""
+"Location (GPS) is required to start irrigation. Please enable location "
+"services."
+msgstr "برای شروع آبیاری موقعیت مکانی (GPS) لازم است. لطفاً سرویس مکان‌یابی را فعال کنید."
+
+#: .\apps\public\views.py:404
+msgid "The run has started"
+msgstr "ابیاری شروع شد"
+
+#: .\apps\public\views.py:425 .\apps\public\views.py:439
+msgid "The run operation has completed"
+msgstr "عملیات تکمیل شد"
+
+#: .\apps\public\views.py:428
+msgid "The run has stopped"
+msgstr "ابیاری پایان یافت"
+
+#: .\apps\public\views.py:441
+msgid "The run has already completed"
+msgstr "در حال حاظر عملیات تکمیل شده است"
+
+#: .\apps\public\views.py:468
+msgid "The operation was successfully"
+msgstr "عملیات با موفقیت انجام شد"
+
+#: .\apps\public\views.py:506
+msgid "Your report status has been submit successfully"
+msgstr "گزارش شما با موفقیت ثبت شد"
+
+#: .\apps\public\views.py:682
+msgid "Report submitted successfully"
+msgstr "گزارش با موفقیت ثبت شد"
+
+#: .\apps\public\views.py:709
+msgid "Manure report submitted successfully"
+msgstr "گزارش کوددهی با موفقیت ثبت شد"
+
+#: .\templates\base\base_template.html:89
+msgid "Success"
+msgstr "موفق"
+
+#: .\templates\base\base_template.html:89
+msgid "Error"
+msgstr "خطا"

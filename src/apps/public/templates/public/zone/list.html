@@ -1,0 +1,91 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}لیست ناحیه‌ها{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #7b1fa2, #4a148c); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .zone-card { background: #fff; border-radius: 12px; padding: 18px 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); border-right: 4px solid #7b1fa2; transition: box-shadow .2s; margin-bottom: 14px; }
+    .zone-card:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+    .stat-pill { border-radius: 20px; padding: 3px 10px; font-size: 12px; display: inline-block; margin-left: 6px; }
+    .search-box { background: #fff; border-radius: 10px; padding: 14px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1100px;margin:30px auto;">
+
+    <div class="page-header">
+        <div>
+            <div style="font-size:22px;font-weight:bold;">لیست ناحیه‌ها</div>
+            <div style="opacity:.85;font-size:13px;margin-top:4px;">مشاهده تمام ناحیه‌های آبیاری</div>
+        </div>
+        <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">
+            بازگشت به داشبورد
+        </a>
+    </div>
+
+    <div class="search-box">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="جستجو بر اساس نام ناحیه یا زمین..." style="border-radius:8px;min-width:220px;">
+            <select name="farm" class="form-select" style="border-radius:8px;max-width:200px;">
+                <option value="">همه زمین‌ها</option>
+                {% for farm in farms %}
+                    <option value="{{ farm.id }}" {% if farm_id == farm.id|stringformat:"s" %}selected{% endif %}>{{ farm.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary" style="border-radius:8px;white-space:nowrap;">جستجو</button>
+            {% if search or farm_id %}
+                <a href="{% url 'public:zone_list' %}" class="btn btn-secondary" style="border-radius:8px;white-space:nowrap;">پاک کردن</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% for zone in page_obj %}
+        <div class="zone-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div style="font-size:17px;font-weight:bold;color:#1a1a2e;">{{ zone.name }}</div>
+                    <div style="color:#777;font-size:12px;margin-top:2px;">{{ zone.farm.name }}</div>
+                    <div style="margin-top:8px;">
+                        <span class="stat-pill" style="background:#f3e8ff;color:#6a1b9a;">{{ zone.plot_count }} زمین</span>
+                        <span class="stat-pill" style="background:#fff3e0;color:#e65100;">{{ zone.outlet_count }} کیز</span>
+                        {% if zone.active_run_count %}
+                            <span class="stat-pill" style="background:#fce4ec;color:#c62828;">{{ zone.active_run_count }} فعال</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{{ zone.get_absolute_url }}" class="btn btn-sm btn-primary" style="border-radius:8px;">
+                    مشاهده جزئیات
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <div style="text-align:center;padding:60px;color:#999;">ناحیه‌ای یافت نشد</div>
+    {% endfor %}
+
+    {% if page_obj.has_other_pages %}
+        <nav style="margin-top:20px;">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if farm_id %}&farm={{ farm_id }}{% endif %}">قبلی</a>
+                    </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if farm_id %}&farm={{ farm_id }}{% endif %}">بعدی</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

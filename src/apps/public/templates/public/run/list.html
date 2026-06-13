@@ -1,0 +1,158 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}لیست آبیاری‌ها{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 14px;
+        border-bottom: 2px solid #e0e7ef;
+    }
+    .page-header h3 { margin: 0; font-size: 22px; font-weight: bold; }
+    .run-table { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden; }
+    .run-table table { margin: 0; font-size: 13px; }
+    .run-table thead th { background: #f0f4fa; font-weight: 700; color: #555; border: none; padding: 10px 8px; }
+    .run-table tbody tr:hover { background: #f8faff; }
+    .badge-running { background: #d4edda; color: #155724; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
+    .badge-completed { background: #cce5ff; color: #004085; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
+    .badge-canceled { background: #f8d7da; color: #721c24; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
+    .anomaly-badge { background: #fff3cd; color: #856404; border-radius: 6px; padding: 2px 6px; font-size: 11px; }
+    .weather-info { font-size: 11px; color: #555; white-space: nowrap; }
+    a.link-subtle { color: #1a73e8; text-decoration: none; }
+    a.link-subtle:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container mt-4">
+    <div class="page-header">
+        <h3><i class="icon-tint" style="color:#6c3cd1;"></i> لیست آبیاری‌ها</h3>
+        <a href="{% url 'public:index' %}" class="btn btn-sm btn-secondary">
+            <i class="icon-arrow-right"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="run-table">
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>کیز</th>
+                    <th>زمین</th>
+                    <th>بخش</th>
+                    <th>ناحیه</th>
+                    <th>آبیار</th>
+                    <th>وضعیت</th>
+                    <th>مدت</th>
+                    <th>زمان شروع</th>
+                    <th>آب‌وهوا</th>
+                    <th>نشانه</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for run in page_obj %}
+                {% with start_rs=run.status_start end_rs=run.status_end %}
+                <tr>
+                    <td>{{ run.id }}</td>
+                    <td>{{ run.outlet.number }}</td>
+                    <td>
+                        <a class="link-subtle" href="{{ run.outlet.plot.get_absolute_url }}">
+                            {{ run.outlet.plot.name }}
+                        </a>
+                    </td>
+                    <td>
+                        <a class="link-subtle" href="{{ run.outlet.plot.zone.get_absolute_url }}">
+                            {{ run.outlet.plot.zone.name }}
+                        </a>
+                    </td>
+                    <td>{{ run.outlet.plot.zone.farm.name }}</td>
+                    <td>
+                        {% if run.created_by %}
+                            {{ run.created_by.get_full_name|default:run.created_by.username }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if run.group.status == 'running' %}
+                            <span class="badge-running">در حال اجرا</span>
+                        {% elif run.group.status == 'completed' %}
+                            <span class="badge-completed">تکمیل شده</span>
+                        {% elif run.group.status == 'canceled' %}
+                            <span class="badge-canceled">لغو شده</span>
+                        {% else %}
+                            {{ run.group.status }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if run.duration_seconds %}
+                            {% widthratio run.duration_seconds 60 1 %} دقیقه
+                        {% else %}
+                            <span style="color:#aaa;">ثبت نشده</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if start_rs %}
+                            {{ start_rs.created_at|jalali }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="weather-info">
+                        {% if start_rs and start_rs.temperature_c %}
+                            <span title="دما">🌡 {{ start_rs.temperature_c }}°</span>
+                        {% endif %}
+                        {% if start_rs and start_rs.wind_speed %}
+                            <span title="باد">💨 {{ start_rs.wind_speed }}</span>
+                        {% endif %}
+                        {% if start_rs and start_rs.humidity %}
+                            <span title="رطوبت">💧 {{ start_rs.humidity }}%</span>
+                        {% endif %}
+                        {% if not start_rs or not start_rs.temperature_c %}
+                            <span style="color:#aaa;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if run.is_anomalous_short %}<span class="anomaly-badge">کوتاه</span>{% endif %}
+                        {% if run.is_anomalous_long %}<span class="anomaly-badge">طولانی</span>{% endif %}
+                        {% if not run.is_anomalous_short and not run.is_anomalous_long %}
+                            <span style="color:#aaa;">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="11" class="text-center text-muted py-4">هیچ آبیاری ثبت نشده است.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <nav style="margin-top:20px;">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
+                    </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

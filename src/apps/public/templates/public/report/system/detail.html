@@ -1,0 +1,157 @@
+{% extends 'base/base_template.html' %}
+
+{% block Title %}
+    جزئیات گزارش سیستمی- {{ report.title }}
+{% endblock %}
+
+{% block Content %}
+
+    <div class="container mt-4">
+
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-5">جزئیات گزارش سیستمی</h3>
+            <div class="mb-2">
+                <!-- BUTTON -->
+                {% if not report.is_resolved or user.is_superuser %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
+                        افزودن وضعیت/ثبت پیگیری
+                    </button>
+                {% endif %}
+                <a href="{% url 'public:index' %}" class="btn btn-secondary">
+                    خانه
+                </a>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <table class="table table-bordered">
+            <tbody>
+            <tr>
+                <th>عنوان</th>
+                <td>{{ report.title }}</td>
+            </tr>
+            <tr>
+                <th>توضیحات</th>
+                <td>{{ report.description|default:"-" }}</td>
+            </tr>
+            <tr>
+                <th>اولویت</th>
+                <td>{{ report.get_priority_display }}</td>
+            </tr>
+            <tr>
+                <th>ابیار</th>
+                <td>{% if report.waterman %}{{ report.waterman.get_full_name|default:report.waterman.username }}{% else %}-{% endif %}</td>
+            </tr>
+            <tr>
+                <th>منطقه</th>
+                <td>{{ report.outlet.plot.zone.farm.name }}</td>
+            </tr>
+            <tr>
+                <th>بخش</th>
+                <td>{{ report.outlet.plot.zone.name }}</td>
+            </tr>
+            <tr>
+                <th>زمین</th>
+                <td>{{ report.outlet.plot.name }}</td>
+            </tr>
+            <tr>
+                <th>ردیف(کیز)</th>
+                <td>{{ report.outlet.number }}</td>
+            </tr>
+            <tr>
+                <th>وضعیت فعلی</th>
+                <td>
+                    {% if report.last_status %}
+                        {{ report.last_status.get_status_display }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>حل شده؟</th>
+                <td>
+                    {% if report.is_resolved %}
+                        <span style="font-size: 110%;background: #00da5a" class="badge">بله</span>
+                    {% else %}
+                        <span style="font-size: 110%;background: #ff1b3e" class="badge">خیر</span>
+                    {% endif %}
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- STATUS LIST -->
+        <h4>تاریخچه وضعیت‌ها</h4>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>کاربر</th>
+                <th>وضعیت</th>
+                <th>توضیحات</th>
+                <th>تاریخ</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for s in statuses %}
+                <tr>
+                    <td>{{ s.user.get_full_name|default:'سیستم' }}</td>
+                    <td>{{ s.get_status_display }}</td>
+                    <td>{{ s.note|default:"-" }}</td>
+                    <td>
+                        <span class="datetime-convert">{{ s.get_created_at }}</span>
+                        <span class="badge bg-secondary time-ago">{{ s.get_created_at }}</span>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">وضعیتی ثبت نشده</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+
+    <!-- MODAL -->
+    <div class="modal" id="statusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">ثبت وضعیت پیگیری</h5>
+                        <button type="button" class="btn-close m-0 text-danger" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="mb-3">
+                            <label>وضعیت</label>
+                            <select name="status" class="form-control" required>
+                                <option value="pending">در انتظار</option>
+                                <option value="in_progress">در حال انجام</option>
+                                <option value="resolved">حل شده</option>
+                                <option value="hold">متوقف شده</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>توضیحات</label>
+                            <textarea name="note" class="form-control" required></textarea>
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success px-5">ثبت</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

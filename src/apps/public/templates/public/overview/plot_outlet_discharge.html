@@ -1,0 +1,153 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block Title %}{{ plot.name }} — آبدهی کیزها{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #0288d1, #01579b); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+    .breadcrumb-bar { font-size: 13px; opacity: .8; margin-bottom: 6px; }
+    .breadcrumb-bar a { color: rgba(255,255,255,.8); text-decoration: none; }
+    .breadcrumb-bar a:hover { color: #fff; }
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+    .stat-value { font-size: 22px; font-weight: bold; margin: 6px 0 3px; }
+    .stat-label { font-size: 11px; color: #888; }
+    .table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 24px; }
+    .table-card table { margin: 0; font-size: 13px; }
+    .table-card thead th { background: #f0f4fa; font-weight: 700; color: #555; border: none; padding: 10px 12px; }
+    .table-card tbody td { padding: 10px 12px; vertical-align: middle; }
+    .chart-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1100px;margin:30px auto;">
+
+    <!-- Header with breadcrumb -->
+    <div class="page-header">
+        <div class="breadcrumb-bar">
+            <a href="{% url 'public:index' %}">داشبورد</a> /
+            <a href="{% url 'public:plot_list' %}">زمین‌ها</a> /
+            <a href="{% url 'public:plot_detail' plot.id %}">{{ plot.name }}</a> /
+            آبدهی
+        </div>
+        <div style="font-size:22px;font-weight:bold;">{{ plot.name }}</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">
+            {{ farm.name }} — گزارش آبدهی کیزها
+        </div>
+    </div>
+
+    <!-- Summary stat cards -->
+    <div class="stat-cards">
+        <div class="stat-card" style="border-top:3px solid #0288d1;">
+            <div style="color:#0288d1;font-size:20px;">💧</div>
+            <div class="stat-value" style="color:#0288d1;">{{ total_plot_m3 }}</div>
+            <div class="stat-label">کل آب مصرفی (m³)</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #43a047;">
+            <div style="color:#43a047;font-size:20px;">⏱</div>
+            <div class="stat-value" style="color:#43a047;">{{ total_plot_hours }}</div>
+            <div class="stat-label">کل ساعت آبیاری</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #e65100;">
+            <div style="color:#e65100;font-size:20px;">🌊</div>
+            <div class="stat-value" style="color:#e65100;">{{ total_plot_liters }}</div>
+            <div class="stat-label">کل لیتر آبیاری</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid #7b1fa2;">
+            <div style="color:#7b1fa2;font-size:20px;">🔧</div>
+            <div class="stat-value" style="color:#7b1fa2;">{{ discharge_rate }}</div>
+            <div class="stat-label">دبی (لیتر/ثانیه)</div>
+        </div>
+    </div>
+
+    <!-- Outlets table -->
+    <div class="table-card">
+        <div style="padding:16px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;color:#1a1a2e;">
+            جزئیات کیزها
+        </div>
+        {% if outlets %}
+        <table class="table table-hover" style="margin:0;">
+            <thead>
+                <tr>
+                    <th>کیز</th>
+                    <th>وضعیت آبیاری</th>
+                    <th>مدت (دقیقه)</th>
+                    <th>حجم (لیتر)</th>
+                    <th>حجم (m³)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in outlets %}
+                <tr>
+                    <td style="font-weight:600;">{{ o.outlet_number }}</td>
+                    <td>
+                        {% if o.run_count == 1 %}
+                            {% if o.last_run_status_end %}
+                                <span class="badge bg-success">انجام شده</span>
+                            {% else %}
+                                <span class="badge bg-info">در حال انجام</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-warning text-dark">انجام نشده</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ o.total_minutes }}</td>
+                    <td>{{ o.total_liters }}</td>
+                    <td style="font-weight:600;">{{ o.total_m3 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="empty-state">
+                <div class="icon">🔍</div>
+                <div>هیچ کیزی برای این زمین ثبت نشده است</div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Chart -->
+    {% if outlets %}
+    <div class="chart-card">
+        <div style="font-weight:bold;margin-bottom:14px;color:#1a1a2e;">نمودار مصرف آب به ازای هر کیز (m³)</div>
+        <canvas id="waterChart" height="100"></canvas>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block Script %}
+{% if outlets %}
+<script>
+    const labels = JSON.parse('{{ chart_labels|safe }}');
+    const water = JSON.parse('{{ chart_water|safe }}');
+
+    new Chart(
+        document.getElementById("waterChart"),
+        {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "آب مصرفی (m³)",
+                    data: water,
+                    backgroundColor: "#0288d1",
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        }
+    );
+</script>
+{% endif %}
+{% endblock %}

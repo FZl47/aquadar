@@ -1,0 +1,68 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}گزارشات آبیاران{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; }
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e0e7ef;
+    }
+    .page-header h3 { margin: 0; font-size: 22px; font-weight: bold; }
+    .report-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border-right: 4px solid #007bff;
+    }
+    .report-card .report-title { font-size: 17px; font-weight: bold; margin-bottom: 8px; }
+    .report-card .report-meta { font-size: 13px; color: #888; margin-bottom: 8px; }
+    .report-card .report-desc { color: #444; font-size: 14px; line-height: 1.8; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
+    .empty-state i { font-size: 50px; display: block; margin-bottom: 15px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container mt-4">
+    <div class="page-header">
+        <h3><i class="icon-list-alt"></i> گزارشات آبیاران</h3>
+        <a href="{% url 'public:index' %}" class="btn btn-secondary">
+            <i class="icon-arrow-right"></i> بازگشت به داشبورد
+        </a>
+    </div>
+
+    {% if reports %}
+        {% for report in reports %}
+            <div class="report-card">
+                <div class="report-title">{{ report.title }}</div>
+                <div class="report-meta">
+                    <i class="icon-user"></i>
+                    <b>{{ report.created_by.get_full_name|default:report.created_by.username }}</b>
+                    &nbsp;|&nbsp;
+                    <span class="datetime-convert">{{ report.get_created_at }}</span>
+                    &nbsp;
+                    <span class="badge bg-secondary time-ago" style="font-size:11px;">{{ report.get_created_at }}</span>
+                </div>
+                {% if report.description %}
+                    <div class="report-desc">{{ report.description }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="icon-inbox"></i>
+            <p>هیچ گزارشی ثبت نشده است</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

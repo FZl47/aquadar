@@ -1,0 +1,492 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}
+    داشبورد مدیریتی
+{% endblock %}
+
+{% block Link %}
+    <link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+{% endblock %}
+
+{% block Style %}
+    <style>
+
+        body {
+            font-family: 'YekanBakhFaNum', monospace;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+
+        .title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+        }
+
+        #map {
+            height: 420px;
+            border-radius: 10px;
+        }
+
+        .anomaly {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .anomaly div {
+            flex: 1;
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .anomaly span {
+            font-size: 26px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .accordion-button {
+            font-size: 20px;
+        }
+
+    </style>
+{% endblock %}
+
+{% block Content %}
+    <div class="container">
+
+        <!-- Top Navigation -->
+        <div style="background:#fff;border-radius:12px;padding:12px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:20px;font-weight:bold;color:#1a1a2e;">
+                <i class="icon-dashboard" style="color:#3498db;"></i>
+                داشبورد مدیریتی
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <a href="{% url 'public:waterman_list' %}" class="btn btn-sm"
+                   style="background:#e8f4fd;color:#2c7be5;border:1px solid #bee3f8;border-radius:8px;">
+                    <i class="icon-group"></i> لیست آبیاران
+                </a>
+                <a href="{% url 'public:report_activity__list' %}" class="btn btn-sm"
+                   style="background:#e8f9f0;color:#27ae60;border:1px solid #b2dfdb;border-radius:8px;">
+                    <i class="icon-list-alt"></i> گزارشات آبیاران
+                </a>
+                <a href="{% url 'public:run_list' %}" class="btn btn-sm"
+                   style="background:#e8f4ff;color:#6c3cd1;border:1px solid #d5b8ff;border-radius:8px;">
+                    <i class="icon-tint"></i> لیست آبیاری‌ها
+                </a>
+                <a href="{% url 'public:report_manure__list' %}" class="btn btn-sm"
+                   style="background:#f3e8ff;color:#6a1b9a;border:1px solid #ce93d8;border-radius:8px;">
+                    <i class="icon-beaker"></i> گزارشات کوددهی
+                </a>
+                <a href="{% url 'public:farm_list' %}" class="btn btn-sm"
+                   style="background:#e0f7fa;color:#00796b;border:1px solid #b2dfdb;border-radius:8px;">
+                    <i class="icon-map-marker"></i> زمین‌ها
+                </a>
+                <a href="{% url 'public:zone_list' %}" class="btn btn-sm"
+                   style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;border-radius:8px;">
+                    <i class="icon-th"></i> ناحیه‌ها
+                </a>
+                <a href="{% url 'public:plot_list' %}" class="btn btn-sm"
+                   style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;border-radius:8px;">
+                    <i class="icon-leaf"></i> مزارع
+                </a>
+                <a href="{% url 'public:outlet_list' %}" class="btn btn-sm"
+                   style="background:#f3e5f5;color:#7b1fa2;border:1px solid #e1bee7;border-radius:8px;">
+                    <i class="icon-road"></i> کیزها
+                </a>
+                <a href="{% url 'account:logout' %}" class="btn btn-sm"
+                   style="background:#ffe7df;color:#ff1f1f;border-radius:8px;">
+                    <i class="icon-signout"></i> خروج
+                </a>
+            </div>
+        </div>
+
+        <div class="stats">
+
+            <a href="{% url 'public:farm_list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #3498db;">
+                    <div style="color:#3498db;font-size:13px;font-weight:600;">
+                        <i class="icon-map-marker"></i> مناطق
+                    </div>
+                    <div class="stat-number" style="color:#3498db;">{{ total_farms }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:zone_list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #9b59b6;">
+                    <div style="color:#9b59b6;font-size:13px;font-weight:600;">
+                        <i class="icon-th"></i> بخش ها
+                    </div>
+                    <div class="stat-number" style="color:#9b59b6;">{{ total_zones }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:plot_list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #27ae60;">
+                    <div style="color:#27ae60;font-size:13px;font-weight:600;">
+                        <i class="icon-leaf"></i> زمین ها
+                    </div>
+                    <div class="stat-number" style="color:#27ae60;">{{ total_plots }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:outlet_list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #e67e22;">
+                    <div style="color:#e67e22;font-size:13px;font-weight:600;">
+                        <i class="icon-road"></i> کیز ها
+                    </div>
+                    <div class="stat-number" style="color:#e67e22;">{{ total_outlets }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:run_list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #1abc9c;">
+                    <div style="color:#1abc9c;font-size:13px;font-weight:600;">
+                        <i class="icon-tint"></i> آبیاری فعال
+                    </div>
+                    <div class="stat-number" style="color:#1abc9c;">{{ active_runs }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:report_activity__list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #2980b9;">
+                    <div style="color:#2980b9;font-size:13px;font-weight:600;">
+                        <i class="icon-list-alt"></i> گزارشات
+                    </div>
+                    <div class="stat-number" style="color:#2980b9;">{{ total_reports }}</div>
+                </div>
+            </a>
+
+            <a href="{% url 'public:report_manure__list' %}" style="text-decoration:none;">
+                <div class="card" style="border-right:4px solid #8e44ad;">
+                    <div style="color:#8e44ad;font-size:13px;font-weight:600;">
+                        <i class="icon-beaker"></i> گزارشات کود دهی
+                    </div>
+                    <div class="stat-number" style="color:#8e44ad;">{{ total_manure_reports }}</div>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="container mt-4">
+            <h4 class="mb-3">گزارشات سیستمی</h4>
+            <table class="table table-bordered table-hover">
+                <thead class="thead-light">
+                <tr>
+                    <th>#</th>
+                    <th>عنوان</th>
+                    <th>بخش</th>
+                    <th>اولویت</th>
+                    <th>وضعیت</th>
+                    <th>وضعیت نهایی</th>
+                    <th>تاریخ</th>
+                    <th>عملیات</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for report in unresolved_system_reports|slice:':8' %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>{{ report.title|truncatechars:'20' }}</td>
+
+                        <td>
+                            {{ report.outlet.plot.zone.farm.name }} /
+                            {{ report.outlet.plot.zone.name }} /
+                            {{ report.outlet.plot.name }} /
+                            {{ report.outlet.number }}
+                        </td>
+
+                        <td>
+                            {% if report.priority == 'high' %}
+                                <span class="badge bg-danger">بالا</span>
+                            {% elif report.priority == 'medium' %}
+                                <span class="badge bg-warning">متوسط</span>
+                            {% else %}
+                                <span class="badge bg-secondary">کم</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if report.last_status %}
+                                {{ report.last_status.get_status_display }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if report.is_resolved %}
+                                <span class="badge bg-success">حل شده</span>
+                            {% else %}
+                                <span class="badge bg-danger">حل نشده</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="font-90">(<span
+                                    class="time-ago font-70">{{ report.get_created_at }}</span>)</span>
+                            <span class="datetime-convert font-80">{{ report.get_created_at }}</span>
+                        </td>
+
+                        <td>
+                            <a href="{{ report.get_absolute_url }}" class="btn btn-sm btn-primary">
+                                مشاهده
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            گزارشی ثبت نشده
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12 col-lg-8">
+                <div class="chart-box">
+                    <div class="chart-title">آبیاری ها در 30 روز اخیر</div>
+                    <canvas id="runsChart"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-lg-4">
+                <div class="chart-box">
+                    <div class="chart-title">آبیار ها</div>
+                    <ul class="list-group">
+                        {% for waterman_user in waterman_users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                {{ waterman_user.get_full_name }}
+                                {% if waterman_user.has_run_active %}
+                                    <span class="badge bg-primary rounded-pill">
+                                        <span>در حال آبیاری</span>
+                                    </span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+
+            <div class="chart-box">
+                <div class="chart-title">وضعیت آبیاری</div>
+                <div style="width: 300px;text-align: center;margin: auto">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">میانگین زمان آبیاری بر اساس هر بخش</div>
+                <canvas id="durationChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">آبیاری ها/دما</div>
+                <canvas id="tempChart"></canvas>
+            </div>
+
+            <div class="chart-box">
+                <div class="chart-title">تعداد کود دهی بر اساس نوع کود</div>
+                <div style="width: 400px;text-align: center;margin: auto">
+                    <canvas id="manureChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:1px solid #ffe082;border-radius:12px;padding:18px 24px;margin-top:20px;">
+            <div style="font-size:15px;font-weight:700;color:#e65100;margin-bottom:8px;">
+                <i class="icon-warning-sign"></i> تعریف آبیاری مشکل‌دار
+            </div>
+            <p style="margin:0;color:#5d4037;font-size:14px;line-height:1.8;">
+                آبیاری مشکل‌دار به آبیاری‌هایی گفته می‌شود که مدت آن‌ها خارج از بازه
+                <strong>میانگین ± تلرانس</strong> باشد.
+                میانگین مدت آبیاری بر اساس تاریخچه آبیاری همان زمین محاسبه می‌شود.
+                تلرانس مجاز در بخش تنظیمات سیستم قابل تنظیم است.
+                {% if run_settings %}
+                    تلرانس فعلی: <strong>{{ run_settings.avg_tolerance_run_duration }} دقیقه</strong>.
+                {% endif %}
+            </p>
+        </div>
+
+        <button id="pwa-install-btn" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:14px;box-shadow:0 4px 14px rgba(26,115,232,0.4);cursor:pointer;font-family:inherit;">
+            <i class="icon-download"></i> نصب برنامه
+        </button>
+
+    </div>
+{% endblock %}
+
+{% block Script %}
+
+    <script>
+
+        const runsLabels = JSON.parse("{{ runs_labels|escapejs }}");
+        const runsData = JSON.parse("{{ runs_data|escapejs }}");
+
+        const statusLabels = JSON.parse("{{ status_labels|escapejs }}");
+        const statusData = JSON.parse("{{ status_data|escapejs }}");
+
+        const durationLabels = JSON.parse("{{ duration_labels|escapejs }}");
+        const durationData = JSON.parse("{{ duration_data|escapejs }}");
+
+        const tempLabels = JSON.parse("{{ temp_labels|escapejs }}");
+        const tempData = JSON.parse("{{ temp_data|escapejs }}");
+
+        const manureLabels = JSON.parse("{{ manure_labels|escapejs }}");
+        const manureData = JSON.parse("{{ manure_data|escapejs }}");
+
+        const gpsLocations = JSON.parse("{{ gps_locations|escapejs }}");
+
+
+        new Chart(document.getElementById('runsChart'), {
+            type: 'line',
+            data: {
+                labels: runsLabels,
+                datasets: [{
+                    label: 'آبیاری ها',
+                    data: runsData,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52,152,219,0.1)',
+                    fill: true,
+                    tension: 0.40,
+                    borderWidth: 2
+                }]
+            },
+        });
+
+        new Chart(document.getElementById('statusChart'), {
+            type: 'pie',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: ['#4fa0ff', '#08da7d']
+                }]
+            }
+        });
+
+
+        new Chart(document.getElementById('durationChart'), {
+            type: 'bar',
+            data: {
+                labels: durationLabels,
+                datasets: [{
+                    label: 'Minutes',
+                    data: durationData,
+                    backgroundColor: '#a44fff',
+                    borderRadius: 12
+                }]
+            }
+        });
+
+
+        new Chart(document.getElementById('tempChart'), {
+            type: 'bar',
+            data: {
+                labels: tempLabels,
+                datasets: [{
+                    label: 'Temperature',
+                    data: tempData,
+                    backgroundColor: '#ff9a24',
+                    borderRadius: 10
+                }]
+            }
+        });
+
+        let manureChartColors = []
+        for (let i of manureLabels) {
+            manureChartColors.push(getRandomColor())
+        }
+        new Chart(document.getElementById('manureChart'), {
+            type: 'doughnut',
+            data: {
+                labels: manureLabels,
+                datasets: [{
+                    data: manureData,
+                    backgroundColor: manureChartColors
+                }]
+            }
+        });
+
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwa-install-btn').style.display = 'block';
+        });
+        document.getElementById('pwa-install-btn').addEventListener('click', function() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function() {
+                deferredPrompt = null;
+                document.getElementById('pwa-install-btn').style.display = 'none';
+            });
+        });
+
+    </script>
+{% endblock %}
+

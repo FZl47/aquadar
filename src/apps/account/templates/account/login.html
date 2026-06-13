@@ -1,0 +1,29 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}
+    {% trans 'Login' %}
+{% endblock %}
+
+{% block BodyClass %}login-body{% endblock %}
+
+{% block Content %}
+    <div class="container">
+        <form class="form-signin" method="post" action="{% url 'account:login' %}">
+            {% csrf_token %}
+            <h2 class="form-signin-heading">همین حالا وارد شوید</h2>
+            <div class="login-wrap">
+                <input type="text" class="form-control" name="username" placeholder="نام کاربری" required>
+                <input type="password" class="form-control" name="password" placeholder="کلمه عبور" required>
+                <label class="checkbox">
+                    <span class="pull-right" style="font-size: 13px"> <a
+                            href="#"> کلمه عبور را فراموش کرده اید؟</a></span>
+                </label>
+                <button class="btn btn-lg btn-login btn-block" style="display: block;width: 90%;margin: 10px auto;"
+                        type="submit">ورود
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}کیز {{ outlet.number }}{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #e65100, #bf360c); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+    .run-row { border-bottom: 1px solid #f0f0f0; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+    .run-row:last-child { border-bottom: none; }
+    .status-badge { border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:900px;margin:30px auto;">
+
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">کیز {{ outlet.number }}</div>
+        <div style="opacity:.85;margin-top:4px;">
+            {{ outlet.plot.zone.farm.name }} / {{ outlet.plot.zone.name }} / {{ outlet.plot.name }}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'public:outlet_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست کیزها</a>
+            <a href="{{ outlet.plot.zone.get_absolute_url }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده ناحیه</a>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h6 style="font-weight:bold;color:#1a1a2e;margin-bottom:14px;">اطلاعات کیز</h6>
+        <table class="table table-borderless" style="font-size:14px;">
+            <tr>
+                <td style="color:#888;width:140px;">شماره کیز</td>
+                <td style="font-weight:600;">{{ outlet.number }}</td>
+            </tr>
+            <tr>
+                <td style="color:#888;">زمین</td>
+                <td><a href="{{ outlet.plot.get_absolute_url }}">{{ outlet.plot.name }}</a></td>
+            </tr>
+            <tr>
+                <td style="color:#888;">ناحیه</td>
+                <td><a href="{{ outlet.plot.zone.get_absolute_url }}">{{ outlet.plot.zone.name }}</a></td>
+            </tr>
+            <tr>
+                <td style="color:#888;">منطقه</td>
+                <td>{{ outlet.plot.zone.farm.name }}</td>
+            </tr>
+            <tr>
+                <td style="color:#888;">وضعیت فعلی</td>
+                <td>
+                    {% with status=outlet.status %}
+                        {% if status == 'running' %}
+                            <span class="status-badge" style="background:#e8f5e9;color:#1b5e20;">در حال آبیاری</span>
+                        {% elif status == 'completed' %}
+                            <span class="status-badge" style="background:#e3f2fd;color:#1565c0;">تکمیل شده</span>
+                        {% else %}
+                            <span class="status-badge" style="background:#f5f5f5;color:#757575;">شروع نشده</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="info-card">
+        <h6 style="font-weight:bold;color:#1a1a2e;margin-bottom:14px;">تاریخچه آبیاری (آخرین ۲۰ مورد)</h6>
+
+        {% for run in runs %}
+            <div class="run-row">
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#1a1a2e;">
+                        {% with st=run.status_start %}
+                            {% if st %}{{ st.created_at|jalali }}{% else %}—{% endif %}
+                        {% endwith %}
+                    </div>
+                    <div style="color:#888;font-size:12px;margin-top:2px;">
+                        آبیار: {{ run.created_by.get_full_name|default:'نامشخص' }}
+                        {% if run.duration_seconds %}
+                            · مدت: {{ run.duration_seconds }} ثانیه
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    {% if run.group.status == 'running' %}
+                        <span class="status-badge" style="background:#e8f5e9;color:#1b5e20;">در حال آبیاری</span>
+                    {% elif run.group.status == 'completed' %}
+                        <span class="status-badge" style="background:#e3f2fd;color:#1565c0;">تکمیل</span>
+                    {% else %}
+                        <span class="status-badge" style="background:#fff3e0;color:#e65100;">لغو شده</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div style="text-align:center;padding:30px;color:#999;">سابقه آبیاری ندارد</div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

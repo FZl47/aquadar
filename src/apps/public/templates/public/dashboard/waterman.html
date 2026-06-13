@@ -1,0 +1,816 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}
+    {% trans 'Waterman' %} {% trans 'Dashboard' %}
+{% endblock %}
+
+{% block Style %}
+    <style>
+        .min-header {
+            margin-top: 50px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #f5f6ff;
+        }
+
+        .min-header .nav-tabs li a {
+            padding: 15px;
+        }
+
+        .min-header .nav-tabs li.active a {
+            background: #f6faff;
+            color: #369bff;
+            box-shadow: 0 2px 1px #5a9ddd;
+        }
+
+        .tab-content-title {
+            margin-bottom: 40px;
+            border-right: 3px solid #f13848;
+            padding-right: 10px;
+        }
+
+        .nav-tabs li a {
+            font-size: 17px;
+        }
+
+        #plot-select-cnt.invisible {
+            height: 0;
+        }
+
+        form[is-valid="false"] button[type="submit"] {
+            background: #d8d8d8;
+            cursor: not-allowed;
+        }
+
+        form[is-valid="true"] button[type="submit"] {
+            background: #14e37e;
+            color: #fff;
+            box-shadow: 0 3px 1px #0a8e57;
+            cursor: pointer;
+        }
+
+        form[is-valid="true"] button[type="submit"] i {
+            display: inline-block !important;
+        }
+
+        select {
+            font-size: 15px !important;
+        }
+
+        span.customSelect {
+            font-size: 14px !important;
+            padding: 13px !important;
+            height: 50px !important;
+        }
+
+        .cnt-select-plot {
+            padding: 10px 20px 20px 20px;
+            margin-top: 20px;
+            background: #fff;
+            box-shadow: 0 20px 5px rgba(238, 238, 238, 0.3);
+            border-radius: 15px;
+        }
+
+        .cnt-select-plot h2 {
+            margin-bottom: 25px;
+        }
+
+        .header-user {
+            direction: ltr;
+            margin-top: 10px;
+            margin-bottom: 40px;
+        }
+
+        .header-user > div {
+            border: 1px solid #ddd;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 270px;
+            border-radius: 10px;
+            padding: 15px 8px;
+        }
+
+        .header-user .logout {
+            background: #ffe7e0;
+            color: #ff2834;
+            padding: 6px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .selected-plot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-item {
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 15px 5px rgba(238, 238, 238, 0.5);
+            border: 1px solid #eee;
+        }
+
+        .action-item p {
+            padding: 0;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .action-item form {
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        .action-item button {
+            margin-top: 25px;
+        }
+
+        .running-groups {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+
+        .running-group {
+            min-width: 300px;
+            background: #f1f6ff;
+            color: #262cff;
+            border: 1px solid #ced0ff;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .running-group > div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* System alert section */
+
+        .report-items {
+            display: flex;
+            justify-content: space-evenly;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .report-item {
+            min-width: 300px;
+            background: #fff1f8;
+            color: #262cff;
+            border: 1px solid #ced0ff;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .system-alerts-section {
+            margin-bottom: 20px;
+        }
+
+        .system-alerts-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #ff2647, #ff6b35);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 10px 10px 0 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .system-alerts-header i {
+            font-size: 20px;
+        }
+
+        .system-alerts-body {
+            border: 2px solid #ff2647;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 10px;
+            background: #fff9f9;
+        }
+
+        .alert-pulse {
+            animation: alertPulse 2s infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Tab form styling */
+        .form-tab-section {
+            padding: 20px;
+            background: #fafcff;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .form-tab-section label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-tab-section .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block BodyClass %}{% endblock %}
+
+{% block Content %}
+    <div class="container">
+
+        <div class="header-user">
+            <div>
+                <div>
+                    <i class="icon-user"></i>
+                    {{ request.user.get_full_name|truncatechars:'20' }}
+                </div>
+                <div>
+                    <a href="{% url 'account:logout' %}" class="logout">
+                        خروج از حساب کاربری
+                        <i class="icon-signout"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-bottom: 50px;padding: 15px;">
+
+            {% if system_reports %}
+                <div class="col-12 system-alerts-section">
+                    <div class="system-alerts-header">
+                        <i class="icon-warning-sign alert-pulse"></i>
+                        <span>اخطار های سیستمی ({{ system_reports|length }} مورد)</span>
+                    </div>
+                    <div class="system-alerts-body">
+                        <div class="report-items">
+                            {% for report in system_reports %}
+                                <div class="report-item">
+                                    <div>
+                                        <div class="report-header">
+                                            <p>{{ report.title|truncatechars:'30' }}</p>
+                                            <div class="report-header-item">
+                                                <span class="priority priority-{{ report.priority }}">{{ report.get_priority_display }}</span>
+                                                <span class="status status-{{ report.last_status.status }}">{{ report.last_status.get_status_display }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="time-ago"
+                                                  style="font-size:12px;color:#888;">{{ report.get_created_at }}</span>
+                                            <a class="btn btn-danger btn-sm" href="{{ report.get_absolute_url }}">
+                                                <i class="icon-eye-open"></i> مشاهده/پیگیری
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if active_runnings %}
+                <div class="running-groups">
+                    <h4 class="text-primary">آبیاری های در حال انجام</h4>
+                    {% for running in active_runnings %}
+                        <div class="running-group">
+                            <div>
+                                <p>
+                                    زمین
+                                    <b>{{ running.outlet.plot.name }}</b>
+                                    کیز
+                                    <b>{{ running.outlet.number }}</b>
+                                    در حال آبیاری
+                                </p>
+                                <a class="btn btn-danger"
+                                   href="{% url 'public:plot_outlet_action' outlet_id=running.outlet.id %}">
+                                    پایان آبیاری
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if allow_code_entry %}
+                <div class="col-12 col-lg-4 action-item">
+                    <p>ثبت آبیاری با کد</p>
+                    <div id="gps-status" style="font-size:13px;margin-bottom:8px;"></div>
+                    <form id="form-by-code" action="{% url 'public:plot_outlet_action_by_code' %}" method="get">
+                        <input type="hidden" name="gps_lat" id="bycode-gps-lat">
+                        <input type="hidden" name="gps_lng" id="bycode-gps-lng">
+                        <label for="#water_input_code">کد ردیف(کیز)</label>
+                        <input type="text" class="form-control" required name="outlet_code" id="water_input_code"
+                               placeholder="کد را وارد نمایید">
+                        <div class="text-left">
+                            <button class="btn btn-primary">شروع/پایان آبیاری</button>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="cnt-select-plot">
+            {% if not plot_obj %}
+                <h2>انتخاب زمین</h2>
+                <form id="form-submit-water" method="get" is-valid="false">
+                    <div>
+                        <label>منطقه:</label>
+                        <select name="zone" class="styled form-control">
+                            <option value="">انتخاب کنید</option>
+                            {% for zone in zones %}
+                                <option value="{{ zone.id }}">{{ zone }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <br>
+                    <div id="plot-select-cnt" class="invisible">
+                        <label>زمین:</label>
+                        <select name="plot" class="styled form-control">
+                            {% for plot in plots %}
+                                <option value="{{ plot.id }}" zone="{{ plot.zone.id }}">{{ plot }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <br>
+                    <div class="text-left">
+                        <button class="btn" type="submit" style="padding: 10px 35px;">
+                            ثبت و ادامه
+                            <i class="icon-arrow-left d-none"></i>
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div>
+                    <header class="selected-plot-header">
+                        <h3 class="tab-content-title">
+                            <span style="display:inline-block;">زمین انتخاب شده:</span>
+                            <span class="badge bg-success"
+                                  style="font-size: 25px;padding: 8px;margin-top: 10px;">{{ plot_obj }}</span>
+                        </h3>
+                        <div>
+                            <a href="{% url 'public:index' %}" class="btn btn-warning btn-round">
+                                برگشت به قبل
+                                <i class="icon-arrow-left"></i>
+                            </a>
+                        </div>
+                    </header>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if plot_obj %}
+            <section class="panel">
+                <header class="min-header">
+                    <ul class="nav nav-tabs nav-justified" id="dashTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-water-btn" data-bs-toggle="tab"
+                                    data-bs-target="#submit-water" type="button" role="tab">ثبت آبیاری
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-manure-btn" data-bs-toggle="tab"
+                                    data-bs-target="#submit-manure" type="button" role="tab">ثبت کود دهی
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-reports-btn" data-bs-toggle="tab" data-bs-target="#reports"
+                                    type="button" role="tab">گزارشات
+                            </button>
+                        </li>
+                    </ul>
+                </header>
+                <div class="panel-body">
+                    <div class="tab-content tasi-tab" id="dashTabsContent">
+
+                        <!-- TAB: irrigation -->
+                        <div class="tab-pane fade show active" id="submit-water" role="tabpanel">
+                            {% if plot_obj.has_running_action %}
+                                <div style="margin: 10px auto 25px auto;text-align: center">
+                                    <div class="alert alert-warning fade in col-12 col-lg-10">
+                                        توجه کنید در صورت پایان آبیاری هر ردیف(کیز) تا زمان لغو عملیات یا عملیات جدید
+                                        امکان شروع مجدد فراهم نمیباشد.
+                                    </div>
+                                    <div class="col-12 col-lg-2">
+                                        <a href="{% url 'public:plot_outlets_run_reset' plot_id=plot_obj.id %}"
+                                           class="btn btn-danger btn-round">
+                                            لغو عملیات
+                                            <i class="icon-minus-sign"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <table class="table table-striped table-advance table-hover">
+                                <thead>
+                                <tr>
+                                    <th>شماره ردیف(کیز) <i class="icon-road"></i></th>
+                                    <th class="hidden-phone">جزئیات شروع و پایان <i class="icon-question-sign"></i></th>
+                                    <th>زمان طی شده <i class="icon-time"></i></th>
+                                    <th class="hidden-phone">وضعیت <i class="icon-book"></i></th>
+                                    <th>عملیات <i class="icon-edit-sign"></i></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for outlet in plot_obj.get_outlets %}
+                                    <tr>
+                                        <td>{{ outlet.number }}</td>
+                                        <td class="hidden-phone" style="font-size:11px;min-width:160px;">
+                                            {% if outlet.status_start %}
+                                                <div class="d-inline-block" style="line-height:2;">
+                                                    <div>
+                                                        <i class="icon-play-circle" style="color:#28a745;"></i>
+                                                        <strong>شروع:</strong> {{ outlet.status_start.created_at|jalali }}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span style="color:#bbb;">-</span>
+                                            {% endif %}
+                                            {% if outlet.status_end %}
+                                                <div class="d-inline-block"
+                                                     style="line-height:2;margin-top:4px;border-top:1px solid #eee;padding-top:4px;">
+                                                    <div>
+                                                        <i class="icon-stop" style="color:#dc3545;"></i>
+                                                        <strong>پایان:</strong> {{ outlet.status_end.created_at|jalali }}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="hidden-phone">
+                                            <span outlet-id="{{ outlet.id }}"
+                                                  outlet-duration="{{ outlet.status }}">{{ outlet.run.duration_seconds|default:'0' }}</span>
+                                            ثانیه
+                                        </td>
+                                        <td>
+                                            <span class="label-custom label-{{ outlet.status }} outlet-status-label"
+                                                  data-outlet-id="{{ outlet.id }}">{{ outlet.status_label }}</span>
+                                        </td>
+                                        <td>
+                                            <form class="form-start-run" method="post"
+                                                  action="{% url 'public:plot_outlet_action' outlet_id=outlet.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="plot" value="{{ plot_obj.id }}">
+                                                <input type="hidden" name="status" value="start">
+                                                <input type="hidden" class="gps-lat-input" name="gps_lat">
+                                                <input type="hidden" class="gps-lng-input" name="gps_lng">
+                                                <button outlet-id="{{ outlet.id }}" outlet-start
+                                                        class="btn btn-success btn-sm {% if outlet.status == 'not_started' %}d-block {% else %}d-none{% endif %}">
+                                                    <i class="icon-ok"></i>
+                                                    <span style="margin: 3px;">شروع</span>
+                                                </button>
+                                            </form>
+
+                                            <form class="form-end-run" method="post"
+                                                  action="{% url 'public:plot_outlet_action' outlet_id=outlet.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="plot" value="{{ plot_obj.id }}">
+                                                <input type="hidden" name="status" value="end">
+                                                <input type="hidden" class="gps-lat-input" name="gps_lat">
+                                                <input type="hidden" class="gps-lng-input" name="gps_lng">
+                                                <button outlet-id="{{ outlet.id }}" outlet-end
+                                                        class="btn btn-danger btn-sm {% if outlet.status == 'running' %}d-block {% else %}d-none{% endif %}">
+                                                    <i class="icon-stop"></i>
+                                                    <span style="margin: 3px;">پایان</span>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- TAB: manure -->
+                        <div class="tab-pane fade" id="submit-manure" role="tabpanel">
+                            <div class="form-tab-section">
+                                <h4 style="margin-bottom:20px;border-right:3px solid #28a745;padding-right:10px;">ثبت
+                                    کود دهی</h4>
+                                <form method="post"
+                                      action="{% url 'public:report_manure__create' plot_id=plot_obj.id %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label>نوع کود</label>
+                                        <select name="category" class="form-control">
+                                            <option value="">-- انتخاب کنید --</option>
+                                            {% for cat in manure_categories %}
+                                                <option value="{{ cat.id }}">{{ cat.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>عنوان <span class="text-danger">*</span></label>
+                                        <input type="text" name="title" class="form-control" required
+                                               placeholder="عنوان کوددهی را وارد کنید">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>توضیحات</label>
+                                        <textarea name="description" class="form-control" rows="3"
+                                                  placeholder="توضیحات..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="icon-ok"></i> ثبت کوددهی
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- TAB: reports -->
+                        <div class="tab-pane fade" id="reports" role="tabpanel">
+                            <div class="form-tab-section">
+                                <h4 style="margin-bottom:20px;border-right:3px solid #007bff;padding-right:10px;">ثبت
+                                    گزارش</h4>
+                                <form method="post" action="{% url 'public:report_activity__create' %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label>عنوان گزارش <span class="text-danger">*</span></label>
+                                        <input type="text" name="title" class="form-control" required
+                                               placeholder="عنوان گزارش را وارد کنید">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>توضیحات</label>
+                                        <textarea name="description" class="form-control" rows="4"
+                                                  placeholder="توضیحات گزارش..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="icon-ok"></i> ثبت گزارش
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        <button id="pwa-install-btn" class="btn btn-info"
+                style="position:fixed;top:20px;right:20px;z-index:1000;">
+            <i class="icon-download"></i> نصب برنامه
+        </button>
+    </div>
+
+{% endblock %}
+
+{% block Script %}
+    <script>
+        var REQUIRE_GPS = {{ require_gps|lower }};
+        var gpsLat = null;
+        var gpsLng = null;
+        var gpsReady = false;
+
+        function updateGpsStatus(ok, msg) {
+            var el = document.getElementById('gps-status');
+            if (!el) return;
+            el.style.color = ok ? '#28a745' : '#dc3545';
+            el.textContent = msg;
+        }
+
+        function fillGpsInputs() {
+            document.querySelectorAll('.gps-lat-input').forEach(function (el) {
+                el.value = gpsLat || '';
+            });
+            document.querySelectorAll('.gps-lng-input').forEach(function (el) {
+                el.value = gpsLng || '';
+            });
+            var bycodeLat = document.getElementById('bycode-gps-lat');
+            var bycodeLng = document.getElementById('bycode-gps-lng');
+            if (bycodeLat) bycodeLat.value = gpsLat || '';
+            if (bycodeLng) bycodeLng.value = gpsLng || '';
+        }
+
+        function requestGps(onSuccess, onError) {
+            if (!navigator.geolocation) {
+                updateGpsStatus(false, 'مرورگر شما از GPS پشتیبانی نمی‌کند');
+                if (onError) onError('no_support');
+                return;
+            }
+            updateGpsStatus(false, 'در حال دریافت موقعیت مکانی...');
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    gpsLat = pos.coords.latitude;
+                    gpsLng = pos.coords.longitude;
+                    gpsReady = true;
+                    fillGpsInputs();
+                    updateGpsStatus(true, 'موقعیت مکانی دریافت شد ✓');
+                    if (onSuccess) onSuccess();
+                },
+                function (err) {
+                    gpsReady = false;
+                    updateGpsStatus(false, 'دسترسی به GPS رد شد. برای شروع آبیاری لوکیشن را فعال کنید.');
+                    if (onError) onError(err);
+                },
+                {enableHighAccuracy: true, timeout: 10000}
+            );
+        }
+
+        function updateOutletRow(outletId, newStatus, statusLabel) {
+            var startBtn = document.querySelector('[outlet-start][outlet-id="' + outletId + '"]');
+            var endBtn = document.querySelector('[outlet-end][outlet-id="' + outletId + '"]');
+            var statusEl = document.querySelector('.outlet-status-label[data-outlet-id="' + outletId + '"]');
+            var durationEl = document.querySelector('[outlet-id="' + outletId + '"][outlet-duration]');
+
+            if (startBtn) {
+                startBtn.className = startBtn.className.replace(/\bd-block\b|\bd-none\b/g, '').trim();
+                startBtn.classList.add(newStatus === 'not_started' ? 'd-block' : 'd-none');
+            }
+            if (endBtn) {
+                endBtn.className = endBtn.className.replace(/\bd-block\b|\bd-none\b/g, '').trim();
+                endBtn.classList.add(newStatus === 'running' ? 'd-block' : 'd-none');
+            }
+            if (statusEl) {
+                statusEl.className = 'label-custom label-' + newStatus + ' outlet-status-label';
+                statusEl.setAttribute('data-outlet-id', outletId);
+                statusEl.textContent = statusLabel;
+            }
+            if (durationEl) {
+                durationEl.setAttribute('outlet-duration', newStatus);
+                if (newStatus === 'running') {
+                    durationEl.textContent = '0';
+                }
+            }
+        }
+
+        function doSubmitForm(form, outletId) {
+            fillGpsInputs();
+            var formData = new FormData(form);
+            formData.set('gps_lat', gpsLat || '');
+            formData.set('gps_lng', gpsLng || '');
+
+            var btn = form.querySelector('button');
+            if (btn) btn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                body: formData
+            }).then(function (resp) {
+                return resp.json();
+            }).then(function (data) {
+                createNotify({
+                    title: data.success ? 'موفق' : 'خطا',
+                    message: data.message,
+                    theme: data.success ? 'success' : 'error'
+                });
+                if (data.success) {
+                    updateOutletRow(data.outlet_id, data.outlet_status, data.outlet_status_label);
+                }
+            }).catch(function () {
+                createNotify({title: 'خطا', message: 'خطایی رخ داد', theme: 'error'});
+            }).finally(function () {
+                if (btn) btn.disabled = false;
+            });
+        }
+
+        function submitRunFormAjax(form, outletId, isStart) {
+            if (REQUIRE_GPS && !gpsReady) {
+                createNotify({title: 'موقعیت مکانی', message: 'در حال دریافت موقعیت مکانی...', theme: 'info'});
+                requestGps(
+                    function () {
+                        doSubmitForm(form, outletId);
+                    },
+                    function () {
+                        if (isStart) {
+                            createNotify({
+                                title: 'خطا',
+                                message: 'برای شروع آبیاری باید موقعیت مکانی (GPS) را فعال کنید.',
+                                theme: 'error'
+                            });
+                        } else {
+                            doSubmitForm(form, outletId);
+                        }
+                    }
+                );
+                return;
+            }
+            doSubmitForm(form, outletId);
+        }
+
+
+        document.querySelectorAll('.form-start-run').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('[outlet-start]');
+                var outletId = btn ? btn.getAttribute('outlet-id') : null;
+                submitRunFormAjax(form, outletId, true);
+            });
+        });
+
+        document.querySelectorAll('.form-end-run').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var btn = form.querySelector('[outlet-end]');
+                var outletId = btn ? btn.getAttribute('outlet-id') : null;
+                submitRunFormAjax(form, outletId, false);
+            });
+        });
+
+        requestGps();
+
+        function initialPlotSelection() {
+            let plot_input = document.querySelector('select[name="plot"]')
+            let form_submit_water = document.querySelector('#form-submit-water')
+
+            document.querySelector('select[name="zone"]').addEventListener('change', function (el) {
+                let zone_id = this.value
+                if (!zone_id) {
+                    document.querySelector('#plot-select-cnt').classList.add('invisible')
+                    form_submit_water.setAttribute('is-valid', 'false')
+                } else {
+                    document.querySelector('#plot-select-cnt').classList.remove('invisible')
+                }
+
+                function hideAndDeactivateAllPlot() {
+                    plot_input.value = null
+                    document.querySelectorAll(`select[name="plot"] option`).forEach(function (el) {
+                        el.classList.add('d-none')
+                        el.removeAttribute('selected')
+                    })
+                }
+
+                hideAndDeactivateAllPlot()
+
+                document.querySelectorAll(`select[name="plot"] option[zone="${zone_id}"]`).forEach(function (el) {
+                    el.classList.remove('d-none')
+                })
+            })
+
+            plot_input.addEventListener('change', function (el) {
+                form_submit_water.setAttribute('is-valid', 'true')
+            })
+
+            form_submit_water.addEventListener('submit', function (el) {
+                if (this.getAttribute('is-valid') == 'false') {
+                    el.preventDefault()
+                }
+            })
+        }
+
+        try {
+            initialPlotSelection()
+        } catch (e) {
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let deferredInstallPrompt = null;
+            const pwaBtn = document.getElementById('pwa-install-btn');
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+
+                if (pwaBtn) {
+                    pwaBtn.style.display = 'block';
+                }
+            });
+
+            if (pwaBtn) {
+                pwaBtn.addEventListener('click', async () => {
+                    if (!deferredInstallPrompt) {
+                        console.log('Install prompt is not available.');
+                        return;
+                    }
+                    deferredInstallPrompt.prompt();
+                    const choiceResult = await deferredInstallPrompt.userChoice;
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA installed');
+                    } else {
+                        console.log('Installation cancelled');
+                    }
+                    deferredInstallPrompt = null;
+                    pwaBtn.style.display = 'none';
+                });
+            }
+            window.addEventListener('appinstalled', () => {
+                console.log('App installed successfully');
+
+                if (pwaBtn) {
+                    pwaBtn.style.display = 'none';
+                }
+
+                deferredInstallPrompt = null;
+            });
+
+        });
+    </script>
+{% endblock %}

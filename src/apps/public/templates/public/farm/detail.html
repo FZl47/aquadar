@@ -1,0 +1,79 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}{{ farm.name }}{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #1a73e8, #0d47a1); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); text-align: center; }
+    .stat-num { font-size: 28px; font-weight: bold; margin-top: 6px; }
+    .zone-card { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 12px; border-right: 3px solid #9b59b6; display: flex; justify-content: space-between; align-items: center; }
+    .badge-pill { border-radius: 20px; padding: 3px 10px; font-size: 12px; display: inline-block; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1100px;margin:30px auto;">
+
+    <div class="page-header">
+        <div style="font-size:24px;font-weight:bold;">{{ farm.name }}</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">کد: {{ farm.number }}</div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'public:farm_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست زمین‌ها</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="border-top:3px solid #9b59b6;">
+                <div style="color:#9b59b6;font-size:13px;font-weight:600;">ناحیه‌ها</div>
+                <div class="stat-num" style="color:#9b59b6;">{{ zones.count }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="border-top:3px solid #27ae60;">
+                <div style="color:#27ae60;font-size:13px;font-weight:600;">زمین‌ها</div>
+                <div class="stat-num" style="color:#27ae60;">{{ total_plots }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="border-top:3px solid #e67e22;">
+                <div style="color:#e67e22;font-size:13px;font-weight:600;">کیزها</div>
+                <div class="stat-num" style="color:#e67e22;">{{ total_outlets }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+            <div class="stat-card" style="border-top:3px solid #e74c3c;">
+                <div style="color:#e74c3c;font-size:13px;font-weight:600;">آبیاری فعال</div>
+                <div class="stat-num" style="color:#e74c3c;">{{ active_runs }}</div>
+            </div>
+        </div>
+    </div>
+
+    <h5 style="font-weight:bold;margin-bottom:14px;color:#1a1a2e;">ناحیه‌های این زمین</h5>
+
+    {% for zone in zones %}
+        <div class="zone-card">
+            <div>
+                <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">{{ zone.name }}</div>
+                <div style="margin-top:6px;">
+                    <span class="badge-pill" style="background:#f3e8ff;color:#6a1b9a;">{{ zone.plot_count }} زمین</span>
+                    <span class="badge-pill" style="background:#fff3e0;color:#e65100;">{{ zone.outlet_count }} کیز</span>
+                    {% if zone.active_run_count %}
+                        <span class="badge-pill" style="background:#fce4ec;color:#c62828;">{{ zone.active_run_count }} فعال</span>
+                    {% endif %}
+                </div>
+            </div>
+            <a href="{{ zone.get_absolute_url }}" class="btn btn-sm btn-outline-primary" style="border-radius:8px;white-space:nowrap;">
+                جزئیات ناحیه
+            </a>
+        </div>
+    {% empty %}
+        <div style="text-align:center;padding:40px;color:#999;">ناحیه‌ای ثبت نشده</div>
+    {% endfor %}
+
+</div>
+{% endblock %}

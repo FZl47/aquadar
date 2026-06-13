@@ -1,0 +1,288 @@
+{% extends 'base/base_template.html' %}
+{% load static i18n %}
+
+{% block Title %}
+    {% trans "User Notifications" %}
+{% endblock %}
+
+{% block BodyClass %}
+    has-rtl nk-body bg-white npc-default has-aside
+{% endblock %}
+
+{% block Content %}
+    <div class="nk-app-root">
+        <div class="nk-main">
+            <div class="nk-wrap">
+
+                {% include 'base/components/header.html' %}
+
+                <div class="nk-content">
+                    <div class="container wide-xl">
+                        <div class="nk-content-inner">
+
+                            {% include 'base/components/menu.html' %}
+
+                            <div class="nk-content-body">
+                                <!-- Page Header -->
+                                <div class="nk-block-head nk-block-head-sm">
+                                    <div class="nk-block-between g-3">
+                                        <div class="nk-block-head-content">
+                                            <h3 class="nk-block-title page-title">
+                                                {% trans "User Notifications" %}
+                                            </h3>
+                                            <div class="nk-block-des text-soft">
+                                                <p>
+                                                    {% blocktrans with total=pagination.paginator.count %}
+                                                        There are {{ total }} notifications in total.
+                                                    {% endblocktrans %}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="nk-block-head-content">
+                                            <div class="toggle-wrap nk-block-tools-toggle">
+                                                <a href="#"
+                                                   class="btn btn-icon btn-trigger toggle-expand me-n1"
+                                                   data-target="pageMenu">
+                                                    <em class="icon ni ni-menu-alt-r"></em>
+                                                </a>
+                                                <div class="toggle-expand-content" data-content="pageMenu">
+                                                    <ul class="nk-block-tools g-3">
+                                                        <li class="nk-block-tools-opt">
+                                                            <a href="{% url 'notification:notification__create' %}"
+                                                               class="btn btn-primary">
+                                                                <em class="icon ni ni-plus"></em>
+                                                                <span>{% trans "Add Notification" %}</span>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- List -->
+                                <div class="nk-block">
+                                    <div class="card card-bordered card-stretch">
+                                        <div class="card-inner-group">
+
+                                            {% with qs=request.GET %}
+                                                <!-- Tools -->
+                                                <div class="card-inner position-relative card-tools-toggle">
+                                                    <div class="card-tools me-n1">
+                                                        <ul class="btn-toolbar gx-1">
+
+                                                            <!-- Filter -->
+                                                            <li>
+                                                                <div class="dropdown">
+                                                                    <a href="#"
+                                                                       class="btn btn-trigger btn-icon dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        {% if qs.filter %}
+                                                                            <div class="dot dot-primary"></div>
+                                                                        {% endif %}
+                                                                        <em class="icon ni ni-filter-alt"></em>
+                                                                    </a>
+                                                                    <div class="filter-wg dropdown-menu dropdown-menu-xl dropdown-menu-end">
+                                                                        <div class="dropdown-head">
+                                                                            <span class="sub-title dropdown-title">
+                                                                                {% trans "Advanced Filter" %}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="dropdown-body dropdown-body-rg">
+                                                                            <form class="add-params-to-form">
+                                                                                <input type="hidden" name="filter"
+                                                                                       value="true">
+
+                                                                                <div class="row gx-6 gy-4">
+
+                                                                                    <div class="col-12">
+                                                                                        <div class="form-group">
+                                                                                            <label class="overline-title overline-title-alt">
+                                                                                                {% trans "Sort By" %}
+                                                                                            </label>
+                                                                                            <select name="sort_by"
+                                                                                                    class="form-select js-select2 select-by-filter">
+                                                                                                <option value="latest">{% trans "Latest" %}</option>
+                                                                                                <option value="oldest">{% trans "Oldest" %}</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div class="col-12">
+                                                                                        <div class="form-group">
+                                                                                            <label class="overline-title overline-title-alt">
+                                                                                                {% trans "Visited Status" %}
+                                                                                            </label>
+                                                                                            <select name="is_visited"
+                                                                                                    class="form-select js-select2 select-by-filter">
+                                                                                                <option value="all">{% trans "All" %}</option>
+                                                                                                <option value="true">{% trans "Visited" %}</option>
+                                                                                                <option value="false">{% trans "Not Visited" %}</option>
+                                                                                            </select>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div class="col-12 text-left">
+                                                                                        <button type="submit"
+                                                                                                class="btn btn-secondary">
+                                                                                            {% trans "Filter" %}
+                                                                                        </button>
+                                                                                    </div>
+
+                                                                                </div>
+                                                                            </form>
+                                                                        </div>
+                                                                        <div class="dropdown-foot between">
+                                                                            <a class="clickable"
+                                                                               href="{% url 'notification:notification__list' %}">
+                                                                                {% trans "Reset Filter" %}
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+
+                                                            <!-- Search -->
+                                                            <li>
+                                                                <a href="#"
+                                                                   class="search-toggle toggle-search btn btn-icon"
+                                                                   data-target="search">
+                                                                    <em class="icon ni ni-search"></em>
+                                                                    {% if qs.search %}
+                                                                        <div class="dot dot-primary"></div>
+                                                                    {% endif %}
+                                                                </a>
+                                                            </li>
+
+                                                        </ul>
+                                                    </div>
+
+                                                    <div class="card-search search-wrap px-3" data-search="search">
+                                                        <div class="search-content">
+                                                            <form class="add-params-to-form">
+                                                                <a href="#"
+                                                                   class="search-back btn btn-icon toggle-search"
+                                                                   data-target="search">
+                                                                    <em class="icon ni ni-arrow-left"></em>
+                                                                </a>
+                                                                <input type="text"
+                                                                       name="search"
+                                                                       class="form-control border-transparent form-focus-none"
+                                                                       placeholder="{% trans 'Search by title or user' %}"
+                                                                       value="{{ qs.search }}">
+                                                                <button class="search-submit btn btn-icon">
+                                                                    <em class="icon ni ni-search"></em>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+
+                                            <!-- Table -->
+                                            <div class="card-inner p-0 text-center">
+                                                <div class="nk-tb-list nk-tb-ulist is-compact">
+
+                                                    <div class="nk-tb-item nk-tb-head">
+                                                        <div class="nk-tb-col"><span class="sub-text">ID</span></div>
+                                                        <div class="nk-tb-col"><span
+                                                                class="sub-text">{% trans "User" %}</span></div>
+                                                        <div class="nk-tb-col"><span
+                                                                class="sub-text">{% trans "Title" %}</span></div>
+                                                        <div class="nk-tb-col"><span
+                                                                class="sub-text">{% trans "Visited" %}</span></div>
+                                                        <div class="nk-tb-col"><span
+                                                                class="sub-text">{% trans "Send Notify" %}</span></div>
+                                                        <div class="nk-tb-col"><span
+                                                                class="sub-text">{% trans "Date" %}</span></div>
+                                                        <div class="nk-tb-col nk-tb-col-tools"></div>
+                                                    </div>
+
+                                                    {% for notification in data %}
+                                                        <div class="nk-tb-item">
+                                                            <div class="nk-tb-col">
+                                                                <a href="{{ notification.get_absolute_url }}">
+                                                                    {{ notification.id }}
+                                                                </a>
+                                                            </div>
+
+                                                            <div class="nk-tb-col">
+                                                                <a href="{{ notification.to_user.get_absolute_url }}">
+                                                                    {{ notification.to_user.get_full_name|default:notification.to_user.username }}
+                                                                </a>
+                                                            </div>
+
+                                                            <div class="nk-tb-col">
+                                                                <span>{{ notification.title|truncatechars:'25' }}</span>
+                                                            </div>
+
+                                                            <div class="nk-tb-col">
+                                                                {% if notification.is_visited %}
+                                                                    <span class="tb-status text-success">
+                                                                        {% trans "Visited" %}
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="tb-status text-warning">
+                                                                        {% trans "Not Visited" %}
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <div class="nk-tb-col">
+                                                                {% if notification.send_notify %}
+                                                                    <span class="tb-status text-success fs-16px">
+                                                                        <em class="icon ni ni-check-c"></em>
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="tb-status text-danger fs-16px">
+                                                                        <em class="icon ni ni-minus-c"></em>
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+
+                                                            <div class="nk-tb-col fs-12px">
+                                                                <span class="datetime-convert">{{ notification.get_created_at }}</span>
+                                                            </div>
+
+                                                            <div class="nk-tb-col nk-tb-col-tools">
+                                                                <ul class="nk-tb-actions gx-1">
+                                                                    <li>
+                                                                        <a href="{{ notification.get_absolute_url }}"
+                                                                           class="btn btn-icon btn-trigger"
+                                                                           data-bs-toggle="tooltip"
+                                                                           data-bs-placement="bottom"
+                                                                           title="{% trans 'View Details' %}">
+                                                                            <em class="icon ni ni-eye"></em>
+                                                                        </a>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    {% empty %}
+                                                        <div class="nk-tb-item">
+                                                            <div class="nk-tb-col text-center">
+                                                                {% trans "No notifications found." %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+
+                                                </div>
+                                            </div>
+
+                                            {% include 'base/components/list-pagination.html' %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% include 'base/components/footer.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
