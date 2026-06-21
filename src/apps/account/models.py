@@ -21,15 +21,15 @@ class CustomUserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
         if not username:
             raise ValueError(_('The Email field must be set'))
-        farms = extra_fields.get('farms')
-        del extra_fields['farms']
+        farms = extra_fields.pop('farms', None)
 
         user = self.model(username=username, **extra_fields)
         user.set_password(password)
+        user.save(using=self._db)
+
         if farms:
             user.farms.set(farms)
 
-        user.save(using=self._db)
         return user
 
     def create_superuser(self, username, password=None, **extra_fields):
@@ -53,13 +53,17 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
         ('waterman', _('Waterman User')),
     )
 
-    first_name = models.CharField("first name", max_length=150, blank=True, default=_('No name'))
-    last_name = models.CharField("last name", max_length=150, blank=True, default='')
+    first_name = models.CharField(_("first name"), max_length=150, blank=True, default=_('No name'))
+    last_name = models.CharField(_("last name"), max_length=150, blank=True, default='')
     phonenumber = models.CharField(_("Phonenumber"), null=True, blank=True, max_length=20,
                                    validators=[PhonenumberValidator()])
 
-    role = models.CharField(max_length=15, choices=ROLE_TYPES, default='waterman')
-    farms = models.ManyToManyField('public.Farm')
+    role = models.CharField(max_length=15, choices=ROLE_TYPES, default='waterman', verbose_name=_('Role'))
+    farms = models.ManyToManyField('public.Farm', verbose_name=_('Farms'))
+
+    class Meta(AbstractUser.Meta):
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
 
     objects = CustomUserManager()
     all_objects = models.Manager()
@@ -77,7 +81,7 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
 
     @property
     def has_run_active(self):
-        return self.run_set.filter(group__status='running').exists()
+        return self.run_set.filter(status='open').exists()
 
     def create_notif(self, notif_kw=None, **kwargs):
         if 'user' in kwargs and 'to_user' not in kwargs:
@@ -87,14 +91,22 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
 
 
 class UserLoginActivity(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    ip = models.CharField(max_length=24)
-    agent = models.TextField(null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
+    ip = models.CharField(max_length=24, verbose_name=_('IP Address'))
+    agent = models.TextField(null=True, verbose_name=_('User Agent'))
+
+    class Meta:
+        verbose_name = _('Login Activity')
+        verbose_name_plural = _('Login Activities')
 
     def __str__(self):
         return f'{self.user} | {self.ip}'
 
 
 class UserHostRestrict(BaseModel):
-    host = models.CharField(max_length=128)
-    users = models.ManyToManyField('account.User')
+    host = models.CharField(max_length=128, verbose_name=_('Host'))
+    users = models.ManyToManyField('account.User', verbose_name=_('Users'))
+
+    class Meta:
+        verbose_name = _('Host Restriction')
+        verbose_name_plural = _('Host Restrictions')

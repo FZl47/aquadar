@@ -1,0 +1,178 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}{% if is_create %}{% trans "Add Plot" %}{% else %}{% trans "Edit Plot" %}{% endif %}{% endblock %}
+
+{% block Link %}
+<link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+{% endblock %}
+
+{% block Style %}
+<style>
+body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+.container { max-width: 1100px; margin: 30px auto; }
+.page-header { background: linear-gradient(135deg, #27ae60, #1a7a45); border-radius: 14px; padding: 22px 28px; margin-bottom: 22px; color: #fff; }
+.card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+#plot-map { height: 480px; width: 100%; border-radius: 10px; border: 1px solid #ddd; }
+.draw-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.draw-bar button { border: none; background: #1a73e8; color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.draw-bar button.danger { background: #e74c3c; }
+.draw-bar button.warn { background: #f39c12; }
+.draw-bar button.secondary { background: #6c757d; }
+.draw-info { font-size: 12px; color: #666; margin-top: 6px; }
+.form-label { font-weight: 600; font-size: 13px; }
+.err { color: #c0392b; font-size: 12px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container">
+
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">
+            {% if is_create %}{% trans "Add Plot" %}{% else %}{% trans "Edit Plot" %}: {{ plot.name }}{% endif %}
+        </div>
+        <div style="opacity:.85;font-size:13px;margin-top:4px;">
+            {% trans "Fill the form and draw the plot boundary on the map (click to add points, unlimited)." %}
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="card">
+            <div style="font-weight:bold;font-size:15px;margin-bottom:14px;color:#1a1a2e;">{% trans "Information" %}</div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{% trans "Number" %}</label>
+                    {{ form.number }}
+                    {% if form.number.errors %}<div class="err">{{ form.number.errors|join:"، " }}</div>{% endif %}
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">{% trans "Name" %}</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="err">{{ form.name.errors|join:"، " }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{% trans "Zone" %}</label>
+                    {{ form.zone }}
+                    {% if form.zone.errors %}<div class="err">{{ form.zone.errors|join:"، " }}</div>{% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">{% trans "Avg Duration (min)" %}</label>
+                    {{ form.avg_run_duration }}
+                    {% if form.avg_run_duration.errors %}<div class="err">{{ form.avg_run_duration.errors|join:"، " }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="font-weight:bold;font-size:15px;margin-bottom:14px;color:#1a1a2e;">{% trans "Plot Boundary on Map" %}</div>
+            <div class="draw-bar">
+                <button type="button" id="btn-undo" class="warn">↩ {% trans "Undo last point" %}</button>
+                <button type="button" id="btn-clear" class="danger">🗑 {% trans "Clear all" %}</button>
+                <button type="button" id="btn-locate" class="secondary">📍 {% trans "Use my location" %}</button>
+                <span id="point-count" style="margin-right:auto;font-size:12px;color:#666;">{% trans "Points:" %} <strong id="pcnt">0</strong></span>
+            </div>
+            <div id="plot-map"></div>
+            <div class="draw-info">{% trans "Click on the map to add boundary points. The polygon closes automatically. You can add unlimited points." %}</div>
+            {{ form.boundary }}
+            {% if form.boundary.errors %}<div class="err">{{ form.boundary.errors|join:"، " }}</div>{% endif %}
+        </div>
+
+        <div style="display:flex;gap:10px;">
+            <button type="submit" class="btn btn-primary" style="border-radius:8px;padding:8px 22px;">{% trans "Save" %}</button>
+            {% if plot %}
+                <a href="{% url 'public:plot_detail' plot.pk %}" class="btn btn-outline-secondary" style="border-radius:8px;">{% trans "Cancel" %}</a>
+            {% else %}
+                <a href="{% url 'public:plot_list' %}" class="btn btn-outline-secondary" style="border-radius:8px;">{% trans "Cancel" %}</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block Script %}
+<script>
+(function() {
+    const boundaryInput = document.getElementById('id_boundary');
+    let initial = [];
+    try { initial = JSON.parse(boundaryInput.value || '[]'); } catch (e) { initial = []; }
+
+    const center = initial.length
+        ? [initial[0][0], initial[0][1]]
+        : [35.6892, 51.3890];
+
+    const map = L.map('plot-map').setView(center, initial.length ? 16 : 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap',
+    }).addTo(map);
+
+    let points = initial.slice();
+    const markers = [];
+    let polygon = null;
+
+    function syncInput() {
+        boundaryInput.value = JSON.stringify(points);
+        document.getElementById('pcnt').textContent = points.length;
+    }
+
+    function redraw() {
+        markers.forEach(m => map.removeLayer(m));
+        markers.length = 0;
+        if (polygon) { map.removeLayer(polygon); polygon = null; }
+
+        points.forEach((p, idx) => {
+            const m = L.marker(p, { draggable: true }).addTo(map);
+            m.bindTooltip(String(idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
+            m.on('dragend', (e) => {
+                const ll = e.target.getLatLng();
+                points[idx] = [ll.lat, ll.lng];
+                syncInput();
+                redraw();
+            });
+            markers.push(m);
+        });
+
+        if (points.length >= 3) {
+            polygon = L.polygon(points, { color: '#27ae60', weight: 2, fillOpacity: 0.25 }).addTo(map);
+        } else if (points.length === 2) {
+            polygon = L.polyline(points, { color: '#27ae60', weight: 2 }).addTo(map);
+        }
+    }
+
+    map.on('click', (e) => {
+        points.push([e.latlng.lat, e.latlng.lng]);
+        syncInput();
+        redraw();
+    });
+
+    document.getElementById('btn-undo').addEventListener('click', () => {
+        points.pop();
+        syncInput();
+        redraw();
+    });
+    document.getElementById('btn-clear').addEventListener('click', () => {
+        points = [];
+        syncInput();
+        redraw();
+    });
+    document.getElementById('btn-locate').addEventListener('click', () => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition((pos) => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+        });
+    });
+
+    if (initial.length) {
+        const bounds = L.latLngBounds(initial);
+        map.fitBounds(bounds, { padding: [30, 30] });
+    }
+    syncInput();
+    redraw();
+})();
+</script>
+{% endblock %}

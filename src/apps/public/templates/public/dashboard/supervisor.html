@@ -2,491 +2,425 @@
 {% load static %}
 {% load i18n %}
 
-{% block Title %}
-    داشبورد مدیریتی
-{% endblock %}
+{% block Title %}{% trans "Management Dashboard" %}{% endblock %}
 
 {% block Link %}
-    <link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
 {% endblock %}
 
 {% block Style %}
-    <style>
-
-        body {
-            font-family: 'YekanBakhFaNum', monospace;
-            background: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 30px auto;
-        }
-
-        .title {
-            font-size: 26px;
-            font-weight: bold;
-            margin-bottom: 25px;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-number {
-            font-size: 28px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns:repeat(auto-fit, minmax(450px, 1fr));
-            gap: 20px;
-        }
-
-        .chart-box {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
-
-        .chart-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        canvas {
-            width: 100%;
-            height: 300px;
-        }
-
-        #map {
-            height: 420px;
-            border-radius: 10px;
-        }
-
-        .anomaly {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
-        .anomaly div {
-            flex: 1;
-            background: #fafafa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .anomaly span {
-            font-size: 26px;
-            font-weight: bold;
-            color: #e74c3c;
-        }
-
-        .accordion-button {
-            font-size: 20px;
-        }
-
-    </style>
+<style>
+body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; margin: 0; padding: 20px; }
+.container { max-width: 1400px; margin: 30px auto; }
+.card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.stat-number { font-size: 28px; font-weight: bold; margin-top: 5px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
+.chart-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.chart-title { font-weight: bold; margin-bottom: 10px; }
+canvas { width: 100%; height: 300px; }
+.btn-crud { font-size: 12px; padding: 3px 8px; border-radius: 6px; border: none; cursor: pointer; }
+.btn-edit { background: #e3f2fd; color: #1565c0; }
+.btn-del { background: #fce4ec; color: #b71c1c; }
+.modal-body .form-label { font-weight: 600; font-size: 13px; }
+.active-irr-row { background: #fff; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+</style>
 {% endblock %}
 
 {% block Content %}
-    <div class="container">
+<div class="container">
 
-        <!-- Top Navigation -->
-        <div style="background:#fff;border-radius:12px;padding:12px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div style="font-size:20px;font-weight:bold;color:#1a1a2e;">
-                <i class="icon-dashboard" style="color:#3498db;"></i>
-                داشبورد مدیریتی
-            </div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                <a href="{% url 'public:waterman_list' %}" class="btn btn-sm"
-                   style="background:#e8f4fd;color:#2c7be5;border:1px solid #bee3f8;border-radius:8px;">
-                    <i class="icon-group"></i> لیست آبیاران
-                </a>
-                <a href="{% url 'public:report_activity__list' %}" class="btn btn-sm"
-                   style="background:#e8f9f0;color:#27ae60;border:1px solid #b2dfdb;border-radius:8px;">
-                    <i class="icon-list-alt"></i> گزارشات آبیاران
-                </a>
-                <a href="{% url 'public:run_list' %}" class="btn btn-sm"
-                   style="background:#e8f4ff;color:#6c3cd1;border:1px solid #d5b8ff;border-radius:8px;">
-                    <i class="icon-tint"></i> لیست آبیاری‌ها
-                </a>
-                <a href="{% url 'public:report_manure__list' %}" class="btn btn-sm"
-                   style="background:#f3e8ff;color:#6a1b9a;border:1px solid #ce93d8;border-radius:8px;">
-                    <i class="icon-beaker"></i> گزارشات کوددهی
-                </a>
-                <a href="{% url 'public:farm_list' %}" class="btn btn-sm"
-                   style="background:#e0f7fa;color:#00796b;border:1px solid #b2dfdb;border-radius:8px;">
-                    <i class="icon-map-marker"></i> زمین‌ها
-                </a>
-                <a href="{% url 'public:zone_list' %}" class="btn btn-sm"
-                   style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;border-radius:8px;">
-                    <i class="icon-th"></i> ناحیه‌ها
-                </a>
-                <a href="{% url 'public:plot_list' %}" class="btn btn-sm"
-                   style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;border-radius:8px;">
-                    <i class="icon-leaf"></i> مزارع
-                </a>
-                <a href="{% url 'public:outlet_list' %}" class="btn btn-sm"
-                   style="background:#f3e5f5;color:#7b1fa2;border:1px solid #e1bee7;border-radius:8px;">
-                    <i class="icon-road"></i> کیزها
-                </a>
-                <a href="{% url 'account:logout' %}" class="btn btn-sm"
-                   style="background:#ffe7df;color:#ff1f1f;border-radius:8px;">
-                    <i class="icon-signout"></i> خروج
-                </a>
-            </div>
+    <!-- Top Nav -->
+    <div style="background:#fff;border-radius:12px;padding:12px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:20px;font-weight:bold;color:#1a1a2e;">{% trans "Management Dashboard" %}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <a href="{% url 'public:waterman_list' %}" class="btn btn-sm" style="background:#e8f4fd;color:#2c7be5;border:1px solid #bee3f8;border-radius:8px;">{% trans "Irrigators" %}</a>
+            <a href="{% url 'public:report_activity__list' %}" class="btn btn-sm" style="background:#e8f9f0;color:#27ae60;border:1px solid #b2dfdb;border-radius:8px;">{% trans "Activity Reports" %}</a>
+            <a href="{% url 'public:run_list' %}" class="btn btn-sm" style="background:#e8f4ff;color:#6c3cd1;border:1px solid #d5b8ff;border-radius:8px;">{% trans "Irrigations" %}</a>
+            <a href="{% url 'public:report_manure__list' %}" class="btn btn-sm" style="background:#f3e8ff;color:#6a1b9a;border:1px solid #ce93d8;border-radius:8px;">{% trans "Fertilization Reports" %}</a>
+            <a href="{% url 'public:farm_list' %}" class="btn btn-sm" style="background:#e0f7fa;color:#00796b;border:1px solid #b2dfdb;border-radius:8px;">{% trans "Farms" %}</a>
+            <a href="{% url 'public:zone_list' %}" class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;border-radius:8px;">{% trans "Zones" %}</a>
+            <a href="{% url 'public:plot_list' %}" class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;border-radius:8px;">{% trans "Plots" %}</a>
+            <a href="{% url 'public:outlet_list' %}" class="btn btn-sm" style="background:#f3e5f5;color:#7b1fa2;border:1px solid #e1bee7;border-radius:8px;">{% trans "Outlets" %}</a>
+            <a href="{% url 'public:plot_vegetation_map' %}" class="btn btn-sm" style="background:#dcedc8;color:#33691e;border:1px solid #aed581;border-radius:8px;">🌿 {% trans "Vegetation Map" %}</a>
+            <a href="{% url 'public:plot_moisture_map' %}" class="btn btn-sm" style="background:#e1f5fe;color:#0277bd;border:1px solid #81d4fa;border-radius:8px;">💧 {% trans "Moisture Map" %}</a>
+            <button class="btn btn-sm" style="background:#f5f5f5;color:#999;border:1px solid #e0e0e0;border-radius:8px;cursor:default;" title="در حال انجام">🍃 {% trans "Leaf Analysis" %} <span style="font-size:10px;">(⏳)</span></button>
+            <span style="width:1px;height:24px;background:#e0e0e0;margin:0 4px;"></span>
+            <button class="btn btn-sm" style="background:#00796b;color:#fff;border-radius:8px;" onclick="document.getElementById('editFarmForm').action='{% url 'public:farm_create' %}';document.getElementById('editFarmForm').reset();new bootstrap.Modal(document.getElementById('editFarmModal')).show()">+ {% trans "Add Farm" %}</button>
+            <button class="btn btn-sm" style="background:#e65100;color:#fff;border-radius:8px;" onclick="document.getElementById('editZoneForm').action='{% url 'public:zone_create' %}';document.getElementById('editZoneForm').reset();new bootstrap.Modal(document.getElementById('editZoneModal')).show()">+ {% trans "Add Zone" %}</button>
+            <a href="{% url 'public:plot_create' %}" class="btn btn-sm" style="background:#2e7d32;color:#fff;border-radius:8px;text-decoration:none;">+ {% trans "Add Plot" %}</a>
+            <button class="btn btn-sm" style="background:#7b1fa2;color:#fff;border-radius:8px;" onclick="document.getElementById('editOutletForm').action='{% url 'public:outlet_create' %}';document.getElementById('editOutletForm').reset();new bootstrap.Modal(document.getElementById('editOutletModal')).show()">+ {% trans "Add Outlet" %}</button>
+            <a href="{% url 'account:logout' %}" class="btn btn-sm" style="background:#ffe7df;color:#ff1f1f;border-radius:8px;">{% trans "Logout" %}</a>
         </div>
-
-        <div class="stats">
-
-            <a href="{% url 'public:farm_list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #3498db;">
-                    <div style="color:#3498db;font-size:13px;font-weight:600;">
-                        <i class="icon-map-marker"></i> مناطق
-                    </div>
-                    <div class="stat-number" style="color:#3498db;">{{ total_farms }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:zone_list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #9b59b6;">
-                    <div style="color:#9b59b6;font-size:13px;font-weight:600;">
-                        <i class="icon-th"></i> بخش ها
-                    </div>
-                    <div class="stat-number" style="color:#9b59b6;">{{ total_zones }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:plot_list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #27ae60;">
-                    <div style="color:#27ae60;font-size:13px;font-weight:600;">
-                        <i class="icon-leaf"></i> زمین ها
-                    </div>
-                    <div class="stat-number" style="color:#27ae60;">{{ total_plots }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:outlet_list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #e67e22;">
-                    <div style="color:#e67e22;font-size:13px;font-weight:600;">
-                        <i class="icon-road"></i> کیز ها
-                    </div>
-                    <div class="stat-number" style="color:#e67e22;">{{ total_outlets }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:run_list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #1abc9c;">
-                    <div style="color:#1abc9c;font-size:13px;font-weight:600;">
-                        <i class="icon-tint"></i> آبیاری فعال
-                    </div>
-                    <div class="stat-number" style="color:#1abc9c;">{{ active_runs }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:report_activity__list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #2980b9;">
-                    <div style="color:#2980b9;font-size:13px;font-weight:600;">
-                        <i class="icon-list-alt"></i> گزارشات
-                    </div>
-                    <div class="stat-number" style="color:#2980b9;">{{ total_reports }}</div>
-                </div>
-            </a>
-
-            <a href="{% url 'public:report_manure__list' %}" style="text-decoration:none;">
-                <div class="card" style="border-right:4px solid #8e44ad;">
-                    <div style="color:#8e44ad;font-size:13px;font-weight:600;">
-                        <i class="icon-beaker"></i> گزارشات کود دهی
-                    </div>
-                    <div class="stat-number" style="color:#8e44ad;">{{ total_manure_reports }}</div>
-                </div>
-            </a>
-
-        </div>
-
-        <div class="container mt-4">
-            <h4 class="mb-3">گزارشات سیستمی</h4>
-            <table class="table table-bordered table-hover">
-                <thead class="thead-light">
-                <tr>
-                    <th>#</th>
-                    <th>عنوان</th>
-                    <th>بخش</th>
-                    <th>اولویت</th>
-                    <th>وضعیت</th>
-                    <th>وضعیت نهایی</th>
-                    <th>تاریخ</th>
-                    <th>عملیات</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                {% for report in unresolved_system_reports|slice:':8' %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-
-                        <td>{{ report.title|truncatechars:'20' }}</td>
-
-                        <td>
-                            {{ report.outlet.plot.zone.farm.name }} /
-                            {{ report.outlet.plot.zone.name }} /
-                            {{ report.outlet.plot.name }} /
-                            {{ report.outlet.number }}
-                        </td>
-
-                        <td>
-                            {% if report.priority == 'high' %}
-                                <span class="badge bg-danger">بالا</span>
-                            {% elif report.priority == 'medium' %}
-                                <span class="badge bg-warning">متوسط</span>
-                            {% else %}
-                                <span class="badge bg-secondary">کم</span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if report.last_status %}
-                                {{ report.last_status.get_status_display }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if report.is_resolved %}
-                                <span class="badge bg-success">حل شده</span>
-                            {% else %}
-                                <span class="badge bg-danger">حل نشده</span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <span class="font-90">(<span
-                                    class="time-ago font-70">{{ report.get_created_at }}</span>)</span>
-                            <span class="datetime-convert font-80">{{ report.get_created_at }}</span>
-                        </td>
-
-                        <td>
-                            <a href="{{ report.get_absolute_url }}" class="btn btn-sm btn-primary">
-                                مشاهده
-                            </a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center">
-                            گزارشی ثبت نشده
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="row mb-4">
-            <div class="col-12 col-lg-8">
-                <div class="chart-box">
-                    <div class="chart-title">آبیاری ها در 30 روز اخیر</div>
-                    <canvas id="runsChart"></canvas>
-                </div>
-            </div>
-            <div class="col-12 col-lg-4">
-                <div class="chart-box">
-                    <div class="chart-title">آبیار ها</div>
-                    <ul class="list-group">
-                        {% for waterman_user in waterman_users %}
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                {{ waterman_user.get_full_name }}
-                                {% if waterman_user.has_run_active %}
-                                    <span class="badge bg-primary rounded-pill">
-                                        <span>در حال آبیاری</span>
-                                    </span>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="grid">
-
-            <div class="chart-box">
-                <div class="chart-title">وضعیت آبیاری</div>
-                <div style="width: 300px;text-align: center;margin: auto">
-                    <canvas id="statusChart"></canvas>
-                </div>
-            </div>
-
-            <div class="chart-box">
-                <div class="chart-title">میانگین زمان آبیاری بر اساس هر بخش</div>
-                <canvas id="durationChart"></canvas>
-            </div>
-
-            <div class="chart-box">
-                <div class="chart-title">آبیاری ها/دما</div>
-                <canvas id="tempChart"></canvas>
-            </div>
-
-            <div class="chart-box">
-                <div class="chart-title">تعداد کود دهی بر اساس نوع کود</div>
-                <div style="width: 400px;text-align: center;margin: auto">
-                    <canvas id="manureChart"></canvas>
-                </div>
-            </div>
-
-        </div>
-
-        <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:1px solid #ffe082;border-radius:12px;padding:18px 24px;margin-top:20px;">
-            <div style="font-size:15px;font-weight:700;color:#e65100;margin-bottom:8px;">
-                <i class="icon-warning-sign"></i> تعریف آبیاری مشکل‌دار
-            </div>
-            <p style="margin:0;color:#5d4037;font-size:14px;line-height:1.8;">
-                آبیاری مشکل‌دار به آبیاری‌هایی گفته می‌شود که مدت آن‌ها خارج از بازه
-                <strong>میانگین ± تلرانس</strong> باشد.
-                میانگین مدت آبیاری بر اساس تاریخچه آبیاری همان زمین محاسبه می‌شود.
-                تلرانس مجاز در بخش تنظیمات سیستم قابل تنظیم است.
-                {% if run_settings %}
-                    تلرانس فعلی: <strong>{{ run_settings.avg_tolerance_run_duration }} دقیقه</strong>.
-                {% endif %}
-            </p>
-        </div>
-
-        <button id="pwa-install-btn" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;background:#1a73e8;color:#fff;border:none;border-radius:50px;padding:12px 20px;font-size:14px;box-shadow:0 4px 14px rgba(26,115,232,0.4);cursor:pointer;font-family:inherit;">
-            <i class="icon-download"></i> نصب برنامه
-        </button>
-
     </div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <a href="{% url 'public:farm_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #3498db;">
+                <div style="color:#3498db;font-size:13px;font-weight:600;">{% trans "Farms" %}</div>
+                <div class="stat-number" style="color:#3498db;">{{ total_farms }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:zone_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #9b59b6;">
+                <div style="color:#9b59b6;font-size:13px;font-weight:600;">{% trans "Zones" %}</div>
+                <div class="stat-number" style="color:#9b59b6;">{{ total_zones }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:plot_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #27ae60;">
+                <div style="color:#27ae60;font-size:13px;font-weight:600;">{% trans "Plots" %}</div>
+                <div class="stat-number" style="color:#27ae60;">{{ total_plots }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:outlet_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #e67e22;">
+                <div style="color:#e67e22;font-size:13px;font-weight:600;">{% trans "Outlets" %}</div>
+                <div class="stat-number" style="color:#e67e22;">{{ total_outlets }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:run_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #1abc9c;">
+                <div style="color:#1abc9c;font-size:13px;font-weight:600;">{% trans "Active Irrigations" %}</div>
+                <div class="stat-number" style="color:#1abc9c;">{{ active_runs }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:report_activity__list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #2980b9;">
+                <div style="color:#2980b9;font-size:13px;font-weight:600;">{% trans "Reports" %}</div>
+                <div class="stat-number" style="color:#2980b9;">{{ total_reports }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:report_manure__list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #8e44ad;">
+                <div style="color:#8e44ad;font-size:13px;font-weight:600;">{% trans "Fertilization Reports" %}</div>
+                <div class="stat-number" style="color:#8e44ad;">{{ total_manure_reports }}</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Active Irrigations with Stop -->
+    {% if active_groups %}
+    <div class="card" style="margin-bottom:20px;">
+        <div style="font-weight:bold;font-size:16px;margin-bottom:14px;color:#e53935;">⚡ {% trans "Active Irrigations" %}</div>
+        {% for group in active_groups %}
+        <div class="active-irr-row">
+            <div>
+                <div style="font-weight:600;">{{ group.plot.zone.farm.name }} / {{ group.plot.zone.name }} / {{ group.plot.name }}</div>
+                <div style="font-size:12px;color:#888;margin-top:3px;">
+                    {% for run in group.run_set.all %}
+                        {% trans "Outlet" %} {{ run.outlet.number }}{% if not forloop.last %}، {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <form method="post" action="{% url 'public:stop_irrigation' group.pk %}" style="margin:0;" onsubmit="return confirm('{% trans "Stop this irrigation?" %}')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:#e53935;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;">{% trans "Stop" %}</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- System Reports -->
+    <div class="card" style="margin-bottom:20px;padding:0;overflow:hidden;">
+        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;color:#1a1a2e;display:flex;justify-content:space-between;align-items:center;">
+            <span>{% trans "System Reports" %}</span>
+        </div>
+        <div class="table-responsive">
+        <table class="table table-hover" style="margin:0;font-size:13px;">
+            <thead>
+            <tr style="background:#f8f9fa;">
+                <th style="padding:10px 12px;">#</th>
+                <th style="padding:10px 12px;">{% trans "Title" %}</th>
+                <th class="d-none d-md-table-cell" style="padding:10px 12px;">{% trans "Location" %}</th>
+                <th style="padding:10px 12px;">{% trans "Priority" %}</th>
+                <th class="d-none d-sm-table-cell" style="padding:10px 12px;">{% trans "Resolved" %}</th>
+                <th class="d-none d-lg-table-cell" style="padding:10px 12px;">{% trans "Date" %}</th>
+                <th style="padding:10px 12px;">{% trans "Actions" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for report in unresolved_system_reports|slice:':8' %}
+            <tr>
+                <td style="padding:10px 12px;">{{ forloop.counter }}</td>
+                <td style="padding:10px 12px;">
+                    <div style="font-weight:600;">{{ report.title|truncatechars:25 }}</div>
+                    <div class="d-md-none" style="font-size:11px;color:#888;margin-top:2px;">{{ report.outlet.plot.zone.farm.name }} / {{ report.outlet.plot.name }}</div>
+                </td>
+                <td class="d-none d-md-table-cell" style="padding:10px 12px;font-size:12px;color:#666;">{{ report.outlet.plot.zone.farm.name }} / {{ report.outlet.plot.zone.name }} / {{ report.outlet.plot.name }} / {{ report.outlet.number }}</td>
+                <td style="padding:10px 12px;">
+                    {% if report.priority == 'high' %}<span class="badge bg-danger">{% trans "High" %}</span>
+                    {% elif report.priority == 'medium' %}<span class="badge bg-warning text-dark">{% trans "Medium" %}</span>
+                    {% else %}<span class="badge bg-secondary">{% trans "Low" %}</span>
+                    {% endif %}
+                </td>
+                <td class="d-none d-sm-table-cell" style="padding:10px 12px;">
+                    {% if report.is_resolved %}<span class="badge bg-success">{% trans "Resolved" %}</span>{% else %}<span class="badge bg-danger">{% trans "Unresolved" %}</span>{% endif %}
+                </td>
+                <td class="d-none d-lg-table-cell" style="padding:10px 12px;font-size:12px;color:#888;white-space:nowrap;"><span class="datetime-convert">{{ report.get_created_at }}</span></td>
+                <td style="padding:10px 12px;"><a href="{{ report.get_absolute_url }}" class="btn btn-sm btn-primary" style="border-radius:6px;font-size:12px;">{% trans "View" %}</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center" style="padding:30px;color:#aaa;">{% trans "No reports" %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-12 col-lg-8 mb-3">
+            <div class="chart-box">
+                <div class="chart-title">{% trans "Irrigations in last 30 days" %}</div>
+                <canvas id="runsChart"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-lg-4 mb-3">
+            <div class="chart-box">
+                <div class="chart-title">{% trans "Irrigators" %}</div>
+                <ul class="list-group">
+                    {% for waterman_user in waterman_users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        {{ waterman_user.get_full_name }}
+                        {% if waterman_user.has_run_active %}
+                        <span class="badge bg-primary rounded-pill">{% trans "Irrigating" %}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="chart-box">
+            <div class="chart-title">{% trans "Irrigation Status" %}</div>
+            <div style="max-width:300px;text-align:center;margin:auto"><canvas id="statusChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">{% trans "Average Duration per Zone (minutes)" %}</div>
+            <canvas id="durationChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">{% trans "Irrigations by Temperature" %}</div>
+            <canvas id="tempChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <div class="chart-title">{% trans "Fertilization by Category" %}</div>
+            <div style="max-width:400px;text-align:center;margin:auto"><canvas id="manureChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Tolerance Banner -->
+    <div style="background:linear-gradient(135deg,#fff8e1,#fffde7);border:1px solid #ffe082;border-radius:12px;padding:18px 24px;margin-top:20px;">
+        <div style="font-size:15px;font-weight:700;color:#e65100;margin-bottom:8px;">{% trans "Problematic Irrigation Definition" %}</div>
+        <p style="margin:0;color:#5d4037;font-size:14px;line-height:1.8;">
+            {% trans "Problematic irrigation is irrigation whose duration falls outside the average ± tolerance range. The average duration is calculated from the irrigation history of the same plot. Tolerance can be configured in system settings." %}
+            {% if run_settings %}{% trans "Current tolerance:" %} <strong>{{ run_settings.avg_tolerance_run_duration }} {% trans "minutes" %}</strong>.{% endif %}
+        </p>
+    </div>
+
+</div>
+
+<!-- Leaf Analysis Modal -->
+<div id="leafModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:540px;width:92%;max-height:90vh;overflow-y:auto;position:relative;">
+        <button onclick="document.getElementById('leafModal').style.display='none'" style="position:absolute;top:14px;left:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">✕</button>
+        <h5 style="font-weight:bold;margin-bottom:20px;">{% trans "Leaf Analysis" %}</h5>
+        <div style="margin-bottom:14px;">
+            <label class="form-label" style="font-size:13px;font-weight:600;">{% trans "Scope" %}</label>
+            <select id="leafScopeType" class="form-control" onchange="updateLeafScopeSelect()" style="margin-bottom:8px;">
+                <option value="plot">{% trans "Plot" %}</option>
+                <option value="zone">{% trans "Zone" %}</option>
+                <option value="farm">{% trans "Farm" %}</option>
+                <option value="outlet">{% trans "Outlet" %}</option>
+            </select>
+            <select id="leafScopeId" class="form-control">
+                <option value="">{% trans "Select..." %}</option>
+            </select>
+        </div>
+        <div id="leafUploadArea" data-upload-url-tpl="{% url 'public:plot_leaf_upload' 0 %}" style="border:2px dashed #ccc;border-radius:10px;padding:24px;text-align:center;cursor:pointer;" ondragover="event.preventDefault();" ondrop="handleLeafModalDrop(event);" onclick="document.getElementById('leafFileInput').click()">
+            <div style="font-size:32px;">🍃</div>
+            <div style="color:#888;font-size:14px;">{% trans "Drag or click to upload leaf image" %}</div>
+            <input id="leafFileInput" type="file" accept="image/*" style="display:none;" onchange="uploadLeafFromModal(this.files[0])">
+        </div>
+        <div id="leafModalLoading" style="display:none;text-align:center;padding:16px;color:#888;">{% trans "Analyzing image..." %}</div>
+        <div id="leafModalResult" style="display:none;margin-top:16px;"></div>
+    </div>
+</div>
+
+<!-- CRUD Modals: Edit Farm -->
+<div class="modal fade" id="editFarmModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Farm" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editFarmForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <input type="hidden" id="editFarmId">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="ef_number"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control" id="ef_name"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Pool Size" %}</label><input name="pool_size" type="number" class="form-control" id="ef_pool_size"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Discharge Rate" %}</label><input name="discharge_rate" type="number" step="0.01" class="form-control" id="ef_discharge_rate"></div>
+            <div class="mb-2 form-check"><input name="is_active" type="checkbox" class="form-check-input" id="ef_is_active"><label class="form-check-label" for="ef_is_active">{% trans "Active" %}</label></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<!-- CRUD Modals: Edit Zone -->
+<div class="modal fade" id="editZoneModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Zone" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editZoneForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <input type="hidden" id="editZoneId">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="ez_number"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control" id="ez_name"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Farm" %}</label>
+                <select name="farm" class="form-control" id="ez_farm">
+                    {% for farm in farms %}<option value="{{ farm.pk }}">{{ farm.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="mb-2"><label class="form-label">{% trans "Order" %}</label><input name="order" type="number" class="form-control" id="ez_order"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<!-- CRUD Modals: Edit Outlet -->
+<div class="modal fade" id="editOutletModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Outlet" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editOutletForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <input type="hidden" id="editOutletId">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="eo_number"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Plot" %}</label>
+                <select name="plot" class="form-control" id="eo_plot">
+                    {% for plot in plots %}<option value="{{ plot.pk }}">{{ plot.zone.farm.name }} / {{ plot.zone.name }} / {{ plot.name }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>
+
 {% endblock %}
 
 {% block Script %}
+<script>
+const runsLabels = JSON.parse("{{ runs_labels|escapejs }}");
+const runsData = JSON.parse("{{ runs_data|escapejs }}");
+const statusLabels = JSON.parse("{{ status_labels|escapejs }}");
+const statusData = JSON.parse("{{ status_data|escapejs }}");
+const durationLabels = JSON.parse("{{ duration_labels|escapejs }}");
+const durationData = JSON.parse("{{ duration_data|escapejs }}");
+const tempLabels = JSON.parse("{{ temp_labels|escapejs }}");
+const tempData = JSON.parse("{{ temp_data|escapejs }}");
+const manureLabels = JSON.parse("{{ manure_labels|escapejs }}");
+const manureData = JSON.parse("{{ manure_data|escapejs }}");
 
-    <script>
+new Chart(document.getElementById('runsChart'), {
+    type: 'line',
+    data: {
+        labels: runsLabels,
+        datasets: [{ label: '{% trans "Irrigations" %}', data: runsData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.4, borderWidth: 2 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
 
-        const runsLabels = JSON.parse("{{ runs_labels|escapejs }}");
-        const runsData = JSON.parse("{{ runs_data|escapejs }}");
+new Chart(document.getElementById('statusChart'), {
+    type: 'pie',
+    data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: ['#4fa0ff', '#08da7d', '#ff7675'] }] },
+    options: { responsive: true }
+});
 
-        const statusLabels = JSON.parse("{{ status_labels|escapejs }}");
-        const statusData = JSON.parse("{{ status_data|escapejs }}");
+if (durationLabels.length > 0) {
+    new Chart(document.getElementById('durationChart'), {
+        type: 'bar',
+        data: { labels: durationLabels, datasets: [{ label: '{% trans "Minutes" %}', data: durationData, backgroundColor: '#a44fff', borderRadius: 8 }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+}
 
-        const durationLabels = JSON.parse("{{ duration_labels|escapejs }}");
-        const durationData = JSON.parse("{{ duration_data|escapejs }}");
+if (tempLabels.length > 0) {
+    new Chart(document.getElementById('tempChart'), {
+        type: 'bar',
+        data: { labels: tempLabels, datasets: [{ label: '{% trans "Count" %}', data: tempData, backgroundColor: '#ff9a24', borderRadius: 8 }] },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+}
 
-        const tempLabels = JSON.parse("{{ temp_labels|escapejs }}");
-        const tempData = JSON.parse("{{ temp_data|escapejs }}");
+if (manureLabels.length > 0) {
+    new Chart(document.getElementById('manureChart'), {
+        type: 'doughnut',
+        data: { labels: manureLabels, datasets: [{ data: manureData, backgroundColor: manureLabels.map(function() { return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); }) }] },
+        options: { responsive: true }
+    });
+}
 
-        const manureLabels = JSON.parse("{{ manure_labels|escapejs }}");
-        const manureData = JSON.parse("{{ manure_data|escapejs }}");
+// Leaf Analysis Modal — URL comes from data attribute, no hardcoded paths
+const scopeData = {
+    plot: [{% for p in plots %}{ id: {{ p.pk }}, name: "{{ p.zone.farm.name|escapejs }} / {{ p.zone.name|escapejs }} / {{ p.name|escapejs }}" }{% if not forloop.last %},{% endif %}{% endfor %}],
+    zone: [{% for z in zones %}{ id: {{ z.pk }}, name: "{{ z.farm.name|escapejs }} / {{ z.name|escapejs }}" }{% if not forloop.last %},{% endif %}{% endfor %}],
+    farm: [{% for f in farms %}{ id: {{ f.pk }}, name: "{{ f.name|escapejs }}" }{% if not forloop.last %},{% endif %}{% endfor %}],
+    outlet: [{% for o in outlets %}{ id: {{ o.pk }}, name: "{{ o.plot.zone.farm.name|escapejs }} / {{ o.plot.zone.name|escapejs }} / {{ o.plot.name|escapejs }} / {% trans 'Outlet' %} {{ o.number }}" }{% if not forloop.last %},{% endif %}{% endfor %}],
+};
 
-        const gpsLocations = JSON.parse("{{ gps_locations|escapejs }}");
+function updateLeafScopeSelect() {
+    const type = document.getElementById('leafScopeType').value;
+    const sel = document.getElementById('leafScopeId');
+    sel.innerHTML = '<option value="">{% trans "Select..." %}</option>';
+    (scopeData[type] || []).forEach(function(item) {
+        sel.innerHTML += '<option value="' + item.id + '">' + item.name + '</option>';
+    });
+}
+updateLeafScopeSelect();
 
+function handleLeafModalDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) uploadLeafFromModal(file);
+}
 
-        new Chart(document.getElementById('runsChart'), {
-            type: 'line',
-            data: {
-                labels: runsLabels,
-                datasets: [{
-                    label: 'آبیاری ها',
-                    data: runsData,
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52,152,219,0.1)',
-                    fill: true,
-                    tension: 0.40,
-                    borderWidth: 2
-                }]
-            },
-        });
-
-        new Chart(document.getElementById('statusChart'), {
-            type: 'pie',
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    data: statusData,
-                    backgroundColor: ['#4fa0ff', '#08da7d']
-                }]
+function uploadLeafFromModal(file) {
+    if (!file) return;
+    const type = document.getElementById('leafScopeType').value;
+    const id = document.getElementById('leafScopeId').value;
+    if (!id) { alert('{% trans "Please select a scope" %}'); return; }
+    if (type !== 'plot') { alert('{% trans "Leaf analysis is done at plot level. Please select a plot." %}'); return; }
+    const urlTpl = document.getElementById('leafUploadArea').dataset.uploadUrlTpl;
+    const url = urlTpl.replace('/0/', '/' + id + '/');
+    const fd = new FormData();
+    fd.append('image', file);
+    document.getElementById('leafModalLoading').style.display = 'block';
+    document.getElementById('leafModalResult').style.display = 'none';
+    fetch(url, { method: 'POST', headers: { 'X-CSRFToken': CSRF_TOKEN }, body: fd })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('leafModalLoading').style.display = 'none';
+            if (data.success) {
+                const d = data.data;
+                const score = d.health_score || 0;
+                const color = score >= 70 ? '#27ae60' : score >= 40 ? '#f39c12' : '#e74c3c';
+                document.getElementById('leafModalResult').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">'
+                    + '<div style="width:60px;height:60px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#fff;">' + score + '</div>'
+                    + '<div><strong>{% trans "Health Score" %}</strong><br><small style="color:#666;">' + (d.summary || '') + '</small></div></div>'
+                    + '<div style="font-size:13px;color:#555;">' + (d.recommendations || []).map(function(r) { return '• ' + r; }).join('<br>') + '</div>';
+                document.getElementById('leafModalResult').style.display = 'block';
+            } else {
+                document.getElementById('leafModalResult').innerHTML = '<div style="color:#e74c3c;">' + (data.error || '{% trans "Error" %}') + '</div>';
+                document.getElementById('leafModalResult').style.display = 'block';
             }
         });
+}
 
-
-        new Chart(document.getElementById('durationChart'), {
-            type: 'bar',
-            data: {
-                labels: durationLabels,
-                datasets: [{
-                    label: 'Minutes',
-                    data: durationData,
-                    backgroundColor: '#a44fff',
-                    borderRadius: 12
-                }]
-            }
-        });
-
-
-        new Chart(document.getElementById('tempChart'), {
-            type: 'bar',
-            data: {
-                labels: tempLabels,
-                datasets: [{
-                    label: 'Temperature',
-                    data: tempData,
-                    backgroundColor: '#ff9a24',
-                    borderRadius: 10
-                }]
-            }
-        });
-
-        let manureChartColors = []
-        for (let i of manureLabels) {
-            manureChartColors.push(getRandomColor())
-        }
-        new Chart(document.getElementById('manureChart'), {
-            type: 'doughnut',
-            data: {
-                labels: manureLabels,
-                datasets: [{
-                    data: manureData,
-                    backgroundColor: manureChartColors
-                }]
-            }
-        });
-
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', function(e) {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('pwa-install-btn').style.display = 'block';
-        });
-        document.getElementById('pwa-install-btn').addEventListener('click', function() {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function() {
-                deferredPrompt = null;
-                document.getElementById('pwa-install-btn').style.display = 'none';
-            });
-        });
-
-    </script>
+</script>
 {% endblock %}
-

@@ -91,7 +91,6 @@ class SMSProvider(BaseProvider):
 
     def _payload_irrigation_issue_report(self):
         kwargs = self.notification.kwargs
-        # TODO: Should be complete with all the variables needed for the pattern
         return ('irg_alert', {
             'waterman': kwargs.get('waterman', ''),
             'farm': kwargs.get('farm', ''),

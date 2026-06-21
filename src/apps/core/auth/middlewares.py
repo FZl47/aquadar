@@ -43,7 +43,6 @@ class UserHostRestrict:
         user = request.user
 
         if not user.is_anonymous:
-            # TODO: should use cache system for optimize
             host_restrict = UserHostRestrictModel.objects.filter(host=host, users__in=[user])
         if host_restrict:
             raise PermissionDenied

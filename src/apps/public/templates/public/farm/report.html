@@ -1,0 +1,139 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block Title %}گزارش مزرعه — {{ farm.name }}{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #1a73e8, #0d47a1); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+    .breadcrumb-bar { font-size: 13px; opacity: .8; margin-bottom: 6px; }
+    .breadcrumb-bar a { color: rgba(255,255,255,.8); text-decoration: none; }
+    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .health-circle { width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; color: #fff; margin: 0 auto 12px; }
+    .section-title { font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #1a1a2e; }
+    .risk-badge { border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .history-row { background: #f8f9fa; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1000px;margin:30px auto;">
+    <div class="page-header">
+        <div class="breadcrumb-bar">
+            <a href="{% url 'public:index' %}">داشبورد</a> /
+            <a href="{% url 'public:farm_list' %}">مزارع</a> /
+            <a href="{% url 'public:farm_detail' farm.id %}">{{ farm.name }}</a> /
+            گزارش هوش مصنوعی
+        </div>
+        <div style="font-size:24px;font-weight:bold;">گزارش مزرعه</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">{{ farm.name }}</div>
+        <div style="margin-top:12px;">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.4);">
+                    + تولید گزارش جدید
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if report %}
+        <div class="info-card" style="text-align:center;">
+            <div class="health-circle" style="background:{% if report.health_score >= 70 %}#27ae60{% elif report.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">
+                {{ report.health_score|default:"?" }}
+            </div>
+            <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">امتیاز سلامت مزرعه</div>
+            <div style="color:#666;font-size:14px;">{{ report.get_created_at_jalali }}</div>
+        </div>
+
+        {% if report.summary %}
+        <div class="info-card">
+            <div class="section-title">خلاصه</div>
+            <p style="color:#444;line-height:1.8;margin:0;">{{ report.summary }}</p>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            {% if report.soil_assessment %}
+            <div class="col-md-6">
+                <div class="info-card">
+                    <div class="section-title">ارزیابی خاک</div>
+                    <p style="color:#444;font-size:14px;line-height:1.7;margin:0;">{{ report.soil_assessment }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% if report.irrigation_assessment %}
+            <div class="col-md-6">
+                <div class="info-card">
+                    <div class="section-title">ارزیابی آبیاری</div>
+                    <p style="color:#444;font-size:14px;line-height:1.7;margin:0;">{{ report.irrigation_assessment }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if report.pest_risk %}
+        <div class="info-card">
+            <div class="section-title">ریسک آفات و بیماری‌ها</div>
+            <p style="color:#444;font-size:14px;line-height:1.7;margin:0;">{{ report.pest_risk }}</p>
+        </div>
+        {% endif %}
+
+        {% if report.season_recommendations %}
+        <div class="info-card">
+            <div class="section-title">توصیه‌های فصلی</div>
+            <ul style="padding-right:20px;color:#444;line-height:2;margin:0;">
+                {% for rec in report.season_recommendations %}
+                    <li>{{ rec }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if report.risks %}
+        <div class="info-card">
+            <div class="section-title">ریسک‌ها</div>
+            {% for risk in report.risks %}
+                <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+                    <span class="risk-badge" style="
+                        {% if risk.severity == 'high' %}background:#f8d7da;color:#721c24;
+                        {% elif risk.severity == 'medium' %}background:#fff3cd;color:#856404;
+                        {% else %}background:#d4edda;color:#155724;{% endif %}
+                        white-space:nowrap;">
+                        {% if risk.severity == 'high' %}بالا{% elif risk.severity == 'medium' %}متوسط{% else %}پایین{% endif %}
+                    </span>
+                    <div>
+                        <div style="font-weight:600;font-size:14px;">{{ risk.title }}</div>
+                        <div style="color:#666;font-size:13px;margin-top:4px;">{{ risk.description }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="info-card" style="text-align:center;padding:40px;">
+            <div style="font-size:40px;margin-bottom:12px;">📊</div>
+            <div style="color:#666;">هنوز گزارشی تولید نشده. روی "تولید گزارش جدید" کلیک کنید.</div>
+        </div>
+    {% endif %}
+
+    {% if history|length > 1 %}
+    <div class="info-card">
+        <div class="section-title">تاریخچه گزارش‌ها</div>
+        {% for h in history %}
+            <div class="history-row">
+                <div>
+                    <span style="font-weight:600;">گزارش {{ forloop.counter }}</span>
+                    <span style="font-size:12px;color:#888;margin-right:8px;">{{ h.get_created_at_jalali }}</span>
+                </div>
+                <span style="font-size:16px;font-weight:bold;color:{% if h.health_score >= 70 %}#27ae60{% elif h.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">
+                    {{ h.health_score|default:"?" }}
+                </span>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

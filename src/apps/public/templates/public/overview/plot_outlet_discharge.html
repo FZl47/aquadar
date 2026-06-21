@@ -21,13 +21,20 @@
     .chart-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .empty-state { text-align: center; padding: 60px 20px; color: #aaa; }
     .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .cycle-badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-top: 8px; }
+    .discharge-edit-form { display: none; margin-top: 8px; }
+    .discharge-edit-form input { width: 90px; padding: 3px 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; text-align: center; }
+    .discharge-edit-form button { padding: 3px 10px; border-radius: 6px; border: none; font-size: 12px; cursor: pointer; }
+    .btn-save-dr { background: #0288d1; color: #fff; }
+    .btn-cancel-dr { background: #eee; color: #555; margin-right: 4px; }
+    .edit-dr-link { font-size: 11px; color: #0288d1; cursor: pointer; text-decoration: underline; display: block; margin-top: 4px; }
 </style>
 {% endblock %}
 
 {% block Content %}
 <div class="container" style="max-width:1100px;margin:30px auto;">
 
-    <!-- Header with breadcrumb -->
+    <!-- Header -->
     <div class="page-header">
         <div class="breadcrumb-bar">
             <a href="{% url 'public:index' %}">داشبورد</a> /
@@ -36,12 +43,21 @@
             آبدهی
         </div>
         <div style="font-size:22px;font-weight:bold;">{{ plot.name }}</div>
-        <div style="opacity:.8;font-size:13px;margin-top:4px;">
-            {{ farm.name }} — گزارش آبدهی کیزها
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">{{ farm.name }} — گزارش آبدهی کیزها</div>
+        {% if last_group %}
+        <div class="cycle-badge">
+            دوره آبیاری:
+            {% if last_group.status == 'running' %}
+                <span style="color:#a5f3a5;">● در حال انجام</span>
+            {% elif last_group.status == 'completed' %}
+                <span style="color:#ffe082;">● تکمیل شده</span>
+            {% endif %}
+            — شروع: {{ last_group.created_at }}
         </div>
+        {% endif %}
     </div>
 
-    <!-- Summary stat cards -->
+    <!-- Stat cards -->
     <div class="stat-cards">
         <div class="stat-card" style="border-top:3px solid #0288d1;">
             <div style="color:#0288d1;font-size:20px;">💧</div>
@@ -60,8 +76,19 @@
         </div>
         <div class="stat-card" style="border-top:3px solid #7b1fa2;">
             <div style="color:#7b1fa2;font-size:20px;">🔧</div>
-            <div class="stat-value" style="color:#7b1fa2;">{{ discharge_rate }}</div>
+            <div class="stat-value" style="color:#7b1fa2;" id="dr-display">{{ discharge_rate }}</div>
             <div class="stat-label">دبی (لیتر/ثانیه)</div>
+            {% if request.user.role == 'supervisor' or request.user.is_superuser %}
+            <span class="edit-dr-link" onclick="toggleDrEdit()">ویرایش دبی</span>
+            <form class="discharge-edit-form" id="discharge-edit-form" method="post" action="{% url 'public:farm_discharge_rate_update' farm.pk %}">
+                {% csrf_token %}
+                <input type="number" name="discharge_rate" id="dr-input" step="0.01" min="0" value="{{ discharge_rate }}">
+                <div style="margin-top:6px;">
+                    <button type="submit" class="btn-save-dr">ذخیره</button>
+                    <button type="button" class="btn-cancel-dr" onclick="toggleDrEdit()">لغو</button>
+                </div>
+            </form>
+            {% endif %}
         </div>
     </div>
 
@@ -69,6 +96,9 @@
     <div class="table-card">
         <div style="padding:16px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;color:#1a1a2e;">
             جزئیات کیزها
+            {% if last_group %}
+            <span style="font-size:11px;font-weight:400;color:#888;margin-right:8px;">دوره جاری</span>
+            {% endif %}
         </div>
         {% if outlets %}
         <table class="table table-hover" style="margin:0;">
@@ -79,19 +109,18 @@
                     <th>مدت (دقیقه)</th>
                     <th>حجم (لیتر)</th>
                     <th>حجم (m³)</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for o in outlets %}
                 <tr>
-                    <td style="font-weight:600;">{{ o.outlet_number }}</td>
+                    <td style="font-weight:600;"><a href="{% url 'public:outlet_detail' o.outlet_id %}" style="color:#0288d1;text-decoration:none;">{{ o.outlet_number }}</a></td>
                     <td>
-                        {% if o.run_count == 1 %}
-                            {% if o.last_run_status_end %}
-                                <span class="badge bg-success">انجام شده</span>
-                            {% else %}
-                                <span class="badge bg-info">در حال انجام</span>
-                            {% endif %}
+                        {% if o.status == 'completed' %}
+                            <span class="badge bg-success">انجام شده</span>
+                        {% elif o.status == 'running' %}
+                            <span class="badge bg-info">در حال انجام</span>
                         {% else %}
                             <span class="badge bg-warning text-dark">انجام نشده</span>
                         {% endif %}
@@ -99,6 +128,7 @@
                     <td>{{ o.total_minutes }}</td>
                     <td>{{ o.total_liters }}</td>
                     <td style="font-weight:600;">{{ o.total_m3 }}</td>
+                    <td><a href="{% url 'public:outlet_detail' o.outlet_id %}" class="btn btn-sm btn-outline-primary" style="border-radius:6px;font-size:11px;">جزئیات</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -106,7 +136,7 @@
         {% else %}
             <div class="empty-state">
                 <div class="icon">🔍</div>
-                <div>هیچ کیزی برای این زمین ثبت نشده است</div>
+                <div>{% if last_group %}هنوز آبیاری‌ای در دوره جاری ثبت نشده است{% else %}هیچ سابقه آبیاری‌ای برای این زمین ثبت نشده است{% endif %}</div>
             </div>
         {% endif %}
     </div>
@@ -123,6 +153,12 @@
 {% endblock %}
 
 {% block Script %}
+<script>
+function toggleDrEdit() {
+    var form = document.getElementById('discharge-edit-form');
+    if (form) form.style.display = form.style.display === 'block' ? 'none' : 'block';
+}
+</script>
 {% if outlets %}
 <script>
     const labels = JSON.parse('{{ chart_labels|safe }}');

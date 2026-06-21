@@ -18,17 +18,27 @@ def run_status_create(sender, instance, created, **kwargs):
             transaction.on_commit(lambda: _schedule_weather_fetch(instance.id))
 
         status = instance.status
+
+        if status == 'start':
+            models.Run.objects.filter(pk=instance.run_id).update(status='open')
+            return
+
         if status != 'end':
             return
 
+        models.Run.objects.filter(pk=instance.run_id).update(status='closed')
+
+        # Re-fetch run to get updated state for optimality check
+        run = models.Run.objects.get(pk=instance.run_id)
+
         # Check irrigation run is optimal
-        if (instance.run.is_irrigation_optimal is True) or (instance.run.is_irrigation_optimal is None):
+        if (run.is_irrigation_optimal is True) or (run.is_irrigation_optimal is None):
             return
 
         # Irrigation run is not optimal - create report if configured
         settings_obj = models.RunSettings.objects.first()
         if settings_obj and settings_obj.create_report_to_supervisor_if_has_problem:
-            instance.run.report_irrigation_bad()
+            run.report_irrigation_bad()
 
 
 def _schedule_weather_fetch(run_status_id):

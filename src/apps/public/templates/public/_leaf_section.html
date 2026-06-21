@@ -1,0 +1,44 @@
+{% load i18n %}
+{# Reusable leaf-analysis section. Requires context: leaf_upload_url, leaf_list_url, leaf_analyses #}
+<div class="info-card leaf-section" style="margin-top:20px;background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);"
+     data-upload-url="{{ leaf_upload_url }}">
+    {% csrf_token %}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">🍃 {% trans "Leaf analysis (AI)" %}</div>
+        <a href="{{ leaf_list_url }}" style="font-size:13px;color:#1a73e8;text-decoration:none;">{% trans "View analysis history" %} ›</a>
+    </div>
+
+    {% if leaf_analyses %}
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        {% for a in leaf_analyses %}
+        <div style="border:1px solid #eee;border-radius:10px;padding:10px;width:160px;">
+            {% if a.image %}<img src="{{ a.image.url }}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;" alt="">{% endif %}
+            <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                {% if a.health_score is not None %}
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:12px;font-weight:bold;color:#fff;background:{% if a.health_score >= 70 %}#27ae60{% elif a.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">{{ a.health_score }}</span>
+                {% endif %}
+                <span style="font-size:11px;color:#888;">{{ a.get_created_at_jalali }}</span>
+            </div>
+            <div style="font-size:12px;color:#555;margin-top:6px;max-height:48px;overflow:hidden;">{{ a.summary|default:"—" }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="color:#999;font-size:13px;margin-bottom:14px;">{% trans "No leaf analysis registered yet." %}</div>
+    {% endif %}
+
+    <div style="position:relative;">
+        <div style="opacity:0.35;pointer-events:none;user-select:none;">
+            <div class="leaf-upload-area"
+                 style="border:2px dashed #ccc;border-radius:12px;padding:24px;text-align:center;">
+                <div style="font-size:28px;margin-bottom:6px;">🍃</div>
+                <div style="color:#888;font-size:14px;">{% trans "Drag a leaf image here or click to upload" %}</div>
+                <input type="file" accept="image/*" style="display:none;">
+            </div>
+        </div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;">
+            <span style="background:#fff3cd;color:#856404;border-radius:20px;padding:6px 18px;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">⏳ در حال انجام</span>
+            <span style="font-size:11px;color:#999;">این قابلیت به زودی فعال می‌شود</span>
+        </div>
+    </div>
+</div>

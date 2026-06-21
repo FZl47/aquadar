@@ -1,0 +1,287 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}جزئیات آبیاری #{{ run.id }}{% endblock %}
+
+{% block Style %}
+<style>
+    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+    .page-header { background: linear-gradient(135deg, #0288d1, #01579b); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+    .info-card h6 { font-weight: bold; color: #1a1a2e; margin-bottom: 14px; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-box { background: #fff; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-box .val { font-size: 22px; font-weight: 700; color: #01579b; }
+    .stat-box .lbl { font-size: 11px; color: #888; margin-top: 4px; }
+    .status-badge { border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; }
+    .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .weather-item { background: #f8f9fa; border-radius: 10px; padding: 12px; text-align: center; }
+    .weather-item .wi { font-size: 20px; }
+    .weather-item .wv { font-size: 16px; font-weight: 700; color: #0288d1; margin-top: 4px; }
+    .weather-item .wl { font-size: 11px; color: #888; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:900px;margin:30px auto;">
+
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">آبیاری #{{ run.id }}</div>
+        <div style="opacity:.85;margin-top:4px;">
+            {{ run.outlet.plot.zone.farm.name }} /
+            {{ run.outlet.plot.zone.name }} /
+            {{ run.outlet.plot.name }} /
+            کیز {{ run.outlet.number }}
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 داشبورد</a>
+            <a href="{% url 'public:run_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست آبیاری‌ها</a>
+            <a href="{% url 'public:outlet_detail' run.outlet.pk %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده کیز</a>
+            <a href="{{ run.outlet.plot.get_absolute_url }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده زمین</a>
+            <button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:8px;" onclick="new bootstrap.Modal(document.getElementById('editRunModal')).show()">✏️ ویرایش</button>
+            <form method="post" action="{% url 'public:run_delete' run.id %}" style="display:inline;" onsubmit="return confirm('این آبیاری حذف شود؟');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:8px;">🗑️ حذف</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Run Modal -->
+    <div class="modal fade" id="editRunModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ویرایش آبیاری</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'public:run_update' run.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">کیز</label>
+                        <select name="outlet" class="form-control">
+                            {% for o in outlets %}<option value="{{ o.pk }}" {% if o.pk == run.outlet_id %}selected{% endif %}>{{ o.plot.zone.farm.name }} / {{ o.plot.zone.name }} / {{ o.plot.name }} / کیز {{ o.number }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2"><label class="form-label">آبیار</label>
+                        <select name="created_by" class="form-control">
+                            <option value="">— هیچکدام —</option>
+                            {% for u in users %}<option value="{{ u.pk }}" {% if u.pk == run.created_by_id %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ذخیره</button></div>
+            </form>
+        </div></div>
+    </div>
+
+    {% with start=run.status_start end=run.status_end %}
+
+    <div class="stat-grid">
+        <div class="stat-box">
+            <div class="val">
+                {% if run.duration_seconds %}
+                    {{ run.duration_seconds|floatformat:0 }}
+                {% else %}—{% endif %}
+            </div>
+            <div class="lbl">مدت (ثانیه)</div>
+        </div>
+        <div class="stat-box">
+            <div class="val">
+                {% if run.group.status == 'canceled' %}
+                    <span style="color:#e65100;font-size:14px;">لغو شده</span>
+                {% elif run.status == 'open' %}
+                    <span style="color:#2e7d32;font-size:14px;">در حال آبیاری</span>
+                {% else %}
+                    <span style="color:#1565c0;font-size:14px;">تکمیل شده</span>
+                {% endif %}
+            </div>
+            <div class="lbl">وضعیت</div>
+        </div>
+        <div class="stat-box">
+            <div class="val" style="font-size:14px;">{{ run.created_by.get_full_name|default:'—' }}</div>
+            <div class="lbl">آبیار</div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h6 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>اطلاعات شروع آبیاری</span>
+            {% if start %}
+            <span style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:6px;font-size:12px;" onclick="new bootstrap.Modal(document.getElementById('editStartModal')).show()">✏️ ویرایش</button>
+                <form method="post" action="{% url 'public:runstatus_delete' start.id %}" style="display:inline;" onsubmit="return confirm('این وضعیت حذف شود؟');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:6px;font-size:12px;">🗑️ حذف</button>
+                </form>
+            </span>
+            {% endif %}
+        </h6>
+        {% if start %}
+        <table class="table table-borderless" style="font-size:14px;">
+            <tr><td style="color:#888;width:160px;">زمان شروع</td><td>{{ start.created_at|jalali }}</td></tr>
+            <tr><td style="color:#888;">موقعیت GPS</td>
+                <td>
+                    {% if start.gps_lat and start.gps_lng %}
+                        {{ start.gps_lat }}, {{ start.gps_lng }}
+                        <a href="https://maps.google.com/?q={{ start.gps_lat }},{{ start.gps_lng }}" target="_blank" style="font-size:12px;margin-right:8px;">نقشه ↗</a>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+        </table>
+        <div class="weather-grid">
+            <div class="weather-item">
+                <div class="wi">🌡️</div>
+                <div class="wv">{{ start.temperature_c|default:"—" }}{% if start.temperature_c %}°C{% endif %}</div>
+                <div class="wl">دما</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">💧</div>
+                <div class="wv">{{ start.humidity|default:"—" }}{% if start.humidity %}%{% endif %}</div>
+                <div class="wl">رطوبت</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">💨</div>
+                <div class="wv">{{ start.wind_speed|default:"—" }}{% if start.wind_speed %} m/s{% endif %}</div>
+                <div class="wl">سرعت باد</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">🌧️</div>
+                <div class="wv">{{ start.precipitation|default:"—" }}{% if start.precipitation %} mm{% endif %}</div>
+                <div class="wl">بارش</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">☀️</div>
+                <div class="wv">{{ start.solar_radiation|default:"—" }}{% if start.solar_radiation %} W/m²{% endif %}</div>
+                <div class="wl">تابش خورشید</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">🔆</div>
+                <div class="wv">{{ start.uv_index|default:"—" }}</div>
+                <div class="wl">شاخص UV</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">⛅</div>
+                <div class="wv">{{ start.cloud_cover|default:"—" }}{% if start.cloud_cover %}%{% endif %}</div>
+                <div class="wl">پوشش ابر</div>
+            </div>
+        </div>
+        {% else %}
+        <div style="color:#999;text-align:center;padding:20px;">اطلاعات شروع ثبت نشده</div>
+        {% endif %}
+    </div>
+
+    <div class="info-card">
+        <h6 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>اطلاعات پایان آبیاری</span>
+            {% if end %}
+            <span style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:6px;font-size:12px;" onclick="new bootstrap.Modal(document.getElementById('editEndModal')).show()">✏️ ویرایش</button>
+                <form method="post" action="{% url 'public:runstatus_delete' end.id %}" style="display:inline;" onsubmit="return confirm('این وضعیت حذف شود؟');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:6px;font-size:12px;">🗑️ حذف</button>
+                </form>
+            </span>
+            {% endif %}
+        </h6>
+        {% if end %}
+        <table class="table table-borderless" style="font-size:14px;">
+            <tr><td style="color:#888;width:160px;">زمان پایان</td><td>{{ end.created_at|jalali }}</td></tr>
+            <tr><td style="color:#888;">موقعیت GPS</td>
+                <td>
+                    {% if end.gps_lat and end.gps_lng %}
+                        {{ end.gps_lat }}, {{ end.gps_lng }}
+                        <a href="https://maps.google.com/?q={{ end.gps_lat }},{{ end.gps_lng }}" target="_blank" style="font-size:12px;margin-right:8px;">نقشه ↗</a>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+        </table>
+        <div class="weather-grid">
+            <div class="weather-item">
+                <div class="wi">🌡️</div>
+                <div class="wv">{{ end.temperature_c|default:"—" }}{% if end.temperature_c %}°C{% endif %}</div>
+                <div class="wl">دما</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">💧</div>
+                <div class="wv">{{ end.humidity|default:"—" }}{% if end.humidity %}%{% endif %}</div>
+                <div class="wl">رطوبت</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">💨</div>
+                <div class="wv">{{ end.wind_speed|default:"—" }}{% if end.wind_speed %} m/s{% endif %}</div>
+                <div class="wl">سرعت باد</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">🌧️</div>
+                <div class="wv">{{ end.precipitation|default:"—" }}{% if end.precipitation %} mm{% endif %}</div>
+                <div class="wl">بارش</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">☀️</div>
+                <div class="wv">{{ end.solar_radiation|default:"—" }}{% if end.solar_radiation %} W/m²{% endif %}</div>
+                <div class="wl">تابش خورشید</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">🔆</div>
+                <div class="wv">{{ end.uv_index|default:"—" }}</div>
+                <div class="wl">شاخص UV</div>
+            </div>
+            <div class="weather-item">
+                <div class="wi">⛅</div>
+                <div class="wv">{{ end.cloud_cover|default:"—" }}{% if end.cloud_cover %}%{% endif %}</div>
+                <div class="wl">پوشش ابر</div>
+            </div>
+        </div>
+        {% else %}
+        <div style="color:#999;text-align:center;padding:20px;">آبیاری هنوز پایان نیافته</div>
+        {% endif %}
+    </div>
+
+    {% if start %}
+    <div class="modal fade" id="editStartModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">ویرایش وضعیت شروع</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="post" action="{% url 'public:runstatus_update' start.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body">
+                    {% include 'public/run/_runstatus_fields.html' with rs=start %}
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ذخیره</button></div>
+            </form>
+        </div></div>
+    </div>
+    {% endif %}
+
+    {% if end %}
+    <div class="modal fade" id="editEndModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">ویرایش وضعیت پایان</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="post" action="{% url 'public:runstatus_update' end.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body">
+                    {% include 'public/run/_runstatus_fields.html' with rs=end %}
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ذخیره</button></div>
+            </form>
+        </div></div>
+    </div>
+    {% endif %}
+
+    {% endwith %}
+
+    <div class="info-card">
+        <h6>اطلاعات کیز</h6>
+        <table class="table table-borderless" style="font-size:14px;">
+            <tr><td style="color:#888;width:160px;">کیز</td><td><a href="{% url 'public:outlet_detail' run.outlet.pk %}">کیز {{ run.outlet.number }}</a></td></tr>
+            <tr><td style="color:#888;">زمین</td><td><a href="{{ run.outlet.plot.get_absolute_url }}">{{ run.outlet.plot.name }}</a></td></tr>
+            <tr><td style="color:#888;">ناحیه</td><td><a href="{{ run.outlet.plot.zone.get_absolute_url }}">{{ run.outlet.plot.zone.name }}</a></td></tr>
+            <tr><td style="color:#888;">منطقه</td><td>{{ run.outlet.plot.zone.farm.name }}</td></tr>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

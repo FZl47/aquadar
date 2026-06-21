@@ -22,8 +22,36 @@
         <div style="font-size:24px;font-weight:bold;">{{ farm.name }}</div>
         <div style="opacity:.8;font-size:13px;margin-top:4px;">کد: {{ farm.number }}</div>
         <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 داشبورد</a>
             <a href="{% url 'public:farm_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست زمین‌ها</a>
+<button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:8px;" onclick="openEditFarmModal()">✏️ ویرایش</button>
+            <form method="post" action="{% url 'public:farm_delete' farm.id %}" style="display:inline;" onsubmit="return confirm('این منطقه حذف شود؟');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:8px;">🗑️ حذف</button>
+            </form>
         </div>
+    </div>
+
+    <!-- Edit Farm Modal -->
+    <div class="modal fade" id="editFarmModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ویرایش منطقه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'public:farm_update' farm.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">شماره</label><input name="number" type="number" class="form-control" value="{{ farm.number }}"></div>
+                    <div class="mb-2"><label class="form-label">نام</label><input name="name" class="form-control" value="{{ farm.name }}"></div>
+                    <div class="mb-2"><label class="form-label">حجم استخر</label><input name="pool_size" type="number" class="form-control" value="{{ farm.pool_size|default:'' }}"></div>
+                    <div class="mb-2"><label class="form-label">نرخ آبدهی</label><input name="discharge_rate" type="number" step="0.01" class="form-control" value="{{ farm.discharge_rate|default:'' }}"></div>
+                    <div class="form-check"><input name="is_active" type="checkbox" class="form-check-input" id="farm_is_active" {% if farm.is_active %}checked{% endif %}><label class="form-check-label" for="farm_is_active">فعال</label></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ذخیره</button></div>
+            </form>
+        </div></div>
     </div>
 
     <div class="row mb-4">
@@ -75,5 +103,15 @@
         <div style="text-align:center;padding:40px;color:#999;">ناحیه‌ای ثبت نشده</div>
     {% endfor %}
 
+    {% include 'public/_leaf_section.html' %}
+
 </div>
+{% endblock %}
+
+{% block Script %}
+<script>
+function openEditFarmModal() {
+    new bootstrap.Modal(document.getElementById('editFarmModal')).show();
+}
+</script>
 {% endblock %}

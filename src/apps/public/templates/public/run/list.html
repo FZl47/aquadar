@@ -61,8 +61,8 @@
                 {% for run in page_obj %}
                 {% with start_rs=run.status_start end_rs=run.status_end %}
                 <tr>
-                    <td>{{ run.id }}</td>
-                    <td>{{ run.outlet.number }}</td>
+                    <td><a class="link-subtle" href="{% url 'public:run_detail' run.pk %}">{{ run.id }}</a></td>
+                    <td><a class="link-subtle" href="{% url 'public:outlet_detail' run.outlet.pk %}">{{ run.outlet.number }}</a></td>
                     <td>
                         <a class="link-subtle" href="{{ run.outlet.plot.get_absolute_url }}">
                             {{ run.outlet.plot.name }}
@@ -80,14 +80,12 @@
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        {% if run.group.status == 'running' %}
-                            <span class="badge-running">در حال اجرا</span>
-                        {% elif run.group.status == 'completed' %}
-                            <span class="badge-completed">تکمیل شده</span>
-                        {% elif run.group.status == 'canceled' %}
+                        {% if run.group.status == 'canceled' %}
                             <span class="badge-canceled">لغو شده</span>
+                        {% elif run.status == 'open' %}
+                            <span class="badge-running">در حال اجرا</span>
                         {% else %}
-                            {{ run.group.status }}
+                            <span class="badge-completed">تکمیل شده</span>
                         {% endif %}
                     </td>
                     <td>

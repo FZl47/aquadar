@@ -6,9 +6,6 @@ from django.contrib import messages
 from apps.core.forms.utils import form_validate_err
 
 
-# TODO: refactor
-# TODO: add docs/add type hints
-
 class ViewMixin:
     pass
 
@@ -21,7 +18,6 @@ class CreateViewMixin(ViewMixin):
 
     def create(self, request, *args, **kwargs):
         data = request.POST.copy()
-        # add request to form data
         self.data = data
         data['request'] = request
 
@@ -72,7 +68,6 @@ class UpdateViewMixin(ViewMixin):
 
     def update(self, request, *args, **kwargs):
         data = request.POST.copy()
-        # add request to form data
         self.data = data
         data['request'] = request
         instance = self.get_instance()

@@ -233,6 +233,10 @@
         .form-tab-section .form-group {
             margin-bottom: 15px;
         }
+
+        @keyframes btnSpin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 {% endblock %}
 
@@ -428,6 +432,7 @@
                                     <th>شماره ردیف(کیز) <i class="icon-road"></i></th>
                                     <th class="hidden-phone">جزئیات شروع و پایان <i class="icon-question-sign"></i></th>
                                     <th>زمان طی شده <i class="icon-time"></i></th>
+                                    <th class="hidden-phone">مصرف آب (م³) <i class="icon-tint"></i></th>
                                     <th class="hidden-phone">وضعیت <i class="icon-book"></i></th>
                                     <th>عملیات <i class="icon-edit-sign"></i></th>
                                 </tr>
@@ -461,6 +466,9 @@
                                             <span outlet-id="{{ outlet.id }}"
                                                   outlet-duration="{{ outlet.status }}">{{ outlet.run.duration_seconds|default:'0' }}</span>
                                             ثانیه
+                                        </td>
+                                        <td class="hidden-phone">
+                                            <span class="outlet-water-m3" data-outlet-id="{{ outlet.id }}">—</span>
                                         </td>
                                         <td>
                                             <span class="label-custom label-{{ outlet.status }} outlet-status-label"
@@ -564,10 +572,6 @@
             </section>
         {% endif %}
 
-        <button id="pwa-install-btn" class="btn btn-info"
-                style="position:fixed;top:20px;right:20px;z-index:1000;">
-            <i class="icon-download"></i> نصب برنامه
-        </button>
     </div>
 
 {% endblock %}
@@ -575,6 +579,13 @@
 {% block Script %}
     <script>
         var REQUIRE_GPS = {{ require_gps|lower }};
+        var DISCHARGE_RATE = {% if plot_obj %}{{ plot_obj.zone.farm.discharge_rate|default:"0" }}{% else %}0{% endif %};
+
+        function calcWaterM3(seconds) {
+            if (!seconds || !DISCHARGE_RATE) return '—';
+            return (DISCHARGE_RATE * seconds / 1000).toFixed(2) + ' م³';
+        }
+
         var gpsLat = null;
         var gpsLng = null;
         var gpsReady = false;
@@ -624,7 +635,47 @@
             );
         }
 
+        var _outletTimers = {};
+
+        function _startOutletTimer(outletId, initialSeconds) {
+            _stopOutletTimer(outletId);
+            var el = document.querySelector('[outlet-id="' + outletId + '"][outlet-duration]');
+            if (!el) return;
+            var secs = initialSeconds || 0;
+            el.textContent = secs;
+            _outletTimers[outletId] = setInterval(function() {
+                secs++;
+                el = document.querySelector('[outlet-id="' + outletId + '"][outlet-duration]');
+                if (el) el.textContent = secs;
+                var wEl = document.querySelector('.outlet-water-m3[data-outlet-id="' + outletId + '"]');
+                if (wEl) wEl.textContent = calcWaterM3(secs);
+            }, 1000);
+        }
+
+        function _stopOutletTimer(outletId) {
+            if (_outletTimers[outletId]) {
+                clearInterval(_outletTimers[outletId]);
+                delete _outletTimers[outletId];
+            }
+        }
+
+        /* Start timers for outlets that are already running on page load */
+        (function initTimers() {
+            document.querySelectorAll('[outlet-duration]').forEach(function(el) {
+                var status = el.getAttribute('outlet-duration');
+                var outletId = el.getAttribute('outlet-id');
+                var initialSecs = parseInt(el.textContent, 10) || 0;
+                if (status === 'running') {
+                    _startOutletTimer(outletId, initialSecs);
+                } else if (initialSecs > 0) {
+                    var wEl = document.querySelector('.outlet-water-m3[data-outlet-id="' + outletId + '"]');
+                    if (wEl) wEl.textContent = calcWaterM3(initialSecs);
+                }
+            });
+        })();
+
         function updateOutletRow(outletId, newStatus, statusLabel) {
+            outletId = String(outletId);
             var startBtn = document.querySelector('[outlet-start][outlet-id="' + outletId + '"]');
             var endBtn = document.querySelector('[outlet-end][outlet-id="' + outletId + '"]');
             var statusEl = document.querySelector('.outlet-status-label[data-outlet-id="' + outletId + '"]');
@@ -645,8 +696,14 @@
             }
             if (durationEl) {
                 durationEl.setAttribute('outlet-duration', newStatus);
-                if (newStatus === 'running') {
-                    durationEl.textContent = '0';
+            }
+            if (newStatus === 'running') {
+                _startOutletTimer(outletId, 0);
+            } else {
+                _stopOutletTimer(outletId);
+                var waterEl = document.querySelector('.outlet-water-m3[data-outlet-id="' + outletId + '"]');
+                if (waterEl && durationEl) {
+                    waterEl.textContent = calcWaterM3(parseInt(durationEl.textContent, 10) || 0);
                 }
             }
         }
@@ -658,7 +715,11 @@
             formData.set('gps_lng', gpsLng || '');
 
             var btn = form.querySelector('button');
-            if (btn) btn.disabled = true;
+            if (btn) {
+                btn.disabled = true;
+                btn._origHtml = btn.innerHTML;
+                btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;animation:btnSpin .7s linear infinite;vertical-align:middle;"></span>';
+            }
 
             fetch(form.action, {
                 method: 'POST',
@@ -678,7 +739,10 @@
             }).catch(function () {
                 createNotify({title: 'خطا', message: 'خطایی رخ داد', theme: 'error'});
             }).finally(function () {
-                if (btn) btn.disabled = false;
+                if (btn) {
+                    btn.disabled = false;
+                    if (btn._origHtml !== undefined) { btn.innerHTML = btn._origHtml; delete btn._origHtml; }
+                }
             });
         }
 
@@ -770,47 +834,5 @@
             initialPlotSelection()
         } catch (e) {
         }
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            let deferredInstallPrompt = null;
-            const pwaBtn = document.getElementById('pwa-install-btn');
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredInstallPrompt = e;
-
-                if (pwaBtn) {
-                    pwaBtn.style.display = 'block';
-                }
-            });
-
-            if (pwaBtn) {
-                pwaBtn.addEventListener('click', async () => {
-                    if (!deferredInstallPrompt) {
-                        console.log('Install prompt is not available.');
-                        return;
-                    }
-                    deferredInstallPrompt.prompt();
-                    const choiceResult = await deferredInstallPrompt.userChoice;
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('PWA installed');
-                    } else {
-                        console.log('Installation cancelled');
-                    }
-                    deferredInstallPrompt = null;
-                    pwaBtn.style.display = 'none';
-                });
-            }
-            window.addEventListener('appinstalled', () => {
-                console.log('App installed successfully');
-
-                if (pwaBtn) {
-                    pwaBtn.style.display = 'none';
-                }
-
-                deferredInstallPrompt = null;
-            });
-
-        });
     </script>
 {% endblock %}

@@ -9,13 +9,17 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -74,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.core.context_processors.feature_flags',
             ],
         },
     },
@@ -151,15 +156,15 @@ AUTH_USER_MODEL = 'account.User'  # Custom user model
 LOGIN_URL = reverse_lazy('account:login')
 LOGOUT_URL = reverse_lazy('account:logout')
 
-EXCEPT_USER_AUTH_URLS = [LOGIN_URL]
+EXCEPT_USER_AUTH_URLS = [LOGIN_URL, '/manifest.json', '/serviceworker.js', '/offline']
 EXCEPT_USER_PROFILE_URLS = []
 
 # Django-Q2 cluster config
 Q_CLUSTER = {
     'name': 'aquadar',
-    'workers': 2,
+    'workers': 6,
     'recycle': 500,
-    'timeout': 60,
+    'timeout': 300,
     'retry': 120,
     'queue_limit': 50,
     'bulk': 10,
@@ -167,13 +172,16 @@ Q_CLUSTER = {
 }
 
 NOTIFICATION_SMS_PROVIDER_CONFIG = {
-    'API_URL': 'https://api.panelchi.com/api/v1/sms/send/simple',
-    'API_TOKEN': 'YOUR_PANELCHI_TOKEN_HERE',
-    'LINE_NUMBER': 'YOUR_LINE_NUMBER_HERE',
+    'API_KEY': os.environ.get('SMS_API_KEY'),
+    'API_URL': 'https://api.panelchi.com/sms/pattern',
+    'LINE_NUMBER': os.environ.get('SMS_LINE_NUMBER'),
 }
 
 NOTIFICATION_CONFIG = {
-    'PROVIDERS': ['apps.notification.utils.providers.sms.SMSProvider'],
+    'PROVIDERS': [
+        # 'apps.notification.utils.providers.email.EmailProvider',
+        'apps.notification.utils.providers.sms.SMSProvider',
+    ],
 }
 
 SHORTIN_CONFIG = {
@@ -181,39 +189,27 @@ SHORTIN_CONFIG = {
     'TIMEOUT': 5,
 }
 
+GEMINI_API_KEY = ''
+
+# django-pwa config
 PWA_APP_NAME = 'آکوآدار'
 PWA_APP_DESCRIPTION = 'سیستم مدیریت آبیاری آکوآدار'
-PWA_APP_THEME_COLOR = '#1a73e8'
+PWA_APP_THEME_COLOR = '#27ae60'
 PWA_APP_BACKGROUND_COLOR = '#ffffff'
 PWA_APP_DISPLAY = 'standalone'
 PWA_APP_SCOPE = '/'
 PWA_APP_ORIENTATION = 'any'
 PWA_APP_START_URL = '/'
 PWA_APP_STATUS_BAR_COLOR = 'default'
-PWA_APP_DIR = 'rtl'
-PWA_APP_LANG = 'fa'
 PWA_APP_ICONS = [
-    {'src': '/static/img/icons/android/android-launchericon-192-192.png', 'sizes': '192x192', 'type': 'image/png'},
-    {'src': '/static/img/icons/android/android-launchericon-512-512.png', 'sizes': '512x512', 'type': 'image/png'},
-
+    {'src': '/static/img/logo.png', 'sizes': '160x160'},
 ]
-
 PWA_APP_ICONS_APPLE = [
-    {'src': '/static/img/icons/ios/16.png', 'sizes': '16x16', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/20.png', 'sizes': '20x20', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/29.png', 'sizes': '29x29', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/40.png', 'sizes': '40x40', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/58.png', 'sizes': '58x58', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/60.png', 'sizes': '60x60', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/76.png', 'sizes': '76x76', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/80.png', 'sizes': '80x80', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/87.png', 'sizes': '87x87', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/120.png', 'sizes': '120x120', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/152.png', 'sizes': '152x152', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/167.png', 'sizes': '167x167', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/180.png', 'sizes': '180x180', 'type': 'image/png'},
-    {'src': '/static/img/icons/ios/1024.png', 'sizes': '1024x1024', 'type': 'image/png'},
+    {'src': '/static/img/logo.png', 'sizes': '160x160'},
 ]
-
-PWA_APP_SPLASH = []
+PWA_APP_SPLASH_SCREEN = [
+    {'src': '/static/img/logo.png', 'media': '(device-width: 320px)'},
+]
+PWA_APP_DIR = 'rtl'
+PWA_APP_LANG = 'fa-IR'
 PWA_SERVICE_WORKER_PATH = BASE_DIR / 'static' / 'js' / 'serviceworker.js'

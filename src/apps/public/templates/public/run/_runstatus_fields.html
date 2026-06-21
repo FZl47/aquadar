@@ -1,0 +1,15 @@
+<div class="mb-2"><label class="form-label">وضعیت</label>
+    <select name="status" class="form-control">
+        <option value="start" {% if rs.status == 'start' %}selected{% endif %}>شروع</option>
+        <option value="end" {% if rs.status == 'end' %}selected{% endif %}>پایان</option>
+    </select>
+</div>
+<div class="mb-2"><label class="form-label">دما (°C)</label><input name="temperature_c" type="number" step="0.01" class="form-control" value="{{ rs.temperature_c|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">رطوبت (%)</label><input name="humidity" type="number" class="form-control" value="{{ rs.humidity|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">سرعت باد (m/s)</label><input name="wind_speed" type="number" step="0.01" class="form-control" value="{{ rs.wind_speed|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">بارش (mm)</label><input name="precipitation" type="number" step="0.01" class="form-control" value="{{ rs.precipitation|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">تابش خورشید (W/m²)</label><input name="solar_radiation" type="number" step="0.01" class="form-control" value="{{ rs.solar_radiation|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">شاخص UV</label><input name="uv_index" type="number" step="0.1" class="form-control" value="{{ rs.uv_index|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">پوشش ابر (%)</label><input name="cloud_cover" type="number" class="form-control" value="{{ rs.cloud_cover|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">GPS عرض</label><input name="gps_lat" type="number" step="0.000001" class="form-control" value="{{ rs.gps_lat|default:'' }}"></div>
+<div class="mb-2"><label class="form-label">GPS طول</label><input name="gps_lng" type="number" step="0.000001" class="form-control" value="{{ rs.gps_lng|default:'' }}"></div>

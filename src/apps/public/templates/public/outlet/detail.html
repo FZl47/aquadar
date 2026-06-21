@@ -25,9 +25,38 @@
             {{ outlet.plot.zone.farm.name }} / {{ outlet.plot.zone.name }} / {{ outlet.plot.name }}
         </div>
         <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 داشبورد</a>
             <a href="{% url 'public:outlet_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست کیزها</a>
             <a href="{{ outlet.plot.zone.get_absolute_url }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده ناحیه</a>
+            <button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:8px;" onclick="new bootstrap.Modal(document.getElementById('editOutletModal')).show()">✏️ ویرایش</button>
+            <form method="post" action="{% url 'public:outlet_delete' outlet.id %}" style="display:inline;" onsubmit="return confirm('این کیز حذف شود؟');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:8px;">🗑️ حذف</button>
+            </form>
         </div>
+    </div>
+
+    <!-- Edit Outlet Modal -->
+    <div class="modal fade" id="editOutletModal" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ویرایش کیز</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'public:outlet_update' outlet.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body">
+                    <div class="mb-2"><label class="form-label">شماره</label><input name="number" type="number" class="form-control" value="{{ outlet.number }}"></div>
+                    <div class="mb-2"><label class="form-label">زمین</label>
+                        <select name="plot" class="form-control">
+                            {% for p in plots %}<option value="{{ p.pk }}" {% if p.pk == outlet.plot_id %}selected{% endif %}>{{ p.zone.farm.name }} / {{ p.zone.name }} / {{ p.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">ذخیره</button></div>
+            </form>
+        </div></div>
     </div>
 
     <div class="info-card">
@@ -84,10 +113,11 @@
                         {% endif %}
                     </div>
                 </div>
-                <div>
-                    {% if run.group.status == 'running' %}
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <a href="{% url 'public:run_detail' run.pk %}" class="btn btn-sm" style="background:#e3f2fd;color:#1565c0;border-radius:8px;font-size:12px;">جزئیات</a>
+                    {% if run.status_start and not run.status_end %}
                         <span class="status-badge" style="background:#e8f5e9;color:#1b5e20;">در حال آبیاری</span>
-                    {% elif run.group.status == 'completed' %}
+                    {% elif run.status_end %}
                         <span class="status-badge" style="background:#e3f2fd;color:#1565c0;">تکمیل</span>
                     {% else %}
                         <span class="status-badge" style="background:#fff3e0;color:#e65100;">لغو شده</span>
@@ -98,6 +128,8 @@
             <div style="text-align:center;padding:30px;color:#999;">سابقه آبیاری ندارد</div>
         {% endfor %}
     </div>
+
+    {% include 'public/_leaf_section.html' %}
 
 </div>
 {% endblock %}
