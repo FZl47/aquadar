@@ -5,6 +5,8 @@
 
 {% block Title %}جزئیات بخش - {{ zone.name }}{% endblock %}
 
+{% block Breadcrumbs %}{% aq_breadcrumb "ناحیه‌ها|public:zone_list" zone.name %}{% endblock %}
+
 {% block Link %}
     <link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
 {% endblock %}

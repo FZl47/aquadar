@@ -1,704 +1,1177 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}{{ plot.name }} — {% trans "Plot Details" %}{% endblock %}
 
+{% block Breadcrumbs %}{% aq_breadcrumb "زمین‌ها|public:plot_list" plot.name %}{% endblock %}
+
 {% block Link %}
-<link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
 {% endblock %}
 
 {% block Style %}
-<style>
-    body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
-    .page-header { background: linear-gradient(135deg, #27ae60, #1a7a45); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
-    .breadcrumb-bar { font-size: 13px; opacity: .8; margin-bottom: 6px; }
-    .breadcrumb-bar a { color: rgba(255,255,255,.8); text-decoration: none; }
-    .breadcrumb-bar a:hover { color: #fff; }
-    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
-    .stat-value { font-size: 26px; font-weight: bold; margin: 8px 0 4px; }
-    .stat-value-sub { font-size: 13px; font-weight: 600; color: #888; margin-top: 2px; }
-    .stat-label { font-size: 12px; color: #888; }
-    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
-    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: #888; }
-    .outlet-row { background: #f8f9fa; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .outlet-running { background: #e8f5e9; }
-    .score-badge { display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;font-weight:bold;color:#fff;flex-shrink:0; }
-    .index-hint { font-size:11px;color:#aaa;margin-top:2px; }
+    <style>
+        body {
+            font-family: 'YekanBakhFaNum', monospace;
+            background: #f4f6f9;
+            padding: 20px;
+        }
 
-    /* Analysis history improvements */
-    .analysis-item { display:flex;align-items:flex-start;gap:16px;padding:14px 0;border-bottom:1px solid #f0f0f0; }
-    .analysis-item:last-child { border-bottom: none; }
-    .analysis-vi-img { flex:0 0 auto;width:130px; }
-    .analysis-vi-img img { width:130px;height:100px;object-fit:contain;border-radius:8px;border:1px solid #ddd;cursor:pointer;transition:transform .15s;padding:6px;box-sizing:border-box;background:#f8f9fa; }
-    .analysis-vi-img img:hover { transform:scale(1.03); }
-    .analysis-body { flex:1;min-width:0; }
-    .analysis-scores { display:flex;gap:12px;margin:6px 0;flex-wrap:wrap; }
-    .analysis-score-chip { display:inline-flex;flex-direction:column;align-items:center;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:6px 14px;min-width:80px; }
-    .analysis-score-chip.moisture { background:#eff6ff;border-color:#93c5fd; }
-    .analysis-score-chip .chip-val { font-size:20px;font-weight:800;color:#15803d;line-height:1.1; }
-    .analysis-score-chip.moisture .chip-val { color:#1d4ed8; }
-    .analysis-score-chip .chip-lbl { font-size:10px;color:#888;margin-top:2px; }
-    .problem-tag { display:inline-block;border-radius:5px;padding:3px 8px;font-size:11px;margin:2px 2px 2px 0; }
-    .problem-tag.high { background:#ffebee;color:#c62828; }
-    .problem-tag.medium { background:#fff8e1;color:#e65100; }
-    .problem-tag.low { background:#f5f5f5;color:#555; }
-    .problem-detail { font-size:12px;color:#666;margin-top:2px;padding-right:8px;border-right:3px solid #ddd; }
+        .page-header {
+            background: linear-gradient(135deg, #27ae60, #1a7a45);
+            border-radius: 14px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            color: #fff;
+        }
 
-    /* Nice loading spinner */
-    .analyze-spinner { display:inline-block;width:20px;height:20px;border:3px solid #27ae60;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:8px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .analyze-loading-box { display:none;text-align:center;padding:20px 10px;color:#555;font-size:14px; }
-    .analyze-loading-box .big-spinner { width:44px;height:44px;border-width:5px;margin:0 auto 10px; }
+        .breadcrumb-bar {
+            font-size: 13px;
+            opacity: .8;
+            margin-bottom: 6px;
+        }
 
-    /* Lightbox */
-    #lightbox-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out; }
-    #lightbox-overlay.active { display:flex; }
-    #lightbox-overlay img { max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 32px rgba(0,0,0,.5); }
-</style>
+        .breadcrumb-bar a {
+            color: rgba(255, 255, 255, .8);
+            text-decoration: none;
+        }
+
+        .breadcrumb-bar a:hover {
+            color: #fff;
+        }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: bold;
+            margin: 8px 0 4px;
+        }
+
+        .stat-value-sub {
+            font-size: 13px;
+            font-weight: 600;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .info-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #888;
+        }
+
+        .outlet-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .outlet-running {
+            background: #e8f5e9;
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .index-hint {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        /* Analysis history improvements */
+        .analysis-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .analysis-item:last-child {
+            border-bottom: none;
+        }
+
+        .analysis-vi-img {
+            flex: 0 0 auto;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+
+        .analysis-vi-img .vi-thumb {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .analysis-vi-img .vi-thumb span {
+            font-size: 10px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .analysis-vi-img img,
+        .analysis-vi-img .vi-thumb > div {
+            width: 120px;
+            height: 90px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform .15s;
+            box-sizing: border-box;
+            background: #f8f9fa;
+        }
+
+        .analysis-vi-img img:hover {
+            transform: scale(1.03);
+        }
+
+        .analysis-body {
+            flex: 1 1 260px;
+            min-width: 0;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .analysis-vi-img {
+                width: 100%;
+                justify-content: flex-start;
+                gap: 8px;
+            }
+            .analysis-vi-img .vi-thumb {
+                flex: 1 1 30%;
+                min-width: 90px;
+            }
+            .analysis-vi-img img,
+            .analysis-vi-img .vi-thumb > div {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 4 / 3;
+            }
+            .analysis-body { flex: 1 1 100%; width: 100%; }
+        }
+        @media (max-width: 420px) {
+            .analysis-vi-img .vi-thumb { flex: 1 1 45%; min-width: 0; }
+        }
+
+        .analysis-scores {
+            display: flex;
+            gap: 12px;
+            margin: 6px 0;
+            flex-wrap: wrap;
+        }
+
+        .analysis-score-chip {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            padding: 6px 14px;
+            min-width: 80px;
+        }
+
+        .analysis-score-chip.moisture {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .analysis-score-chip .chip-val {
+            font-size: 20px;
+            font-weight: 800;
+            color: #15803d;
+            line-height: 1.1;
+        }
+
+        .analysis-score-chip.moisture .chip-val {
+            color: #1d4ed8;
+        }
+
+        .analysis-score-chip .chip-lbl {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .problem-tag {
+            display: inline-block;
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 11px;
+            margin: 2px 2px 2px 0;
+        }
+
+        .problem-tag.high {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .problem-tag.medium {
+            background: #fff8e1;
+            color: #e65100;
+        }
+
+        .problem-tag.low {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+        .problem-detail {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+            padding-right: 8px;
+            border-right: 3px solid #ddd;
+        }
+
+        /* Nice loading spinner */
+        .analyze-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #27ae60;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .analyze-loading-box {
+            display: none;
+            text-align: center;
+            padding: 20px 10px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .analyze-loading-box .big-spinner {
+            width: 44px;
+            height: 44px;
+            border-width: 5px;
+            margin: 0 auto 10px;
+        }
+
+        /* Lightbox */
+        #lightbox-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .85);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+
+        #lightbox-overlay.active {
+            display: flex;
+        }
+
+        #lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 32px rgba(0, 0, 0, .5);
+        }
+    </style>
 {% endblock %}
 
 {% block Content %}
-<div id="lightbox-overlay" onclick="this.classList.remove('active')">
-    <img id="lightbox-img" src="" alt="">
-</div>
-
-<div class="container" style="max-width:1000px;margin:30px auto;">
-
-    <div class="page-header">
-        <div class="breadcrumb-bar">
-            <a href="{% url 'public:index' %}">{% trans "Dashboard" %}</a> /
-            <a href="{% url 'public:plot_list' %}">{% trans "Plots" %}</a> /
-            {{ plot.name }}
-        </div>
-        <div style="font-size:24px;font-weight:bold;">{{ plot.name }}</div>
-        <div style="opacity:.8;font-size:13px;margin-top:4px;">
-            {{ plot.zone.farm.name }} / {{ plot.zone.name }} — {% trans "Number" %} {{ plot.number }}
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;text-decoration:none;">🏠 {% trans "Dashboard" %}</a>
-            <a href="{% url 'public:plot_update' plot.id %}" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:8px;text-decoration:none;">✏️ {% trans "Edit" %}</a>
-            <form method="post" action="{% url 'public:plot_delete' plot.id %}" style="display:inline;" onsubmit="return confirm('{% trans "Delete this plot?" %}');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:8px;">🗑️ {% trans "Delete" %}</button>
-            </form>
-            <a href="{% url 'public:plot_outlet_discharge' plot.id %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.4);">
-                📊 {% trans "Discharge Report" %}
-            </a>
-            <a href="{% url 'public:plot_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.4);">
-                ← {% trans "Back to list" %}
-            </a>
-        </div>
+    <div id="lightbox-overlay" onclick="this.classList.remove('active')">
+        <img id="lightbox-img" src="" alt="">
     </div>
 
-    {% if latest_vi %}
-    <div class="stat-cards">
-        <div class="stat-card" style="border-top:3px solid #27ae60;">
-            <div style="color:#27ae60;font-size:22px;">💚</div>
-            <div class="stat-value" style="color:#27ae60;">{% if latest_greenness is not None %}{{ latest_greenness }}%{% else %}—{% endif %}</div>
-            <div class="stat-label">{% trans "Greenness score (avg)" %}</div>
-            <div class="index-hint">{% trans "Avg NDVI" %}: {{ avg_ndvi|default:"—" }} <span style="color:#bbb;">({{ greenness_sample_count }})</span></div>
-        </div>
-        <div class="stat-card" style="border-top:3px solid #3498db;">
-            <div style="color:#3498db;font-size:22px;">💧</div>
-            <div class="stat-value" style="color:#3498db;">{% if latest_moisture is not None %}{{ latest_moisture }}%{% else %}—{% endif %}</div>
-            <div class="stat-label">{% trans "Moisture score (avg)" %}</div>
-            <div class="index-hint">{% trans "Avg NDMI" %}: {{ avg_ndmi|default:"—" }} <span style="color:#bbb;">({{ moisture_sample_count }})</span></div>
-        </div>
-        <div class="stat-card" style="border-top:3px solid #16a085;">
-            <div style="color:#16a085;font-size:22px;">🌤</div>
-            {% if last_weather_check %}
-            <div class="stat-value" style="color:#16a085;font-size:13px;line-height:1.3;">{{ last_weather_check.get_created_at_jalali }}</div>
-            <div class="stat-label">{% trans "Last Weather Check" %}</div>
-            <div class="index-hint">{{ last_weather_check.temperature_c|default:"—" }}°C · {% trans "Humidity" %}: {{ last_weather_check.humidity|default:"—" }}%</div>
-            {% else %}
-            <div class="stat-value" style="color:#ccc;font-size:18px;">—</div>
-            <div class="stat-label">{% trans "Last Weather Check" %}</div>
-            {% endif %}
-        </div>
-        <div class="stat-card" style="border-top:3px solid #f39c12;">
-            <div style="color:#f39c12;font-size:22px;">🌿</div>
-            <div class="stat-value" style="color:#f39c12;">{% if latest_report and latest_report.health_score is not None %}{{ latest_report.health_score }}{% else %}—{% endif %}</div>
-            <div class="stat-label">{% trans "Health Score" %} ({% trans "latest" %})</div>
-            {% if avg_health_score is not None %}
-            <div class="stat-value-sub">{% trans "Avg" %}: {{ avg_health_score }}</div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
+    <div class="container" style="max-width:1000px;margin:30px auto;">
 
-    <!-- Weather/irrigation stat cards -->
-    <div class="stat-cards">
-        <div class="stat-card" style="border-top:3px solid #3498db;">
-            <div style="color:#3498db;font-size:22px;">💧</div>
-            <div class="stat-value" style="color:#3498db;">{{ stats.total_water }}</div>
-            <div class="stat-label">{% trans "Water this run (m³)" %}</div>
+        <div class="page-header">
+            <div class="breadcrumb-bar">
+                <a href="{% url 'public:index' %}">{% trans "Dashboard" %}</a> /
+                <a href="{% url 'public:plot_list' %}">{% trans "Plots" %}</a> /
+                {{ plot.name }}
+            </div>
+            <div style="font-size:24px;font-weight:bold;">{{ plot.name }}</div>
+            <div style="opacity:.8;font-size:13px;margin-top:4px;">
+                {{ plot.zone.farm.name }} / {{ plot.zone.name }} — {% trans "Number" %} {{ plot.number }}
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'public:index' %}" class="btn btn-sm"
+                   style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;text-decoration:none;">🏠 {% trans "Dashboard" %}</a>
+                <a href="{% url 'public:plot_update' plot.id %}" class="btn btn-sm"
+                   style="background:#ffc107;color:#000;border-radius:8px;text-decoration:none;">✏️ {% trans "Edit" %}</a>
+                <form method="post" action="{% url 'public:plot_delete' plot.id %}" style="display:inline;"
+                      onsubmit="return confirm('{% trans "Delete this plot?" %}');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:#fff;border-radius:8px;">
+                        🗑️ {% trans "Delete" %}</button>
+                </form>
+                <a href="{% url 'public:plot_outlet_discharge' plot.id %}" class="btn btn-sm"
+                   style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.4);">
+                    📊 {% trans "Discharge Report" %}
+                </a>
+                <a href="{% url 'public:plot_list' %}" class="btn btn-sm"
+                   style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.4);">
+                    ← {% trans "Back to list" %}
+                </a>
+            </div>
         </div>
-        <div class="stat-card" style="border-top:3px solid #e74c3c;">
-            <div style="color:#e74c3c;font-size:22px;">🌡</div>
-            <div class="stat-value" style="color:#e74c3c;">{{ stats.avg_temperature }}°</div>
-            <div class="stat-label">{% trans "Avg temperature (°C)" %} <span class="index-hint">{% trans "last 10" %}</span></div>
-        </div>
-        <div class="stat-card" style="border-top:3px solid #f39c12;">
-            <div style="color:#f39c12;font-size:22px;">💨</div>
-            <div class="stat-value" style="color:#f39c12;">{{ stats.avg_wind_speed }}</div>
-            <div class="stat-label">{% trans "Avg wind speed" %} <span class="index-hint">{% trans "last 10" %}</span></div>
-        </div>
-        <div class="stat-card" style="border-top:3px solid #1abc9c;">
-            <div style="color:#1abc9c;font-size:22px;">🌫</div>
-            <div class="stat-value" style="color:#1abc9c;">{{ stats.avg_humidity }}%</div>
-            <div class="stat-label">{% trans "Avg humidity" %} <span class="index-hint">{% trans "last 10 / weather API" %}</span></div>
-        </div>
-    </div>
 
-    <!-- Plot info -->
-    <div class="info-card">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Plot Information" %}</div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Number" %}</span>
-            <span>{{ plot.number }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Name" %}</span>
-            <span>{{ plot.name }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Zone" %}</span>
-            <span><a href="{{ plot.zone.get_absolute_url }}">{{ plot.zone.name }}</a></span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Farm" %}</span>
-            <span>{{ plot.zone.farm.name }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Avg irrigation duration" %}</span>
-            <span>{{ plot.avg_run_duration }} {% trans "minutes" %}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">{% trans "Irrigation count" %}</span>
-            <span>{{ total_runs }}</span>
-        </div>
-    </div>
-
-    <div class="info-card" id="plot-weather-card" data-fetch-url="{{ weather_fetch_url }}">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-            <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">🌤 {% trans "Plot Weather" %}</div>
-            <button id="weather-fetch-btn" class="btn btn-info btn-sm" style="border-radius:8px;font-weight:600;color:#fff;" onclick="fetchPlotWeather()">
-                ⟳ {% trans "Fetch Current Weather" %}
-            </button>
-        </div>
-        <div id="weather-fetch-status" style="display:none;font-size:13px;margin-bottom:10px;padding:8px 12px;border-radius:8px;"></div>
-        <div id="weather-history-list">
-        {% if plot_weather_history %}
-        <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <thead>
-                <tr style="background:#f8f9fa;color:#555;text-align:center;">
-                    <th style="padding:8px 10px;text-align:right;">{% trans "Date/Time" %}</th>
-                    <th style="padding:8px 6px;">🌡 {% trans "Temp (°C)" %}</th>
-                    <th style="padding:8px 6px;">💧 {% trans "Humidity (%)" %}</th>
-                    <th style="padding:8px 6px;">💨 {% trans "Wind (m/s)" %}</th>
-                    <th style="padding:8px 6px;">🌧 {% trans "Precip (mm)" %}</th>
-                    <th style="padding:8px 6px;">☀️ {% trans "Solar (W/m²)" %}</th>
-                    <th style="padding:8px 6px;">🔆 UV</th>
-                    <th style="padding:8px 6px;">⛅ {% trans "Cloud (%)" %}</th>
-                    <th style="padding:8px 6px;">{% trans "Source" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for pw in plot_weather_history %}
-            <tr style="border-bottom:1px solid #f0f0f0;{% if forloop.first %}background:#fffde7;{% endif %}">
-                <td style="padding:8px 10px;white-space:nowrap;">{{ pw.get_created_at_jalali }}</td>
-                <td style="text-align:center;font-weight:{% if forloop.first %}700{% else %}400{% endif %};color:#e74c3c;">{{ pw.temperature_c|default:"—" }}</td>
-                <td style="text-align:center;font-weight:{% if forloop.first %}700{% else %}400{% endif %};color:#3498db;">{{ pw.humidity|default:"—" }}</td>
-                <td style="text-align:center;">{{ pw.wind_speed|default:"—" }}</td>
-                <td style="text-align:center;">{{ pw.precipitation|default_if_none:"—" }}</td>
-                <td style="text-align:center;">{{ pw.solar_radiation|default_if_none:"—" }}</td>
-                <td style="text-align:center;">{{ pw.uv_index|default_if_none:"—" }}</td>
-                <td style="text-align:center;">{{ pw.cloud_cover|default_if_none:"—" }}</td>
-                <td style="text-align:center;">
-                    {% if pw.source == 'manual' %}
-                    <span style="background:#e3f2fd;color:#1565c0;border-radius:4px;padding:2px 6px;font-size:11px;">{% trans "Manual" %}</span>
+        {% if latest_vi %}
+            <div class="stat-cards">
+                <div class="stat-card" style="border-top:3px solid #27ae60;">
+                    <div style="color:#27ae60;font-size:22px;">💚</div>
+                    <div class="stat-value" style="color:#27ae60;">
+                        {% if latest_greenness is not None %}{{ latest_greenness }}%{% else %}—{% endif %}</div>
+                    <div class="stat-label">{% trans "Greenness score (avg)" %}</div>
+                    <div class="index-hint">{% trans "Avg NDVI" %}: {{ avg_ndvi|default:"—" }} <span
+                            style="color:#bbb;">({{ greenness_sample_count }})</span></div>
+                </div>
+                <div class="stat-card" style="border-top:3px solid #3498db;">
+                    <div style="color:#3498db;font-size:22px;">💧</div>
+                    <div class="stat-value" style="color:#3498db;">
+                        {% if latest_moisture is not None %}{{ latest_moisture }}%{% else %}—{% endif %}</div>
+                    <div class="stat-label">{% trans "Moisture score (avg)" %}</div>
+                    <div class="index-hint">{% trans "Avg NDMI" %}: {{ avg_ndmi|default:"—" }} <span
+                            style="color:#bbb;">({{ moisture_sample_count }})</span></div>
+                </div>
+                <div class="stat-card" style="border-top:3px solid #16a085;">
+                    <div style="color:#16a085;font-size:22px;">🌤</div>
+                    {% if last_weather_check %}
+                        <div class="stat-value"
+                             style="color:#16a085;font-size:13px;line-height:1.3;">{{ last_weather_check.get_created_at_jalali }}</div>
+                        <div class="stat-label">{% trans "Last Weather Check" %}</div>
+                        <div class="index-hint">{{ last_weather_check.temperature_c|default:"—" }}°C
+                            · {% trans "Humidity" %}: {{ last_weather_check.humidity|default:"—" }}%
+                        </div>
                     {% else %}
-                    <span style="background:#f3e5f5;color:#6a1b9a;border-radius:4px;padding:2px 6px;font-size:11px;">{% trans "Scheduled" %}</span>
+                        <div class="stat-value" style="color:#ccc;font-size:18px;">—</div>
+                        <div class="stat-label">{% trans "Last Weather Check" %}</div>
                     {% endif %}
-                </td>
-            </tr>
+                </div>
+                <div class="stat-card" style="border-top:3px solid #f39c12;">
+                    <div style="color:#f39c12;font-size:22px;">🌿</div>
+                    <div class="stat-value" style="color:#f39c12;">
+                        {% if latest_report and latest_report.health_score is not None %}
+                            {{ latest_report.health_score }}{% else %}—{% endif %}</div>
+                    <div class="stat-label">{% trans "Health Score" %} ({% trans "latest" %})</div>
+                    {% if avg_health_score is not None %}
+                        <div class="stat-value-sub">{% trans "Avg" %}: {{ avg_health_score }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Weather/irrigation stat cards -->
+        <div class="stat-cards">
+            <div class="stat-card" style="border-top:3px solid #3498db;">
+                <div style="color:#3498db;font-size:22px;">💧</div>
+                <div class="stat-value" style="color:#3498db;">{{ stats.total_water }}</div>
+                <div class="stat-label">{% trans "Water this run (m³)" %}</div>
+            </div>
+            <div class="stat-card" style="border-top:3px solid #e74c3c;">
+                <div style="color:#e74c3c;font-size:22px;">🌡</div>
+                <div class="stat-value" style="color:#e74c3c;">{{ stats.avg_temperature }}°</div>
+                <div class="stat-label">{% trans "Avg temperature (°C)" %} <span
+                        class="index-hint">{% trans "last 10" %}</span></div>
+            </div>
+            <div class="stat-card" style="border-top:3px solid #f39c12;">
+                <div style="color:#f39c12;font-size:22px;">💨</div>
+                <div class="stat-value" style="color:#f39c12;">{{ stats.avg_wind_speed }}</div>
+                <div class="stat-label">{% trans "Avg wind speed" %} <span
+                        class="index-hint">{% trans "last 10" %}</span></div>
+            </div>
+            <div class="stat-card" style="border-top:3px solid #1abc9c;">
+                <div style="color:#1abc9c;font-size:22px;">🌫</div>
+                <div class="stat-value" style="color:#1abc9c;">{{ stats.avg_humidity }}%</div>
+                <div class="stat-label">{% trans "Avg humidity" %} <span
+                        class="index-hint">{% trans "last 10 / weather API" %}</span></div>
+            </div>
+        </div>
+
+        <!-- Plot info -->
+        <div class="info-card">
+            <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Plot Information" %}</div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Number" %}</span>
+                <span>{{ plot.number }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Name" %}</span>
+                <span>{{ plot.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Zone" %}</span>
+                <span><a href="{{ plot.zone.get_absolute_url }}">{{ plot.zone.name }}</a></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Farm" %}</span>
+                <span>{{ plot.zone.farm.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Avg irrigation duration" %}</span>
+                <span>{{ plot.avg_run_duration }} {% trans "minutes" %}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">{% trans "Irrigation count" %}</span>
+                <span>{{ total_runs }}</span>
+            </div>
+        </div>
+
+        <div class="info-card" id="plot-weather-card" data-fetch-url="{{ weather_fetch_url }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+                <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">🌤 {% trans "Plot Weather" %}</div>
+                <button id="weather-fetch-btn" class="btn btn-info btn-sm"
+                        style="border-radius:8px;font-weight:600;color:#fff;" onclick="fetchPlotWeather()">
+                    ⟳ {% trans "Fetch Current Weather" %}
+                </button>
+            </div>
+            <div id="weather-fetch-status"
+                 style="display:none;font-size:13px;margin-bottom:10px;padding:8px 12px;border-radius:8px;"></div>
+            <div id="weather-history-list">
+                {% if plot_weather_history %}
+                    <div style="overflow-x:auto;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                            <tr style="background:#f8f9fa;color:#555;text-align:center;">
+                                <th style="padding:8px 10px;text-align:right;">{% trans "Date/Time" %}</th>
+                                <th style="padding:8px 6px;">🌡 {% trans "Temp (°C)" %}</th>
+                                <th style="padding:8px 6px;">💧 {% trans "Humidity (%)" %}</th>
+                                <th style="padding:8px 6px;">💨 {% trans "Wind (m/s)" %}</th>
+                                <th style="padding:8px 6px;">🌧 {% trans "Precip (mm)" %}</th>
+                                <th style="padding:8px 6px;">☀️ {% trans "Solar (W/m²)" %}</th>
+                                <th style="padding:8px 6px;">🔆 UV</th>
+                                <th style="padding:8px 6px;">⛅ {% trans "Cloud (%)" %}</th>
+                                <th style="padding:8px 6px;">{% trans "Source" %}</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for pw in plot_weather_history %}
+                                <tr style="border-bottom:1px solid #f0f0f0;{% if forloop.first %}background:#fffde7;{% endif %}">
+                                    <td style="padding:8px 10px;white-space:nowrap;">{{ pw.get_created_at_jalali }}</td>
+                                    <td style="text-align:center;font-weight:{% if forloop.first %}700{% else %}400{% endif %};color:#e74c3c;">{{ pw.temperature_c|default:"—" }}</td>
+                                    <td style="text-align:center;font-weight:{% if forloop.first %}700{% else %}400{% endif %};color:#3498db;">{{ pw.humidity|default:"—" }}</td>
+                                    <td style="text-align:center;">{{ pw.wind_speed|default:"—" }}</td>
+                                    <td style="text-align:center;">{{ pw.precipitation|default_if_none:"—" }}</td>
+                                    <td style="text-align:center;">{{ pw.solar_radiation|default_if_none:"—" }}</td>
+                                    <td style="text-align:center;">{{ pw.uv_index|default_if_none:"—" }}</td>
+                                    <td style="text-align:center;">{{ pw.cloud_cover|default_if_none:"—" }}</td>
+                                    <td style="text-align:center;">
+                                        {% if pw.source == 'manual' %}
+                                            <span style="background:#e3f2fd;color:#1565c0;border-radius:4px;padding:2px 6px;font-size:11px;">{% trans "Manual" %}</span>
+                                        {% else %}
+                                            <span style="background:#f3e5f5;color:#6a1b9a;border-radius:4px;padding:2px 6px;font-size:11px;">{% trans "Scheduled" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div id="weather-empty-msg"
+                         style="text-align:center;padding:24px;color:#aaa;font-size:13px;">{% trans "No weather records yet. Click 'Fetch Current Weather' to get started." %}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Outlets list -->
+        <div class="info-card">
+            <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Outlets" %}
+                ({{ outlets|length }})
+            </div>
+            {% for outlet in outlets %}
+                <div class="outlet-row {% if outlet.status == 'running' %}outlet-running{% endif %}">
+                    <div>
+                        <span style="font-weight:600;">{% trans "Outlet" %} {{ outlet.number }}</span>
+                        {% if outlet.status == 'running' %}
+                            <span style="background:#c8e6c9;color:#2e7d32;border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;">{% trans "Irrigating" %}</span>
+                        {% elif outlet.status == 'completed' %}
+                            <span style="background:#e3f2fd;color:#1565c0;border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;">{% trans "Completed" %}</span>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'public:outlet_detail' outlet.id %}" class="btn btn-sm btn-outline-primary"
+                       style="border-radius:8px;font-size:12px;">{% trans "Details" %}</a>
+                </div>
+            {% empty %}
+                <div style="text-align:center;padding:30px;color:#999;">{% trans "No outlets recorded" %}</div>
             {% endfor %}
-            </tbody>
-        </table>
         </div>
-        {% else %}
-        <div id="weather-empty-msg" style="text-align:center;padding:24px;color:#aaa;font-size:13px;">{% trans "No weather records yet. Click 'Fetch Current Weather' to get started." %}</div>
-        {% endif %}
-        </div>
-    </div>
 
-    <!-- Outlets list -->
-    <div class="info-card">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Outlets" %} ({{ outlets|length }})</div>
-        {% for outlet in outlets %}
-            <div class="outlet-row {% if outlet.status == 'running' %}outlet-running{% endif %}">
-                <div>
-                    <span style="font-weight:600;">{% trans "Outlet" %} {{ outlet.number }}</span>
-                    {% if outlet.status == 'running' %}
-                        <span style="background:#c8e6c9;color:#2e7d32;border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;">{% trans "Irrigating" %}</span>
-                    {% elif outlet.status == 'completed' %}
-                        <span style="background:#e3f2fd;color:#1565c0;border-radius:6px;padding:2px 8px;font-size:11px;margin-right:6px;">{% trans "Completed" %}</span>
-                    {% endif %}
-                </div>
-                <a href="{% url 'public:outlet_detail' outlet.id %}" class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:12px;">{% trans "Details" %}</a>
+        <div class="info-card" data-analyze-url="{{ analyze_url }}" data-status-url="{{ task_status_url }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+                <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">{% trans "Land Analysis" %}</div>
+                <button id="analyze-btn" class="btn btn-success btn-sm" style="border-radius:8px;font-weight:600;"
+                        onclick="runPlotAnalysis()">⚡ {% trans "Instant Analysis" %}</button>
             </div>
-        {% empty %}
-            <div style="text-align:center;padding:30px;color:#999;">{% trans "No outlets recorded" %}</div>
-        {% endfor %}
-    </div>
-
-    <div class="info-card" data-analyze-url="{{ analyze_url }}" data-status-url="{{ task_status_url }}">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-            <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">{% trans "Land Analysis" %}</div>
-            <button id="analyze-btn" class="btn btn-success btn-sm" style="border-radius:8px;font-weight:600;"
-                    onclick="runPlotAnalysis()">⚡ {% trans "Instant Analysis" %}</button>
-        </div>
-        <p style="color:#666;font-size:13px;margin-bottom:12px;">
-            {% trans "Analyzes plot condition using GPS location, latest NDVI/NDMI vegetation indices, current weather, and recent irrigation water. If a problem is detected, improvement suggestions are provided and a system report is created for the admin." %}
-        </p>
-        <div id="analyze-loading" class="analyze-loading-box">
-            <div class="analyze-spinner big-spinner" style="display:block;"></div>
-            <div>{% trans "Analyzing plot condition..." %}</div>
-            <div style="font-size:12px;color:#999;margin-top:4px;">{% trans "Fetching satellite data and weather..." %}</div>
-        </div>
-        <div id="analyze-result" style="display:none;"></div>
-    </div>
-
-    <!-- Analysis history: latest inline, older in dropdown -->
-    {% if reports_with_vi %}
-    {% with latest=reports_with_vi.0 %}
-    <div class="info-card">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Latest Analysis" %}</div>
-        {% with r=latest.report vi=latest.vi %}
-        <div class="analysis-item">
-            <div class="analysis-vi-img">
-                {% if vi and vi.image %}
-                <img src="{{ vi.image.url }}" alt="NDVI"
-                     style="padding:8px;box-sizing:border-box;object-fit:contain;background:#f8f9fa;"
-                     onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
-                {% else %}
-                <div style="width:130px;height:100px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
-                {% endif %}
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">
+                {% trans "Analyzes plot condition using GPS location, latest NDVI/NDMI vegetation indices, current weather, and recent irrigation water. If a problem is detected, improvement suggestions are provided and a system report is created for the admin." %}
+            </p>
+            <div id="analyze-loading" class="analyze-loading-box">
+                <div class="analyze-spinner big-spinner" style="display:block;"></div>
+                <div>{% trans "Analyzing plot condition..." %}</div>
+                <div style="font-size:12px;color:#999;margin-top:4px;">{% trans "Fetching satellite data and weather..." %}</div>
             </div>
-            <div class="analysis-body">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                    <span class="score-badge" style="background:{% if r.health_score >= 70 %}#27ae60{% elif r.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">{{ r.health_score|default:"—" }}</span>
-                    <span style="font-size:12px;color:#999;">{{ r.get_created_at_jalali }}</span>
-                </div>
-                <div style="font-size:13px;color:#444;margin-bottom:8px;">{{ r.summary|default:"—" }}</div>
-                {% if r.soil_assessment %}
-                <div class="analysis-scores">
-                    {% with assess=r.soil_assessment %}
-                    <div class="analysis-score-chip">
-                        <span class="chip-val">{{ r.health_score|default:"—" }}</span>
-                        <span class="chip-lbl">{% trans "Health" %}</span>
-                    </div>
-                    {% if vi %}
-                    <div class="analysis-score-chip">
+            <div id="analyze-result" style="display:none;"></div>
+        </div>
+
+        <!-- Analysis history: latest inline, older in dropdown -->
+        {% if reports_with_vi %}
+            {% with latest=reports_with_vi.0 %}
+                <div class="info-card">
+                    <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Latest Analysis" %}</div>
+                    {% with r=latest.report vi=latest.vi %}
+                        <div class="analysis-item">
+                            <div class="analysis-vi-img">
+                                <div class="vi-thumb">
+                                    <span>NDVI</span>
+                                    {% if vi and vi.image %}
+                                        <img src="{{ vi.image.url }}" alt="NDVI"
+                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                    {% else %}
+                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="vi-thumb">
+                                    <span>{% trans "Satellite" %}</span>
+                                    {% if vi and vi.satellite_image %}
+                                        <img src="{{ vi.satellite_image.url }}" alt="{% trans "Satellite" %}"
+                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                    {% else %}
+                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="vi-thumb">
+                                    <span>NDMI</span>
+                                    {% if vi and vi.moisture_image %}
+                                        <img src="{{ vi.moisture_image.url }}" alt="NDMI"
+                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                    {% else %}
+                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="analysis-body">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                    <span class="score-badge"
+                                          style="background:{% if r.health_score >= 70 %}#27ae60{% elif r.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">{{ r.health_score|default:"—" }}</span>
+                                    <span style="font-size:12px;color:#999;">{{ r.get_created_at_jalali }}</span>
+                                </div>
+                                <div style="font-size:13px;color:#444;margin-bottom:8px;">{{ r.summary|default:"—" }}</div>
+                                {% if r.soil_assessment %}
+                                    <div class="analysis-scores">
+                                        {% with assess=r.soil_assessment %}
+                                            <div class="analysis-score-chip">
+                                                <span class="chip-val">{{ r.health_score|default:"—" }}</span>
+                                                <span class="chip-lbl">{% trans "Health" %}</span>
+                                            </div>
+                                            {% if vi %}
+                                                <div class="analysis-score-chip">
                         <span class="chip-val" style="color:#15803d;">
                             {% if vi.ndvi is not None %}{{ vi.ndvi }}{% else %}—{% endif %}
                         </span>
-                        <span class="chip-lbl">NDVI 💚 {% if latest.ndvi_score is not None %}<b style="color:#15803d;">{{ latest.ndvi_score }}%</b>{% endif %}</span>
-                    </div>
-                    <div class="analysis-score-chip moisture">
+                                                    <span class="chip-lbl">NDVI 💚 {% if latest.ndvi_score is not None %}
+                                                        <b style="color:#15803d;">{{ latest.ndvi_score }}%</b>{% endif %}</span>
+                                                </div>
+                                                <div class="analysis-score-chip moisture">
                         <span class="chip-val">
                             {% if vi.ndmi is not None %}{{ vi.ndmi }}{% else %}—{% endif %}
                         </span>
-                        <span class="chip-lbl">NDMI 💧 {% if latest.ndmi_score is not None %}<b style="color:#1d4ed8;">{{ latest.ndmi_score }}%</b>{% endif %}</span>
-                    </div>
-                    {% endif %}
-                    {% endwith %}
-                </div>
-                {% endif %}
-                {% if r.risks %}
-                <div style="margin-top:8px;">
-                    {% for risk in r.risks %}
-                    <div style="margin-bottom:5px;">
+                                                    <span class="chip-lbl">NDMI 💧 {% if latest.ndmi_score is not None %}
+                                                        <b style="color:#1d4ed8;">{{ latest.ndmi_score }}%</b>{% endif %}</span>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                {% endif %}
+                                {% if r.risks %}
+                                    <div style="margin-top:8px;">
+                                        {% for risk in r.risks %}
+                                            <div style="margin-bottom:5px;">
                         <span class="problem-tag {% if risk.severity == 'high' %}high{% elif risk.severity == 'medium' %}medium{% else %}low{% endif %}">
                             {% if risk.severity == 'high' %}🔴{% elif risk.severity == 'medium' %}🟡{% else %}🔵{% endif %}
                             {{ risk.title }}
                         </span>
-                        {% if risk.description %}
-                        <div class="problem-detail">{{ risk.description }}</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                                                {% if risk.description %}
+                                                    <div class="problem-detail">{{ risk.description }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endwith %}
                 </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endwith %}
-    </div>
-    {% endwith %}
+            {% endwith %}
 
-    {% if reports_with_vi|length > 1 %}
-    <div class="info-card" style="padding:0;">
-        <details>
-        <summary style="cursor:pointer;padding:16px 24px;font-weight:bold;font-size:16px;color:#1a1a2e;list-style:none;display:flex;justify-content:space-between;align-items:center;">
-            <span>{% trans "Analysis History" %} <span style="font-size:13px;font-weight:400;color:#888;">({{ reports_with_vi|length|add:"-1" }})</span></span>
-            <span style="font-size:18px;color:#aaa;">▾</span>
-        </summary>
-        <div style="padding:0 24px 16px;">
-        {% for item in reports_with_vi %}
-        {% if not forloop.first %}
-        {% with r=item.report vi=item.vi %}
-        <div class="analysis-item">
-            <div class="analysis-vi-img">
-                {% if vi and vi.image %}
-                <img src="{{ vi.image.url }}" alt="NDVI"
-                     style="padding:8px;box-sizing:border-box;object-fit:contain;background:#f8f9fa;"
-                     onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
-                {% else %}
-                <div style="width:130px;height:100px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
-                {% endif %}
-            </div>
-            <div class="analysis-body">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                    <span class="score-badge" style="background:{% if r.health_score >= 70 %}#27ae60{% elif r.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">{{ r.health_score|default:"—" }}</span>
-                    <span style="font-size:12px;color:#999;">{{ r.get_created_at_jalali }}</span>
-                </div>
-                <div style="font-size:13px;color:#444;margin-bottom:8px;">{{ r.summary|default:"—" }}</div>
-                {% if r.soil_assessment %}
-                <div class="analysis-scores">
-                    {% with assess=r.soil_assessment %}
-                    <div class="analysis-score-chip">
-                        <span class="chip-val">{{ r.health_score|default:"—" }}</span>
-                        <span class="chip-lbl">{% trans "Health" %}</span>
-                    </div>
-                    {% if vi %}
-                    <div class="analysis-score-chip">
+            {% if reports_with_vi|length > 1 %}
+                <div class="info-card" style="padding:0;">
+                    <details>
+                        <summary
+                                style="cursor:pointer;padding:16px 24px;font-weight:bold;font-size:16px;color:#1a1a2e;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+                            <span>{% trans "Analysis History" %} <span
+                                    style="font-size:13px;font-weight:400;color:#888;">({{ reports_with_vi|length|add:"-1" }})</span></span>
+                            <span style="font-size:18px;color:#aaa;">▾</span>
+                        </summary>
+                        <div style="padding:0 24px 16px;">
+                            {% for item in reports_with_vi %}
+                                {% if not forloop.first %}
+                                    {% with r=item.report vi=item.vi %}
+                                        <div class="analysis-item">
+                                            <div class="analysis-vi-img">
+                                                <div class="vi-thumb">
+                                                    <span>NDVI</span>
+                                                    {% if vi and vi.image %}
+                                                        <img src="{{ vi.image.url }}" alt="NDVI"
+                                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                                    {% else %}
+                                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="vi-thumb">
+                                                    <span>{% trans "Satellite" %}</span>
+                                                    {% if vi and vi.satellite_image %}
+                                                        <img src="{{ vi.satellite_image.url }}"
+                                                             alt="{% trans "Satellite" %}"
+                                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                                    {% else %}
+                                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="vi-thumb">
+                                                    <span>NDMI</span>
+                                                    {% if vi and vi.moisture_image %}
+                                                        <img src="{{ vi.moisture_image.url }}" alt="NDMI"
+                                                             onclick="document.getElementById('lightbox-img').src=this.src;document.getElementById('lightbox-overlay').classList.add('active');">
+                                                    {% else %}
+                                                        <div style="width:120px;height:90px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:11px;">{% trans "No image" %}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="analysis-body">
+                                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                                                    <span class="score-badge"
+                                                          style="background:{% if r.health_score >= 70 %}#27ae60{% elif r.health_score >= 40 %}#f39c12{% else %}#e74c3c{% endif %};">{{ r.health_score|default:"—" }}</span>
+                                                    <span style="font-size:12px;color:#999;">{{ r.get_created_at_jalali }}</span>
+                                                </div>
+                                                <div style="font-size:13px;color:#444;margin-bottom:8px;">{{ r.summary|default:"—" }}</div>
+                                                {% if r.soil_assessment %}
+                                                    <div class="analysis-scores">
+                                                        {% with assess=r.soil_assessment %}
+                                                            <div class="analysis-score-chip">
+                                                                <span class="chip-val">{{ r.health_score|default:"—" }}</span>
+                                                                <span class="chip-lbl">{% trans "Health" %}</span>
+                                                            </div>
+                                                            {% if vi %}
+                                                                <div class="analysis-score-chip">
                         <span class="chip-val" style="color:#15803d;">
                             {% if vi.ndvi is not None %}{{ vi.ndvi }}{% else %}—{% endif %}
                         </span>
-                        <span class="chip-lbl">NDVI 💚 {% if item.ndvi_score is not None %}<b style="color:#15803d;">{{ item.ndvi_score }}%</b>{% endif %}</span>
-                    </div>
-                    <div class="analysis-score-chip moisture">
+                                                                    <span class="chip-lbl">NDVI 💚
+                                                                        {% if item.ndvi_score is not None %}
+                                                                            <b style="color:#15803d;">{{ item.ndvi_score }}%</b>{% endif %}</span>
+                                                                </div>
+                                                                <div class="analysis-score-chip moisture">
                         <span class="chip-val">
                             {% if vi.ndmi is not None %}{{ vi.ndmi }}{% else %}—{% endif %}
                         </span>
-                        <span class="chip-lbl">NDMI 💧 {% if item.ndmi_score is not None %}<b style="color:#1d4ed8;">{{ item.ndmi_score }}%</b>{% endif %}</span>
-                    </div>
-                    {% endif %}
-                    {% endwith %}
-                </div>
-                {% endif %}
-                {% if r.risks %}
-                <div style="margin-top:8px;">
-                    {% for risk in r.risks %}
-                    <div style="margin-bottom:5px;">
+                                                                    <span class="chip-lbl">NDMI 💧
+                                                                        {% if item.ndmi_score is not None %}
+                                                                            <b style="color:#1d4ed8;">{{ item.ndmi_score }}%</b>{% endif %}</span>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </div>
+                                                {% endif %}
+                                                {% if r.risks %}
+                                                    <div style="margin-top:8px;">
+                                                        {% for risk in r.risks %}
+                                                            <div style="margin-bottom:5px;">
                         <span class="problem-tag {% if risk.severity == 'high' %}high{% elif risk.severity == 'medium' %}medium{% else %}low{% endif %}">
                             {% if risk.severity == 'high' %}🔴{% elif risk.severity == 'medium' %}🟡{% else %}🔵{% endif %}
                             {{ risk.title }}
                         </span>
-                        {% if risk.description %}
-                        <div class="problem-detail">{{ risk.description }}</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                                                                {% if risk.description %}
+                                                                    <div class="problem-detail">{{ risk.description }}</div>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endwith %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </details>
                 </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endwith %}
+            {% endif %}
         {% endif %}
-        {% endfor %}
-        </div>
-        </details>
-    </div>
-    {% endif %}
-    {% endif %}
 
-    <!-- Boundary Edit -->
-    <div class="info-card" style="margin-top:20px;">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Map Boundary Edit" %}</div>
-        <p style="color:#666;font-size:13px;margin-bottom:12px;">
-            {% trans "Click on the map to add boundary points. Points can be dragged to reposition." %}
-        </p>
-        <form method="post" action="{% url 'public:plot_boundary_update' plot.id %}" id="boundary-form">
-            {% csrf_token %}
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-                <button type="button" id="bd-undo" class="btn btn-sm" style="background:#f39c12;color:#fff;border-radius:8px;">↩ {% trans "Remove last point" %}</button>
-                <button type="button" id="bd-clear" class="btn btn-sm" style="background:#e74c3c;color:#fff;border-radius:8px;">🗑 {% trans "Clear all" %}</button>
-                <button type="button" id="bd-locate" class="btn btn-sm" style="background:#6c757d;color:#fff;border-radius:8px;">📍 {% trans "My location" %}</button>
-                <span style="margin-right:auto;font-size:12px;color:#666;align-self:center;">{% trans "Points" %}: <strong id="bd-cnt">0</strong></span>
+        <!-- Boundary Edit -->
+        <div class="info-card" style="margin-top:20px;">
+            <div style="font-weight:bold;font-size:16px;margin-bottom:12px;color:#1a1a2e;">{% trans "Map Boundary Edit" %}</div>
+            <p style="color:#666;font-size:13px;margin-bottom:12px;">
+                {% trans "Click on the map to add boundary points. Points can be dragged to reposition." %}
+            </p>
+            <form method="post" action="{% url 'public:plot_boundary_update' plot.id %}" id="boundary-form">
+                {% csrf_token %}
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                    <button type="button" id="bd-undo" class="btn btn-sm"
+                            style="background:#f39c12;color:#fff;border-radius:8px;">
+                        ↩ {% trans "Remove last point" %}</button>
+                    <button type="button" id="bd-clear" class="btn btn-sm"
+                            style="background:#e74c3c;color:#fff;border-radius:8px;">🗑 {% trans "Clear all" %}</button>
+                    <button type="button" id="bd-locate" class="btn btn-sm"
+                            style="background:#6c757d;color:#fff;border-radius:8px;">
+                        📍 {% trans "My location" %}</button>
+                    <span style="margin-right:auto;font-size:12px;color:#666;align-self:center;">{% trans "Points" %}: <strong
+                            id="bd-cnt">0</strong></span>
+                </div>
+                <div class="aq-overlay-toggle" id="overlay-toggle" style="display:none;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                    <span style="font-size:12px;color:#666;font-weight:600;">{% trans "Overlay" %}:</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-overlay="none">{% trans "None" %}</button>
+                    <button type="button" class="btn btn-sm btn-outline-success" data-overlay="ndvi">🌿 NDVI</button>
+                    <button type="button" class="btn btn-sm btn-outline-info" data-overlay="ndmi">💧 NDMI</button>
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-overlay="satellite">🛰️ {% trans "Satellite" %}</button>
+                </div>
+                <div id="boundary-map" style="height:420px;border-radius:10px;border:1px solid #ddd;"></div>
+                {{ plot.boundary|json_script:"plot-boundary-initial" }}
+                {% if ndvi_image_url %}{{ ndvi_image_url|json_script:"ndvi-image-url" }}{% endif %}
+                {% if ndmi_image_url %}{{ ndmi_image_url|json_script:"ndmi-image-url" }}{% endif %}
+                {% if satellite_image_url %}{{ satellite_image_url|json_script:"satellite-image-url" }}{% endif %}
+                {% if ndvi_bounds %}{{ ndvi_bounds|json_script:"ndvi-bounds" }}{% endif %}
+                <input type="hidden" name="boundary" id="boundary-input" value="">
+                <div style="margin-top:12px;">
+                    <button type="submit" class="btn btn-success"
+                            style="border-radius:8px;">{% trans "Save boundary" %}</button>
+                </div>
+            </form>
+        </div>
+
+        {% if leaf_analysis_enabled %}
+            <!-- Leaf Analysis -->
+            <div class="info-card" style="margin-top:20px;">
+                <div style="font-weight:bold;font-size:16px;margin-bottom:16px;color:#1a1a2e;">
+                    {% trans "Leaf Analysis (AI)" %}
+                </div>
+                <div id="leaf-upload-area"
+                     data-upload-url="{% url 'public:plot_leaf_upload' plot.id %}"
+                     style="border:2px dashed #ccc;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:border-color .2s;"
+                     ondragover="event.preventDefault();"
+                     ondrop="handleLeafDrop(event);"
+                     onclick="document.getElementById('leaf-file-input').click()">
+                    <div style="font-size:32px;margin-bottom:8px;">🍃</div>
+                    <div style="color:#888;font-size:14px;">{% trans "Drag a leaf image here or click to upload" %}</div>
+                    <input id="leaf-file-input" type="file" accept="image/*" style="display:none;"
+                           onchange="uploadLeafImage(this.files[0])">
+                </div>
+                <div id="leaf-loading"
+                     style="display:none;text-align:center;padding:20px;color:#888;">{% trans "Analyzing image... please wait" %}</div>
+                <div id="leaf-result" style="display:none;margin-top:16px;"></div>
+                <div style="margin-top:12px;">
+                    <a href="{% url 'public:plot_leaf_list' plot.id %}"
+                       style="font-size:13px;color:#1a73e8;">{% trans "View analysis history" %} ›</a>
+                </div>
             </div>
-            <div id="boundary-map" style="height:420px;border-radius:10px;border:1px solid #ddd;"></div>
-            {{ plot.boundary|json_script:"plot-boundary-initial" }}
-            {% if ndvi_image_url %}{{ ndvi_image_url|json_script:"ndvi-image-url" }}{% endif %}
-            {% if ndvi_bounds %}{{ ndvi_bounds|json_script:"ndvi-bounds" }}{% endif %}
-            <input type="hidden" name="boundary" id="boundary-input" value="">
-            <div style="margin-top:12px;">
-                <button type="submit" class="btn btn-success" style="border-radius:8px;">{% trans "Save boundary" %}</button>
-            </div>
-        </form>
-    </div>
+        {% endif %}
 
-    {% if leaf_analysis_enabled %}
-    <!-- Leaf Analysis -->
-    <div class="info-card" style="margin-top:20px;">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:16px;color:#1a1a2e;">
-            {% trans "Leaf Analysis (AI)" %}
-        </div>
-        <div id="leaf-upload-area"
-             data-upload-url="{% url 'public:plot_leaf_upload' plot.id %}"
-             style="border:2px dashed #ccc;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:border-color .2s;"
-             ondragover="event.preventDefault();"
-             ondrop="handleLeafDrop(event);"
-             onclick="document.getElementById('leaf-file-input').click()">
-            <div style="font-size:32px;margin-bottom:8px;">🍃</div>
-            <div style="color:#888;font-size:14px;">{% trans "Drag a leaf image here or click to upload" %}</div>
-            <input id="leaf-file-input" type="file" accept="image/*" style="display:none;" onchange="uploadLeafImage(this.files[0])">
-        </div>
-        <div id="leaf-loading" style="display:none;text-align:center;padding:20px;color:#888;">{% trans "Analyzing image... please wait" %}</div>
-        <div id="leaf-result" style="display:none;margin-top:16px;"></div>
-        <div style="margin-top:12px;">
-            <a href="{% url 'public:plot_leaf_list' plot.id %}" style="font-size:13px;color:#1a73e8;">{% trans "View analysis history" %} ›</a>
-        </div>
     </div>
-    {% endif %}
-
-</div>
 {% endblock %}
 
 {% block Script %}
-<script>
-(function() {
-    let initial = [];
-    try { initial = JSON.parse(document.getElementById('plot-boundary-initial').textContent) || []; } catch (e) { initial = []; }
-    const center = initial.length ? [initial[0][0], initial[0][1]] : [35.6892, 51.3890];
-    const map = L.map('boundary-map').setView(center, initial.length ? 16 : 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-
-    try {
-        const ndviUrlEl = document.getElementById('ndvi-image-url');
-        const ndviBoundsEl = document.getElementById('ndvi-bounds');
-        if (ndviUrlEl && ndviBoundsEl) {
-            const ndviUrl = JSON.parse(ndviUrlEl.textContent);
-            const ndviBounds = JSON.parse(ndviBoundsEl.textContent);
-            if (ndviUrl && ndviBounds) {
-                L.imageOverlay(ndviUrl, ndviBounds, { opacity: 0.9 }).addTo(map);
+    <script>
+        (function () {
+            let initial = [];
+            try {
+                initial = JSON.parse(document.getElementById('plot-boundary-initial').textContent) || [];
+            } catch (e) {
+                initial = [];
             }
-        }
-    } catch (e) {}
+            const center = initial.length ? [initial[0][0], initial[0][1]] : [35.6892, 51.3890];
+            const map = L.map('boundary-map').setView(center, initial.length ? 16 : 6);
+            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            });
+            const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: '© Esri'
+            });
+            const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '© Google',
+                subdomains: ['0', '1', '2', '3']
+            });
+            const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '© CartoDB'
+            });
+            streetLayer.addTo(map);
+            labelsLayer.addTo(map);
+            L.control.layers(
+                {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
+                {'نام شهرها و مناطق': labelsLayer}
+            ).addTo(map);
 
-    let points = initial.slice();
-    const markers = [];
-    let poly = null;
-    const input = document.getElementById('boundary-input');
-    const cnt = document.getElementById('bd-cnt');
-    function sync() { input.value = JSON.stringify(points); cnt.textContent = points.length; }
-    function redraw() {
-        markers.forEach(m => map.removeLayer(m));
-        markers.length = 0;
-        if (poly) { map.removeLayer(poly); poly = null; }
-        points.forEach((p, idx) => {
-            const m = L.marker(p, { draggable: true }).addTo(map);
-            m.bindTooltip(String(idx + 1), { permanent: true, direction: 'top', offset: [0, -10] });
-            m.on('dragend', (e) => { const ll = e.target.getLatLng(); points[idx] = [ll.lat, ll.lng]; sync(); redraw(); });
-            markers.push(m);
-        });
-        if (points.length >= 3) poly = L.polygon(points, { color: '#27ae60', weight: 2, fillOpacity: 0.15 }).addTo(map);
-        else if (points.length === 2) poly = L.polyline(points, { color: '#27ae60', weight: 2 }).addTo(map);
-    }
-    map.on('click', (e) => { points.push([e.latlng.lat, e.latlng.lng]); sync(); redraw(); });
-    document.getElementById('bd-undo').addEventListener('click', () => { points.pop(); sync(); redraw(); });
-    document.getElementById('bd-clear').addEventListener('click', () => { points = []; sync(); redraw(); });
-    document.getElementById('bd-locate').addEventListener('click', () => {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition((pos) => { map.setView([pos.coords.latitude, pos.coords.longitude], 17); });
-    });
-    if (initial.length) map.fitBounds(L.latLngBounds(initial), { padding: [30, 30] });
-    sync();
-    redraw();
-})();
+            const overlayUrls = {};
+            try {
+                const ndviEl = document.getElementById('ndvi-image-url');
+                if (ndviEl) overlayUrls.ndvi = JSON.parse(ndviEl.textContent);
+            } catch (e) {}
+            try {
+                const ndmiEl = document.getElementById('ndmi-image-url');
+                if (ndmiEl) overlayUrls.ndmi = JSON.parse(ndmiEl.textContent);
+            } catch (e) {}
+            try {
+                const satEl = document.getElementById('satellite-image-url');
+                if (satEl) overlayUrls.satellite = JSON.parse(satEl.textContent);
+            } catch (e) {}
+            let overlayBounds = null;
+            try {
+                const boundsEl = document.getElementById('ndvi-bounds');
+                if (boundsEl) overlayBounds = JSON.parse(boundsEl.textContent);
+            } catch (e) {}
 
-function handleLeafDrop(e) {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) uploadLeafImage(file);
-}
-
-function uploadLeafImage(file) {
-    if (!file) return;
-    const fd = new FormData();
-    fd.append('image', file);
-    const uploadUrl = document.getElementById('leaf-upload-area').dataset.uploadUrl;
-    document.getElementById('leaf-loading').style.display = 'block';
-    document.getElementById('leaf-result').style.display = 'none';
-    document.getElementById('leaf-upload-area').style.borderColor = '#1a73e8';
-    fetch(uploadUrl, {
-        method: 'POST',
-        headers: {'X-CSRFToken': CSRF_TOKEN},
-        body: fd,
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById('leaf-loading').style.display = 'none';
-        document.getElementById('leaf-upload-area').style.borderColor = '#ccc';
-        const el = document.getElementById('leaf-result');
-        if (data.success) {
-            el.innerHTML = '<div style="background:#e8f5e9;color:#1b5e20;border-radius:8px;padding:12px;">{% trans "Image queued for analysis. Result will appear in history after processing." %}</div>';
-            el.style.display = 'block';
-        } else {
-            el.innerHTML = '<div style="color:#e74c3c;padding:12px;">' + data.error + '</div>';
-            el.style.display = 'block';
-        }
-    })
-    .catch(() => {
-        document.getElementById('leaf-loading').style.display = 'none';
-        document.getElementById('leaf-result').innerHTML = '<div style="color:#e74c3c;padding:12px;">{% trans "Request failed" %}</div>';
-        document.getElementById('leaf-result').style.display = 'block';
-    });
-}
-
-var _analysisInFlight = false;
-
-function runPlotAnalysis() {
-    if (_analysisInFlight) return;
-    _analysisInFlight = true;
-
-    const card = document.querySelector('[data-analyze-url]');
-    const analyzeUrl = card.dataset.analyzeUrl;
-    const statusUrlTpl = card.dataset.statusUrl;
-    const btn = document.getElementById('analyze-btn');
-    const loading = document.getElementById('analyze-loading');
-    const result = document.getElementById('analyze-result');
-    const oldText = btn.textContent;
-    btn.disabled = true;
-    btn.innerHTML = 'در حال انجام... <span class="analyze-spinner"></span>';
-    loading.style.display = 'block';
-    result.style.display = 'none';
-
-    function done() {
-        _analysisInFlight = false;
-        btn.disabled = false;
-        btn.textContent = oldText;
-        loading.style.display = 'none';
-    }
-
-    function fail(msg) {
-        done();
-        result.innerHTML = '<div style="background:#ffebee;color:#b71c1c;border-radius:8px;padding:12px;">' + msg + '</div>';
-        result.style.display = 'block';
-    }
-
-    fetch(analyzeUrl, {
-        method: 'POST',
-        headers: {'X-CSRFToken': CSRF_TOKEN},
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (!d.success) { fail(d.error || '{% trans "Request failed" %}'); return; }
-        const statusUrl = statusUrlTpl.replace('TASK_ID', d.task_id);
-        let pollCount = 0;
-        const MAX_POLLS = 60;
-        const poll = setInterval(function() {
-            pollCount++;
-            if (pollCount > MAX_POLLS) {
-                clearInterval(poll);
-                fail('{% trans "Analysis timed out. Please try again." %}');
-                return;
+            let activeOverlay = null;
+            function setOverlay(kind) {
+                if (activeOverlay) {
+                    map.removeLayer(activeOverlay);
+                    activeOverlay = null;
+                }
+                if (kind && kind !== 'none' && overlayUrls[kind] && overlayBounds) {
+                    activeOverlay = L.imageOverlay(overlayUrls[kind], overlayBounds, {opacity: 0.9}).addTo(map);
+                }
+                document.querySelectorAll('#overlay-toggle [data-overlay]').forEach(function (b) {
+                    b.classList.toggle('active', b.dataset.overlay === kind);
+                });
             }
-            fetch(statusUrl)
+
+            const toggleEl = document.getElementById('overlay-toggle');
+            const hasAnyOverlay = overlayBounds && (overlayUrls.ndvi || overlayUrls.ndmi || overlayUrls.satellite);
+            if (toggleEl && hasAnyOverlay) {
+                toggleEl.style.display = 'flex';
+                toggleEl.querySelectorAll('[data-overlay]').forEach(function (btn) {
+                    btn.addEventListener('click', function () { setOverlay(btn.dataset.overlay); });
+                });
+                const defaultKind = overlayUrls.ndvi ? 'ndvi' : (overlayUrls.ndmi ? 'ndmi' : 'satellite');
+                setOverlay(defaultKind);
+            }
+
+            let points = initial.slice();
+            const markers = [];
+            let poly = null;
+            const input = document.getElementById('boundary-input');
+            const cnt = document.getElementById('bd-cnt');
+
+            function sync() {
+                input.value = JSON.stringify(points);
+                cnt.textContent = points.length;
+            }
+
+            function redraw() {
+                markers.forEach(m => map.removeLayer(m));
+                markers.length = 0;
+                if (poly) {
+                    map.removeLayer(poly);
+                    poly = null;
+                }
+                points.forEach((p, idx) => {
+                    const m = L.marker(p, {draggable: true}).addTo(map);
+                    m.bindTooltip(String(idx + 1), {permanent: true, direction: 'top', offset: [0, -10]});
+                    m.on('dragend', (e) => {
+                        const ll = e.target.getLatLng();
+                        points[idx] = [ll.lat, ll.lng];
+                        sync();
+                        redraw();
+                    });
+                    markers.push(m);
+                });
+                if (points.length >= 3) poly = L.polygon(points, {
+                    color: '#27ae60',
+                    weight: 2,
+                    fillOpacity: 0.15
+                }).addTo(map);
+                else if (points.length === 2) poly = L.polyline(points, {color: '#27ae60', weight: 2}).addTo(map);
+            }
+
+            map.on('click', (e) => {
+                points.push([e.latlng.lat, e.latlng.lng]);
+                sync();
+                redraw();
+            });
+            document.getElementById('bd-undo').addEventListener('click', () => {
+                points.pop();
+                sync();
+                redraw();
+            });
+            document.getElementById('bd-clear').addEventListener('click', () => {
+                points = [];
+                sync();
+                redraw();
+            });
+            document.getElementById('bd-locate').addEventListener('click', () => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 17);
+                });
+            });
+            if (initial.length) map.fitBounds(L.latLngBounds(initial), {padding: [30, 30]});
+            sync();
+            redraw();
+        })();
+
+        function handleLeafDrop(e) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) uploadLeafImage(file);
+        }
+
+        function uploadLeafImage(file) {
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('image', file);
+            const uploadUrl = document.getElementById('leaf-upload-area').dataset.uploadUrl;
+            document.getElementById('leaf-loading').style.display = 'block';
+            document.getElementById('leaf-result').style.display = 'none';
+            document.getElementById('leaf-upload-area').style.borderColor = '#1a73e8';
+            fetch(uploadUrl, {
+                method: 'POST',
+                headers: {'X-CSRFToken': CSRF_TOKEN},
+                body: fd,
+            })
                 .then(r => r.json())
-                .then(s => {
-                    if (s.status !== 'done') return;
-                    clearInterval(poll);
-                    done();
-                    if (s.success && s.result) {
-                        renderAnalysis(s.result);
+                .then(data => {
+                    document.getElementById('leaf-loading').style.display = 'none';
+                    document.getElementById('leaf-upload-area').style.borderColor = '#ccc';
+                    const el = document.getElementById('leaf-result');
+                    if (data.success) {
+                        el.innerHTML = '<div style="background:#e8f5e9;color:#1b5e20;border-radius:8px;padding:12px;">{% trans "Image queued for analysis. Result will appear in history after processing." %}</div>';
+                        el.style.display = 'block';
                     } else {
-                        fail('{% trans "Analysis failed" %}');
+                        el.innerHTML = '<div style="color:#e74c3c;padding:12px;">' + data.error + '</div>';
+                        el.style.display = 'block';
                     }
                 })
-                .catch(() => {});
-        }, 2000);
-    })
-    .catch(() => fail('{% trans "Request failed" %}'));
-}
+                .catch(() => {
+                    document.getElementById('leaf-loading').style.display = 'none';
+                    document.getElementById('leaf-result').innerHTML = '<div style="color:#e74c3c;padding:12px;">{% trans "Request failed" %}</div>';
+                    document.getElementById('leaf-result').style.display = 'block';
+                });
+        }
 
-function renderAnalysis(r) {
-    const result = document.getElementById('analyze-result');
-    const score = (r.health_score == null) ? '—' : r.health_score;
-    const color = (r.health_score >= 70) ? '#27ae60' : (r.health_score >= 40) ? '#f39c12' : '#e74c3c';
-    let html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
-    html += '<span style="flex:0 0 auto;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;background:' + color + ';">' + score + '</span>';
-    html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;">{% trans "Health Score" %}</div><div style="font-size:13px;color:#666;">' + (r.summary || '') + '</div></div></div>';
+        var _analysisInFlight = false;
 
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px;font-size:13px;">';
-    html += '<div><span style="color:#888;">{% trans "Greenness score" %}</span><div style="font-size:20px;font-weight:800;color:#27ae60;">' + (r.greenness_score == null ? '—' : r.greenness_score + '%') + '</div><div class="index-hint">{% trans "derived from NDVI" %}</div></div>';
-    html += '<div><span style="color:#888;">{% trans "Moisture score" %}</span><div style="font-size:20px;font-weight:800;color:#3498db;">' + (r.moisture_score == null ? '—' : r.moisture_score + '%') + '</div><div class="index-hint">{% trans "derived from NDMI" %}</div></div>';
-    html += '<div><span style="color:#888;">NDVI</span><div>' + (r.ndvi == null ? '—' : r.ndvi) + '</div><div class="index-hint">{% trans "raw (-1 to 1)" %}</div></div>';
-    html += '<div><span style="color:#888;">NDMI</span><div>' + (r.ndmi == null ? '—' : r.ndmi) + '</div><div class="index-hint">{% trans "raw (-1 to 1)" %}</div></div>';
-    if (r.water_m3 != null) {
-        html += '<div><span style="color:#888;">{% trans "Water this run" %}</span><div style="font-weight:bold;color:#1a73e8;">' + r.water_m3 + ' m³</div></div>';
-    }
-    html += '</div>';
+        function runPlotAnalysis() {
+            if (_analysisInFlight) return;
+            _analysisInFlight = true;
 
-    if (r.problems && r.problems.length) {
-        html += '<div style="font-weight:600;margin-bottom:6px;">{% trans "Problems" %}</div>';
-        r.problems.forEach(function(p) {
-            const sev = p.severity === 'high' ? '#e74c3c' : (p.severity === 'medium' ? '#f39c12' : '#888');
-            html += '<div style="border-right:3px solid ' + sev + ';padding:6px 10px;margin-bottom:8px;background:#fafafa;border-radius:6px;font-size:13px;">';
-            html += '<strong>' + (p.title || '') + '</strong>';
-            if (p.description) html += '<div style="font-size:12px;color:#666;margin-top:3px;">' + p.description + '</div>';
+            const card = document.querySelector('[data-analyze-url]');
+            const analyzeUrl = card.dataset.analyzeUrl;
+            const statusUrlTpl = card.dataset.statusUrl;
+            const btn = document.getElementById('analyze-btn');
+            const loading = document.getElementById('analyze-loading');
+            const result = document.getElementById('analyze-result');
+            const oldText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = 'در حال انجام... <span class="analyze-spinner"></span>';
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            function done() {
+                _analysisInFlight = false;
+                btn.disabled = false;
+                btn.textContent = oldText;
+                loading.style.display = 'none';
+            }
+
+            function fail(msg) {
+                done();
+                result.innerHTML = '<div style="background:#ffebee;color:#b71c1c;border-radius:8px;padding:12px;">' + msg + '</div>';
+                result.style.display = 'block';
+            }
+
+            fetch(analyzeUrl, {
+                method: 'POST',
+                headers: {'X-CSRFToken': CSRF_TOKEN},
+            })
+                .then(r => r.json())
+                .then(d => {
+                    if (!d.success) {
+                        fail(d.error || '{% trans "Request failed" %}');
+                        return;
+                    }
+                    const statusUrl = statusUrlTpl.replace('TASK_ID', d.task_id);
+                    let pollCount = 0;
+                    const MAX_POLLS = 60;
+                    const poll = setInterval(function () {
+                        pollCount++;
+                        if (pollCount > MAX_POLLS) {
+                            clearInterval(poll);
+                            fail('{% trans "Analysis timed out. Please try again." %}');
+                            return;
+                        }
+                        fetch(statusUrl)
+                            .then(r => r.json())
+                            .then(s => {
+                                if (s.status !== 'done') return;
+                                clearInterval(poll);
+                                done();
+                                if (s.success && s.result) {
+                                    renderAnalysis(s.result);
+                                } else {
+                                    fail('{% trans "Analysis failed" %}');
+                                }
+                            })
+                            .catch(() => {
+                            });
+                    }, 2000);
+                })
+                .catch(() => fail('{% trans "Request failed" %}'));
+        }
+
+        function renderAnalysis(r) {
+            const result = document.getElementById('analyze-result');
+            const score = (r.health_score == null) ? '—' : r.health_score;
+            const color = (r.health_score >= 70) ? '#27ae60' : (r.health_score >= 40) ? '#f39c12' : '#e74c3c';
+            let html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">';
+            html += '<span style="flex:0 0 auto;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;background:' + color + ';">' + score + '</span>';
+            html += '<div style="flex:1;min-width:0;"><div style="font-weight:600;">{% trans "Health Score" %}</div><div style="font-size:13px;color:#666;">' + (r.summary || '') + '</div></div></div>';
+
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px;font-size:13px;">';
+            html += '<div><span style="color:#888;">{% trans "Greenness score" %}</span><div style="font-size:20px;font-weight:800;color:#27ae60;">' + (r.greenness_score == null ? '—' : r.greenness_score + '%') + '</div><div class="index-hint">{% trans "derived from NDVI" %}</div></div>';
+            html += '<div><span style="color:#888;">{% trans "Moisture score" %}</span><div style="font-size:20px;font-weight:800;color:#3498db;">' + (r.moisture_score == null ? '—' : r.moisture_score + '%') + '</div><div class="index-hint">{% trans "derived from NDMI" %}</div></div>';
+            html += '<div><span style="color:#888;">NDVI</span><div>' + (r.ndvi == null ? '—' : r.ndvi) + '</div><div class="index-hint">{% trans "raw (-1 to 1)" %}</div></div>';
+            html += '<div><span style="color:#888;">NDMI</span><div>' + (r.ndmi == null ? '—' : r.ndmi) + '</div><div class="index-hint">{% trans "raw (-1 to 1)" %}</div></div>';
+            if (r.water_m3 != null) {
+                html += '<div><span style="color:#888;">{% trans "Water this run" %}</span><div style="font-weight:bold;color:#1a73e8;">' + r.water_m3 + ' m³</div></div>';
+            }
             html += '</div>';
-        });
-    }
 
-    if (r.suggestions && r.suggestions.length) {
-        html += '<div style="font-weight:600;margin:10px 0 6px;">{% trans "Suggestions" %}</div><ul style="font-size:13px;color:#444;padding-right:18px;margin:0;">';
-        r.suggestions.forEach(function(s) { html += '<li>' + s + '</li>'; });
-        html += '</ul>';
-    }
+            if (r.problems && r.problems.length) {
+                html += '<div style="font-weight:600;margin-bottom:6px;">{% trans "Problems" %}</div>';
+                r.problems.forEach(function (p) {
+                    const sev = p.severity === 'high' ? '#e74c3c' : (p.severity === 'medium' ? '#f39c12' : '#888');
+                    html += '<div style="border-right:3px solid ' + sev + ';padding:6px 10px;margin-bottom:8px;background:#fafafa;border-radius:6px;font-size:13px;">';
+                    html += '<strong>' + (p.title || '') + '</strong>';
+                    if (p.description) html += '<div style="font-size:12px;color:#666;margin-top:3px;">' + p.description + '</div>';
+                    html += '</div>';
+                });
+            }
 
-    if (r.has_problem) {
-        html += '<div style="margin-top:12px;background:#fff3e0;color:#e65100;border-radius:8px;padding:10px 12px;font-size:13px;">⚠ {% trans "Problem detected; system report created for admin." %}</div>';
-    }
+            if (r.suggestions && r.suggestions.length) {
+                html += '<div style="font-weight:600;margin:10px 0 6px;">{% trans "Suggestions" %}</div><ul style="font-size:13px;color:#444;padding-right:18px;margin:0;">';
+                r.suggestions.forEach(function (s) {
+                    html += '<li>' + s + '</li>';
+                });
+                html += '</ul>';
+            }
 
-    result.innerHTML = html;
-    result.style.display = 'block';
-}
+            if (r.has_problem) {
+                html += '<div style="margin-top:12px;background:#fff3e0;color:#e65100;border-radius:8px;padding:10px 12px;font-size:13px;">⚠ {% trans "Problem detected; system report created for admin." %}</div>';
+            }
 
-function fetchPlotWeather() {
-    const card = document.getElementById('plot-weather-card');
-    const url = card.dataset.fetchUrl;
-    const statusUrlTpl = '{% url "public:task_status" "TASK_ID" %}';
-    const btn = document.getElementById('weather-fetch-btn');
-    const status = document.getElementById('weather-fetch-status');
+            result.innerHTML = html;
+            result.style.display = 'block';
+        }
 
-    btn.disabled = true;
-    btn.innerHTML = 'در حال انجام... <span class="analyze-spinner"></span>';
-    status.style.display = 'none';
+        function fetchPlotWeather() {
+            const card = document.getElementById('plot-weather-card');
+            const url = card.dataset.fetchUrl;
+            const statusUrlTpl = '{% url "public:task_status" "TASK_ID" %}';
+            const btn = document.getElementById('weather-fetch-btn');
+            const status = document.getElementById('weather-fetch-status');
 
-    function showStatus(msg, ok) {
-        status.style.cssText = 'display:block;font-size:13px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:' + (ok ? '#e8f5e9;color:#1b5e20' : '#ffebee;color:#b71c1c') + ';';
-        status.textContent = msg;
-    }
+            btn.disabled = true;
+            btn.innerHTML = 'در حال انجام... <span class="analyze-spinner"></span>';
+            status.style.display = 'none';
 
-    function resetBtn() {
-        btn.disabled = false;
-        btn.innerHTML = '⟳ {% trans "Fetch Current Weather" %}';
-    }
+            function showStatus(msg, ok) {
+                status.style.cssText = 'display:block;font-size:13px;margin-bottom:10px;padding:8px 12px;border-radius:8px;background:' + (ok ? '#e8f5e9;color:#1b5e20' : '#ffebee;color:#b71c1c') + ';';
+                status.textContent = msg;
+            }
 
-    function insertWeatherRow(d) {
-        const emptyMsg = document.getElementById('weather-empty-msg');
-        if (emptyMsg) emptyMsg.remove();
+            function resetBtn() {
+                btn.disabled = false;
+                btn.innerHTML = '⟳ {% trans "Fetch Current Weather" %}';
+            }
 
-        let tbody = document.querySelector('#plot-weather-table tbody');
-        if (!tbody) {
-            const hist = document.getElementById('weather-history-list');
-            hist.innerHTML = `<div style="overflow-x:auto;"><table id="plot-weather-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            function insertWeatherRow(d) {
+                const emptyMsg = document.getElementById('weather-empty-msg');
+                if (emptyMsg) emptyMsg.remove();
+
+                let tbody = document.querySelector('#plot-weather-table tbody');
+                if (!tbody) {
+                    const hist = document.getElementById('weather-history-list');
+                    hist.innerHTML = `<div style="overflow-x:auto;"><table id="plot-weather-table" style="width:100%;border-collapse:collapse;font-size:13px;">
 <thead><tr style="background:#f8f9fa;color:#555;">
 <th style="padding:7px 10px;text-align:right;font-weight:600;">{% trans "Date" %}</th>
 <th style="padding:7px 10px;text-align:center;">🌡 {% trans "Temp (°C)" %}</th>
@@ -710,12 +1183,12 @@ function fetchPlotWeather() {
 <th style="padding:7px 10px;text-align:center;">⛅ {% trans "Cloud (%)" %}</th>
 <th style="padding:7px 10px;text-align:center;">{% trans "Source" %}</th>
 </tr></thead><tbody></tbody></table></div>`;
-            tbody = document.querySelector('#plot-weather-table tbody');
-        }
-        const srcBadge = '<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:#1a73e8;color:#fff;">{% trans "Manual" %}</span>';
-        const row = document.createElement('tr');
-        row.style.cssText = 'background:#e8f5e9;font-weight:600;';
-        row.innerHTML = `<td style="padding:7px 10px;direction:ltr;">${d.fetched_at ? d.fetched_at.replace('T',' ').slice(0,16) : '—'}</td>
+                    tbody = document.querySelector('#plot-weather-table tbody');
+                }
+                const srcBadge = '<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:#1a73e8;color:#fff;">{% trans "Manual" %}</span>';
+                const row = document.createElement('tr');
+                row.style.cssText = 'background:#e8f5e9;font-weight:600;';
+                row.innerHTML = `<td style="padding:7px 10px;direction:ltr;">${d.fetched_at ? d.fetched_at.replace('T', ' ').slice(0, 16) : '—'}</td>
 <td style="padding:7px 10px;text-align:center;">${d.temperature_c != null ? d.temperature_c : '—'}</td>
 <td style="padding:7px 10px;text-align:center;">${d.humidity != null ? d.humidity : '—'}</td>
 <td style="padding:7px 10px;text-align:center;">${d.wind_speed != null ? d.wind_speed : '—'}</td>
@@ -724,48 +1197,55 @@ function fetchPlotWeather() {
 <td style="padding:7px 10px;text-align:center;">${d.uv_index != null ? d.uv_index : '—'}</td>
 <td style="padding:7px 10px;text-align:center;">${d.cloud_cover != null ? d.cloud_cover : '—'}</td>
 <td style="padding:7px 10px;text-align:center;">${srcBadge}</td>`;
-        tbody.insertBefore(row, tbody.firstChild);
-        const prev = tbody.querySelector('tr:nth-child(2)');
-        if (prev) { prev.style.background = ''; prev.style.fontWeight = ''; }
-    }
-
-    fetch(url, { method: 'POST', headers: {'X-CSRFToken': CSRF_TOKEN} })
-    .then(r => r.json())
-    .then(function(data) {
-        if (!data.success) {
-            resetBtn();
-            showStatus(data.error || '{% trans "Weather fetch failed." %}', false);
-            return;
-        }
-        btn.innerHTML = '{% trans "Fetching..." %} <span class="analyze-spinner"></span>';
-        const statusUrl = statusUrlTpl.replace('TASK_ID', data.task_id);
-        let polls = 0;
-        const MAX_POLLS = 30;
-        const poll = setInterval(function() {
-            polls++;
-            if (polls > MAX_POLLS) {
-                clearInterval(poll);
-                resetBtn();
-                showStatus('{% trans "Weather fetch timed out. Please try again." %}', false);
-                return;
-            }
-            fetch(statusUrl).then(r => r.json()).then(function(s) {
-                if (s.status !== 'done') return;
-                clearInterval(poll);
-                resetBtn();
-                if (s.success && s.result) {
-                    showStatus('{% trans "Weather fetched successfully." %}', true);
-                    insertWeatherRow(s.result);
-                } else {
-                    showStatus('{% trans "Weather fetch failed. Try again later." %}', false);
+                tbody.insertBefore(row, tbody.firstChild);
+                const prev = tbody.querySelector('tr:nth-child(2)');
+                if (prev) {
+                    prev.style.background = '';
+                    prev.style.fontWeight = '';
                 }
-            }).catch(function() {});
-        }, 2000);
-    })
-    .catch(function() {
-        resetBtn();
-        showStatus('{% trans "Request failed. Check your connection." %}', false);
-    });
-}
-</script>
+            }
+
+            fetch(url, {method: 'POST', headers: {'X-CSRFToken': CSRF_TOKEN}})
+                .then(r => r.json())
+                .then(function (data) {
+                    if (!data.success) {
+                        resetBtn();
+                        showStatus(data.error || '{% trans "Weather fetch failed." %}', false);
+                        return;
+                    }
+                    btn.innerHTML = '{% trans "Fetching..." %} <span class="analyze-spinner"></span>';
+                    const statusUrl = statusUrlTpl.replace('TASK_ID', data.task_id);
+                    let polls = 0;
+                    const MAX_POLLS = 30;
+                    const poll = setInterval(function () {
+                        polls++;
+                        if (polls > MAX_POLLS) {
+                            clearInterval(poll);
+                            resetBtn();
+                            showStatus('{% trans "Weather fetch timed out. Please try again." %}', false);
+                            return;
+                        }
+                        fetch(statusUrl).then(r => r.json()).then(function (s) {
+                            if (s.status !== 'done') return;
+                            clearInterval(poll);
+                            resetBtn();
+                            if (s.success && s.result) {
+                                showStatus('{% trans "Weather fetched successfully." %}', true);
+                                insertWeatherRow(s.result);
+                            } else {
+                                showStatus('{% trans "Weather fetch failed. Try again later." %}', false);
+                            }
+                        }).catch(function () {
+                        });
+                    }, 2000);
+                })
+                .catch(function () {
+                    resetBtn();
+                    showStatus('{% trans "Request failed. Check your connection." %}', false);
+                });
+        }
+
+        // add icon select maps
+        document.querySelector('.leaflet-control-layers-toggle').innerHTML = `🗺️`
+    </script>
 {% endblock %}

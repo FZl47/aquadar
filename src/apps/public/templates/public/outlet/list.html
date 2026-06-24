@@ -1,8 +1,11 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}لیست کیزها{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "کیزها" %}{% endblock %}
 
 {% block Style %}
 <style>

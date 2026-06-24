@@ -1,0 +1,55 @@
+{% load i18n %}
+
+{# Global CRUD modals — included once for supervisors so the sidebar "Add" links work on every page. #}
+
+<div class="modal fade" id="editFarmModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Add Farm" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editFarmForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Pool Size" %}</label><input name="pool_size" type="number" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Discharge Rate" %}</label><input name="discharge_rate" type="number" step="0.01" class="form-control"></div>
+            <div class="mb-2 form-check"><input name="is_active" type="checkbox" class="form-check-input" id="aq_farm_active"><label class="form-check-label" for="aq_farm_active">{% trans "Active" %}</label></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="editZoneModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Add Zone" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editZoneForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Farm" %}</label>
+                <select name="farm" class="form-control">
+                    {% for farm in sidebar_farms %}<option value="{{ farm.pk }}">{{ farm.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="mb-2"><label class="form-label">{% trans "Order" %}</label><input name="order" type="number" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="editOutletModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">{% trans "Add Outlet" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form id="editOutletForm" method="post">{% csrf_token %}
+        <div class="modal-body">
+            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control"></div>
+            <div class="mb-2"><label class="form-label">{% trans "Plot" %}</label>
+                <select name="plot" class="form-control">
+                    {% for plot in sidebar_plots %}<option value="{{ plot.pk }}">{{ plot.zone__farm__name }} / {{ plot.zone__name }} / {{ plot.name }}</option>{% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
+        </form>
+    </div></div>
+</div>

@@ -614,6 +614,8 @@ class PlotVegetationIndex(BaseModel):
     image_id = models.CharField(max_length=255, blank=True)
     pixel_count = models.PositiveIntegerField(null=True, blank=True)
     image = models.ImageField(upload_to='vegetation/', null=True, blank=True)
+    satellite_image = models.ImageField(upload_to='vegetation/', null=True, blank=True)
+    moisture_image = models.ImageField(upload_to='vegetation/', null=True, blank=True)
     observed_at = models.DateField(null=True, blank=True)
 
     class Meta:

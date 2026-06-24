@@ -1,8 +1,11 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}{% if is_create %}{% trans "Add Plot" %}{% else %}{% trans "Edit Plot" %}{% endif %}{% endblock %}
+
+{% block Breadcrumbs %}{% if is_create %}{% aq_breadcrumb "زمین‌ها|public:plot_list" "افزودن زمین" %}{% else %}{% aq_breadcrumb "زمین‌ها|public:plot_list" plot.name "ویرایش" %}{% endif %}{% endblock %}
 
 {% block Link %}
 <link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
@@ -106,10 +109,26 @@ body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 2
         : [35.6892, 51.3890];
 
     const map = L.map('plot-map').setView(center, initial.length ? 16 : 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap',
-    }).addTo(map);
+    });
+    const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '© Esri',
+    });
+    const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        attribution: '© Google',
+        subdomains: ['0', '1', '2', '3'],
+    });
+    const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 20, attribution: '© CartoDB' });
+    streetLayer.addTo(map);
+    labelsLayer.addTo(map);
+    L.control.layers(
+        {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
+        {'نام شهرها و مناطق': labelsLayer}
+    ).addTo(map);
 
     let points = initial.slice();
     const markers = [];

@@ -1,6 +1,7 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}{% trans "Management Dashboard" %}{% endblock %}
 
@@ -31,27 +32,14 @@ canvas { width: 100%; height: 300px; }
 {% block Content %}
 <div class="container">
 
-    <!-- Top Nav -->
-    <div style="background:#fff;border-radius:12px;padding:12px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <!-- Page Actions -->
+    <div style="background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
         <div style="font-size:20px;font-weight:bold;color:#1a1a2e;">{% trans "Management Dashboard" %}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <a href="{% url 'public:waterman_list' %}" class="btn btn-sm" style="background:#e8f4fd;color:#2c7be5;border:1px solid #bee3f8;border-radius:8px;">{% trans "Irrigators" %}</a>
-            <a href="{% url 'public:report_activity__list' %}" class="btn btn-sm" style="background:#e8f9f0;color:#27ae60;border:1px solid #b2dfdb;border-radius:8px;">{% trans "Activity Reports" %}</a>
-            <a href="{% url 'public:run_list' %}" class="btn btn-sm" style="background:#e8f4ff;color:#6c3cd1;border:1px solid #d5b8ff;border-radius:8px;">{% trans "Irrigations" %}</a>
-            <a href="{% url 'public:report_manure__list' %}" class="btn btn-sm" style="background:#f3e8ff;color:#6a1b9a;border:1px solid #ce93d8;border-radius:8px;">{% trans "Fertilization Reports" %}</a>
-            <a href="{% url 'public:farm_list' %}" class="btn btn-sm" style="background:#e0f7fa;color:#00796b;border:1px solid #b2dfdb;border-radius:8px;">{% trans "Farms" %}</a>
-            <a href="{% url 'public:zone_list' %}" class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffe0b2;border-radius:8px;">{% trans "Zones" %}</a>
-            <a href="{% url 'public:plot_list' %}" class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;border-radius:8px;">{% trans "Plots" %}</a>
-            <a href="{% url 'public:outlet_list' %}" class="btn btn-sm" style="background:#f3e5f5;color:#7b1fa2;border:1px solid #e1bee7;border-radius:8px;">{% trans "Outlets" %}</a>
-            <a href="{% url 'public:plot_vegetation_map' %}" class="btn btn-sm" style="background:#dcedc8;color:#33691e;border:1px solid #aed581;border-radius:8px;">🌿 {% trans "Vegetation Map" %}</a>
-            <a href="{% url 'public:plot_moisture_map' %}" class="btn btn-sm" style="background:#e1f5fe;color:#0277bd;border:1px solid #81d4fa;border-radius:8px;">💧 {% trans "Moisture Map" %}</a>
-            <button class="btn btn-sm" style="background:#f5f5f5;color:#999;border:1px solid #e0e0e0;border-radius:8px;cursor:default;" title="در حال انجام">🍃 {% trans "Leaf Analysis" %} <span style="font-size:10px;">(⏳)</span></button>
-            <span style="width:1px;height:24px;background:#e0e0e0;margin:0 4px;"></span>
-            <button class="btn btn-sm" style="background:#00796b;color:#fff;border-radius:8px;" onclick="document.getElementById('editFarmForm').action='{% url 'public:farm_create' %}';document.getElementById('editFarmForm').reset();new bootstrap.Modal(document.getElementById('editFarmModal')).show()">+ {% trans "Add Farm" %}</button>
-            <button class="btn btn-sm" style="background:#e65100;color:#fff;border-radius:8px;" onclick="document.getElementById('editZoneForm').action='{% url 'public:zone_create' %}';document.getElementById('editZoneForm').reset();new bootstrap.Modal(document.getElementById('editZoneModal')).show()">+ {% trans "Add Zone" %}</button>
-            <a href="{% url 'public:plot_create' %}" class="btn btn-sm" style="background:#2e7d32;color:#fff;border-radius:8px;text-decoration:none;">+ {% trans "Add Plot" %}</a>
-            <button class="btn btn-sm" style="background:#7b1fa2;color:#fff;border-radius:8px;" onclick="document.getElementById('editOutletForm').action='{% url 'public:outlet_create' %}';document.getElementById('editOutletForm').reset();new bootstrap.Modal(document.getElementById('editOutletModal')).show()">+ {% trans "Add Outlet" %}</button>
-            <a href="{% url 'account:logout' %}" class="btn btn-sm" style="background:#ffe7df;color:#ff1f1f;border-radius:8px;">{% trans "Logout" %}</a>
+            <button class="btn btn-sm" style="background:#00796b;color:#fff;border-radius:8px;" onclick="document.getElementById('editFarmForm').action='{% url 'public:farm_create' %}';document.getElementById('editFarmForm').reset();new bootstrap.Modal(document.getElementById('editFarmModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Farm" %}</button>
+            <button class="btn btn-sm" style="background:#e65100;color:#fff;border-radius:8px;" onclick="document.getElementById('editZoneForm').action='{% url 'public:zone_create' %}';document.getElementById('editZoneForm').reset();new bootstrap.Modal(document.getElementById('editZoneModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Zone" %}</button>
+            <a href="{% url 'public:plot_create' %}" class="btn btn-sm" style="background:#2e7d32;color:#fff;border-radius:8px;text-decoration:none;"><i class="fa fa-plus"></i> {% trans "Add Plot" %}</a>
+            <button class="btn btn-sm" style="background:#7b1fa2;color:#fff;border-radius:8px;" onclick="document.getElementById('editOutletForm').action='{% url 'public:outlet_create' %}';document.getElementById('editOutletForm').reset();new bootstrap.Modal(document.getElementById('editOutletModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Outlet" %}</button>
         </div>
     </div>
 
@@ -251,64 +239,6 @@ canvas { width: 100%; height: 300px; }
         <div id="leafModalLoading" style="display:none;text-align:center;padding:16px;color:#888;">{% trans "Analyzing image..." %}</div>
         <div id="leafModalResult" style="display:none;margin-top:16px;"></div>
     </div>
-</div>
-
-<!-- CRUD Modals: Edit Farm -->
-<div class="modal fade" id="editFarmModal" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Farm" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form id="editFarmForm" method="post">{% csrf_token %}
-        <div class="modal-body">
-            <input type="hidden" id="editFarmId">
-            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="ef_number"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control" id="ef_name"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Pool Size" %}</label><input name="pool_size" type="number" class="form-control" id="ef_pool_size"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Discharge Rate" %}</label><input name="discharge_rate" type="number" step="0.01" class="form-control" id="ef_discharge_rate"></div>
-            <div class="mb-2 form-check"><input name="is_active" type="checkbox" class="form-check-input" id="ef_is_active"><label class="form-check-label" for="ef_is_active">{% trans "Active" %}</label></div>
-        </div>
-        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
-        </form>
-    </div></div>
-</div>
-
-<!-- CRUD Modals: Edit Zone -->
-<div class="modal fade" id="editZoneModal" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Zone" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form id="editZoneForm" method="post">{% csrf_token %}
-        <div class="modal-body">
-            <input type="hidden" id="editZoneId">
-            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="ez_number"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Name" %}</label><input name="name" class="form-control" id="ez_name"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Farm" %}</label>
-                <select name="farm" class="form-control" id="ez_farm">
-                    {% for farm in farms %}<option value="{{ farm.pk }}">{{ farm.name }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="mb-2"><label class="form-label">{% trans "Order" %}</label><input name="order" type="number" class="form-control" id="ez_order"></div>
-        </div>
-        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
-        </form>
-    </div></div>
-</div>
-
-<!-- CRUD Modals: Edit Outlet -->
-<div class="modal fade" id="editOutletModal" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">{% trans "Edit Outlet" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form id="editOutletForm" method="post">{% csrf_token %}
-        <div class="modal-body">
-            <input type="hidden" id="editOutletId">
-            <div class="mb-2"><label class="form-label">{% trans "Number" %}</label><input name="number" class="form-control" id="eo_number"></div>
-            <div class="mb-2"><label class="form-label">{% trans "Plot" %}</label>
-                <select name="plot" class="form-control" id="eo_plot">
-                    {% for plot in plots %}<option value="{{ plot.pk }}">{{ plot.zone.farm.name }} / {{ plot.zone.name }} / {{ plot.name }}</option>{% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer"><button type="submit" class="btn btn-primary">{% trans "Save" %}</button></div>
-        </form>
-    </div></div>
 </div>
 
 {% endblock %}

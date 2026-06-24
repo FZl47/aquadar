@@ -5,6 +5,8 @@
 
 {% block Title %}کیز {{ outlet.number }}{% endblock %}
 
+{% block Breadcrumbs %}{% aq_breadcrumb "کیزها|public:outlet_list" outlet.number %}{% endblock %}
+
 {% block Style %}
 <style>
     body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }

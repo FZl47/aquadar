@@ -245,21 +245,6 @@
 {% block Content %}
     <div class="container">
 
-        <div class="header-user">
-            <div>
-                <div>
-                    <i class="icon-user"></i>
-                    {{ request.user.get_full_name|truncatechars:'20' }}
-                </div>
-                <div>
-                    <a href="{% url 'account:logout' %}" class="logout">
-                        خروج از حساب کاربری
-                        <i class="icon-signout"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
         <div class="row" style="margin-bottom: 50px;padding: 15px;">
 
             {% if system_reports %}

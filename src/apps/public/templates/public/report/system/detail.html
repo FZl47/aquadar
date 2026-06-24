@@ -1,8 +1,11 @@
 {% extends 'base/base_template.html' %}
+{% load custom_tags %}
 
 {% block Title %}
     جزئیات گزارش سیستمی- {{ report.title }}
 {% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "گزارش سیستمی" report.title %}{% endblock %}
 
 {% block Content %}
 

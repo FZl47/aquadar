@@ -1,9 +1,12 @@
 {% extends 'base/base_template.html' %}
 {% load static i18n %}
+{% load custom_tags %}
 
 {% block Title %}
     {% trans "Personal Notifications" %}
 {% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "اعلان‌های شخصی" %}{% endblock %}
 
 {% block BodyClass %}
     has-rtl nk-body bg-white npc-default has-aside

@@ -1118,6 +1118,8 @@ class PlotDetailView(SuperVisorUserRequiredMixin, DetailView):
         latest_vi = all_vis[0] if all_vis else None
         context['latest_vi'] = latest_vi
         context['ndvi_image_url'] = latest_vi.image.url if latest_vi and latest_vi.image else None
+        context['ndmi_image_url'] = latest_vi.moisture_image.url if latest_vi and latest_vi.moisture_image else None
+        context['satellite_image_url'] = latest_vi.satellite_image.url if latest_vi and latest_vi.satellite_image else None
         recent_vis = all_vis[:10]
         ndvi_vals = [float(v.ndvi) for v in recent_vis if v.ndvi is not None]
         ndmi_vals = [float(v.ndmi) for v in recent_vis if v.ndmi is not None]
@@ -1347,21 +1349,15 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         farm_id = self.request.GET.get('farm', '').strip()
-        latest_ndmi = Subquery(
-            PlotVegetationIndex.objects.filter(plot=OuterRef('pk'))
-            .order_by('-observed_at').values('ndmi')[:1]
-        )
-        latest_ndvi = Subquery(
-            PlotVegetationIndex.objects.filter(plot=OuterRef('pk'))
-            .order_by('-observed_at').values('ndvi')[:1]
-        )
-        latest_at = Subquery(
-            PlotVegetationIndex.objects.filter(plot=OuterRef('pk'))
-            .order_by('-observed_at').values('observed_at')[:1]
-        )
+        latest_vi = PlotVegetationIndex.objects.filter(plot=OuterRef('pk')).order_by('-observed_at')
         qs = (
             Plot.objects.select_related('zone__farm')
-            .annotate(latest_ndmi=latest_ndmi, latest_ndvi=latest_ndvi, latest_at=latest_at)
+            .annotate(
+                latest_ndmi=Subquery(latest_vi.values('ndmi')[:1]),
+                latest_ndvi=Subquery(latest_vi.values('ndvi')[:1]),
+                latest_at=Subquery(latest_vi.values('observed_at')[:1]),
+                latest_moisture_image=Subquery(latest_vi.values('moisture_image')[:1]),
+            )
         )
         if farm_id.isdigit():
             qs = qs.filter(zone__farm_id=farm_id)
@@ -1372,6 +1368,9 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
                 continue
             ndmi = float(p.latest_ndmi) if p.latest_ndmi is not None else None
             ndvi = float(p.latest_ndvi) if p.latest_ndvi is not None else None
+            moisture_url = ''
+            if p.latest_moisture_image:
+                moisture_url = settings.MEDIA_URL + p.latest_moisture_image
             plots_payload.append({
                 'id': p.id,
                 'name': p.name,
@@ -1383,6 +1382,7 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
                 'ndvi': ndvi,
                 'observed_at': p.latest_at.isoformat() if p.latest_at else None,
                 'detail_url': reverse('public:plot_detail', args=[p.id]),
+                'moisture_image_url': moisture_url,
             })
 
         context['plots_json'] = json.dumps(plots_payload, ensure_ascii=False)

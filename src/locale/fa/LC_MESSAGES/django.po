@@ -423,35 +423,40 @@ msgstr "پوشش گیاهی ضعیف"
 #: .\apps\public\gee.py:534
 #, python-format
 msgid ""
-"Low greenness index (NDVI=%(ndvi)s). Pistachio healthy range: NDVI ≥ 0.35."
+"Low greenness index (NDVI=%(ndvi)s). Pistachio healthy range: NDVI ≥ 0.18 "
+"(orchards with wide tree spacing)."
 msgstr ""
-"شاخص سبزینگی پایین (NDVI=%(ndvi)s). محدوده سالم پسته: NDVI ≥ ۰.۳۵."
+"شاخص سبزینگی پایین (NDVI=%(ndvi)s). محدوده سالم پسته: NDVI ≥ ۰.۱۸ "
+"(باغ‌هایی با فاصله زیاد بین درختان)."
 
 #: .\apps\public\gee.py:536
 msgid ""
-"Check plant nutrition, pests, and irrigation adequacy. For pistachio, target "
-"NDVI ≥ 0.35."
+"Check plant nutrition, pests, and irrigation. For pistachio orchards, target "
+"plot-mean NDVI ≥ 0.18."
 msgstr ""
-"تغذیه گیاه، آفات و کفایت آبیاری را بررسی کنید. برای پسته هدف NDVI ≥ ۰.۳۵ "
-"است."
+"تغذیه گیاه، آفات و آبیاری را بررسی کنید. برای باغ‌های پسته میانگین NDVI زمین "
+"را ≥ ۰.۱۸ هدف بگیرید."
 
 #: .\apps\public\gee.py:539
-msgid "Moderate vegetation cover"
-msgstr "پوشش گیاهی متوسط"
+msgid "Marginal pistachio vigour"
+msgstr "وضعیت مرزی پسته"
 
 #: .\apps\public\gee.py:541
 #, python-format
 msgid ""
-"Moderate greenness index (NDVI=%(ndvi)s). Pistachio optimal NDVI: 0.35–0.65."
+"Borderline greenness index (NDVI=%(ndvi)s). Healthy pistachio plot-mean: "
+"NDVI 0.18–0.30."
 msgstr ""
-"شاخص سبزینگی متوسط (NDVI=%(ndvi)s). NDVI بهینه پسته: ۰.۳۵–۰.۶۵."
+"شاخص سبزینگی مرزی (NDVI=%(ndvi)s). میانگین NDVI زمین برای پسته سالم: "
+"۰.۱۸–۰.۳۰."
 
 #: .\apps\public\gee.py:543
 msgid ""
-"Periodic monitoring and improved nutrition program recommended. Pistachio "
-"optimal NDVI: 0.35–0.65."
+"Monitor canopy and nutrition. Pistachio plot-mean NDVI typically peaks at "
+"0.20–0.30; do not expect dense-crop values (0.5+)."
 msgstr ""
-"پایش دوره‌ای و بهبود برنامه تغذیه توصیه می‌شود. NDVI بهینه پسته: ۰.۳۵–۰.۶۵."
+"تاج درخت و تغذیه را پایش کنید. میانگین NDVI زمین پسته معمولاً در محدوده "
+"۰.۲۰–۰.۳۰ اوج می‌گیرد؛ انتظار مقادیر محصولات متراکم (۰.۵+) را نداشته باشید."
 
 #: .\apps\public\gee.py:548
 msgid "Moisture stress / water deficit"
@@ -459,30 +464,33 @@ msgstr "تنش رطوبتی / کمبود آب"
 
 #: .\apps\public\gee.py:550
 #, python-format
-msgid "Low moisture index (NDMI=%(ndmi)s). Pistachio requires NDMI ≥ 0.03."
-msgstr "شاخص رطوبت پایین (NDMI=%(ndmi)s). پسته به NDMI ≥ ۰.۰۳ نیاز دارد."
+msgid "Low moisture index (NDMI=%(ndmi)s). Pistachio adequate: NDMI ≥ -0.05."
+msgstr "شاخص رطوبت پایین (NDMI=%(ndmi)s). رطوبت مناسب پسته: NDMI ≥ ‎-۰.۰۵."
 
 #: .\apps\public\gee.py:552
-msgid "Increase irrigation frequency or volume. Pistachio target NDMI ≥ 0.03."
-msgstr "تناوب یا حجم آبیاری را افزایش دهید. هدف NDMI ≥ ۰.۰۳ برای پسته."
+msgid ""
+"Increase irrigation frequency or volume. Pistachio target NDMI ≥ -0.05 "
+"(drought-tolerant but stressed below)."
+msgstr ""
+"تناوب یا حجم آبیاری را افزایش دهید. هدف NDMI ≥ ‎-۰.۰۵ برای پسته (مقاوم به "
+"خشکی ولی در زیر این مقدار تحت تنش)."
 
 #: .\apps\public\gee.py:555
-msgid "Soil moisture declining"
-msgstr "کاهش رطوبت خاک"
+msgid "Soil moisture borderline"
+msgstr "رطوبت خاک در حد مرزی"
 
 #: .\apps\public\gee.py:557
 #, python-format
 msgid ""
-"Moisture index declining (NDMI=%(ndmi)s). Pistachio adequate range: NDMI "
-"0.03–0.25."
+"Moisture index borderline (NDMI=%(ndmi)s). Pistachio adequate range: NDMI "
+"-0.05–0.15."
 msgstr ""
-"شاخص رطوبت در حال کاهش است (NDMI=%(ndmi)s). محدوده مناسب پسته: NDMI "
-"۰.۰۳–۰.۲۵."
+"شاخص رطوبت در حد مرزی است (NDMI=%(ndmi)s). محدوده مناسب پسته: NDMI "
+"‎-۰.۰۵–۰.۱۵."
 
 #: .\apps\public\gee.py:559
-msgid ""
-"Monitor irrigation schedule carefully. Pistachio adequate NDMI: 0.03–0.25."
-msgstr "برنامه آبیاری را با دقت پایش کنید. NDMI مناسب پسته: ۰.۰۳–۰.۲۵."
+msgid "Monitor irrigation schedule. Pistachio adequate NDMI: -0.05–0.15."
+msgstr "برنامه آبیاری را پایش کنید. NDMI مناسب پسته: ‎-۰.۰۵–۰.۱۵."
 
 #: .\apps\public\gee.py:563
 msgid "Possible nitrogen deficiency"
@@ -490,8 +498,8 @@ msgstr "احتمال کمبود نیتروژن"
 
 #: .\apps\public\gee.py:565
 #, python-format
-msgid "Low red-edge index (NDRE=%(ndre)s)."
-msgstr "شاخص لبه قرمز پایین (NDRE=%(ndre)s)."
+msgid "Low red-edge index (NDRE=%(ndre)s) for pistachio canopy."
+msgstr "شاخص لبه قرمز برای تاج پسته پایین است (NDRE=%(ndre)s)."
 
 #: .\apps\public\gee.py:567
 msgid "Check nitrogen fertilisation status."
@@ -2009,3 +2017,19 @@ msgstr "هیچ مختصات GPS برای این زمین تنظیم نشده ا�
 #: .\templates\base\base_template.html:83
 msgid "Success"
 msgstr "موفقیت"
+
+#: .\apps\public\gee.py:643
+msgid "Stressed pistachio"
+msgstr "پسته تحت تنش"
+
+#: .\apps\public\gee.py:644
+msgid "Acceptable pistachio"
+msgstr "پسته قابل قبول"
+
+#: .\apps\public\gee.py:645
+msgid "Healthy pistachio"
+msgstr "پسته سالم"
+
+#: .\apps\public\gee.py:646
+msgid "Vigorous pistachio"
+msgstr "پسته پرنشاط"

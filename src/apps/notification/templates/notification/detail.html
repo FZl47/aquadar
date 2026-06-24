@@ -1,9 +1,12 @@
 {% extends 'base/base_template.html' %}
 {% load static i18n %}
+{% load custom_tags %}
 
 {% block Title %}
     {% trans "Notification Detail" %} - {{ object.title }}
 {% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "اعلان‌ها" object.title %}{% endblock %}
 
 {% block BodyClass %}
     has-rtl nk-body bg-white npc-default has-aside

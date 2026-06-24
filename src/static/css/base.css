@@ -1183,4 +1183,8 @@ pre {
     padding-left: 3rem !important
 }
 
-
+.leaflet-control-layers-toggle{
+    padding: 5px;
+    text-align: center;
+    font-size: 23px;
+}

@@ -1,0 +1,130 @@
+{% load i18n %}
+{% load static %}
+
+<div class="aq-backdrop" id="aqBackdrop" onclick="aqCloseSidebar()"></div>
+
+<aside class="aq-sidebar" id="aqSidebar" aria-label="{% trans 'Main navigation' %}">
+    <div class="aq-sidebar-header">
+        <div class="d-flex align-items-center gap-2">
+            <img src="{% static 'img/logo.png' %}" alt="logo" style="width:32px;height:32px;border-radius:6px;background:#fff;padding:3px;">
+            <h5 class="m-0" style="font-weight:bold;color:#fff;">{% trans "Aquadar" %}</h5>
+        </div>
+        <button type="button" class="aq-sidebar-close d-lg-none" onclick="aqCloseSidebar()" aria-label="Close">
+            <i class="icon-remove"></i>
+        </button>
+    </div>
+
+    <div class="aq-sidebar-body">
+        {% if user.is_authenticated %}
+        <div class="aq-sidebar-user">
+            <div style="font-weight:600;color:#1a1a2e;">{{ user.get_full_name|default:user.username }}</div>
+            <div style="font-size:12px;color:#888;">
+                {% if user.role == 'supervisor' %}{% trans "Supervisor" %}{% else %}{% trans "Waterman" %}{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <ul class="aq-nav">
+            <li><a class="aq-nav-link" href="{% url 'public:index' %}"><i class="icon-home"></i><span>{% trans "Dashboard" %}</span></a></li>
+
+            {% if user.role == 'supervisor' or user.is_superuser %}
+            <li class="aq-nav-section"><i class="icon-sitemap"></i> {% trans "Management" %}</li>
+            <li><a class="aq-nav-link" href="{% url 'public:farm_list' %}"><i class="icon-th-large"></i><span>{% trans "Farms" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:zone_list' %}"><i class="icon-map-marker"></i><span>{% trans "Zones" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:plot_list' %}"><i class="icon-leaf"></i><span>{% trans "Plots" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:outlet_list' %}"><i class="icon-tint"></i><span>{% trans "Outlets" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:waterman_list' %}"><i class="icon-group"></i><span>{% trans "Irrigators" %}</span></a></li>
+
+            <li class="aq-nav-section"><i class="icon-plus-sign"></i> {% trans "Add New" %}</li>
+            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editFarmModal" href="#" onclick="aqOpenCrudModal('editFarmForm','{% url 'public:farm_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Farm" %}</span></a></li>
+            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editZoneModal" href="#" onclick="aqOpenCrudModal('editZoneForm','{% url 'public:zone_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Zone" %}</span></a></li>
+            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:plot_create' %}"><i class="icon-plus"></i><span>{% trans "Add Plot" %}</span></a></li>
+            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editOutletModal" href="#" onclick="aqOpenCrudModal('editOutletForm','{% url 'public:outlet_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Outlet" %}</span></a></li>
+
+            <li class="aq-nav-section"><i class="icon-tasks"></i> {% trans "Operations" %}</li>
+            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:report_manure__list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization Reports" %}</span></a></li>
+
+            <li class="aq-nav-section"><i class="icon-bar-chart"></i> {% trans "Analysis" %}</li>
+            <li><a class="aq-nav-link" href="{% url 'public:plot_vegetation_map' %}"><i class="icon-leaf"></i><span>{% trans "Vegetation Map" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:plot_moisture_map' %}"><i class="icon-tint"></i><span>{% trans "Moisture Map" %}</span></a></li>
+            {% else %}
+            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
+            {% endif %}
+
+            <li class="aq-nav-section"><i class="icon-user"></i> {% trans "Account" %}</li>
+            <li><a class="aq-nav-link aq-nav-danger" href="{% url 'account:logout' %}"><i class="icon-signout"></i><span>{% trans "Logout" %}</span></a></li>
+        </ul>
+    </div>
+</aside>
+
+<style>
+.aq-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1040;
+}
+body.aq-sidebar-open .aq-backdrop { display: block; }
+.aq-sidebar {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 280px;
+    background: #fafbff; border-left: 1px solid #e6eaf2;
+    box-shadow: -2px 0 12px rgba(0,0,0,.06);
+    z-index: 1050; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform .25s ease;
+}
+body.aq-sidebar-open .aq-sidebar { transform: translateX(0); }
+.aq-sidebar-header {
+    background: linear-gradient(135deg,#1a73e8,#0d47a1); color: #fff;
+    padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+}
+.aq-sidebar-close {
+    background: rgba(255,255,255,.18); border: none; color: #fff;
+    width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.aq-sidebar-body { flex: 1; overflow-y: auto; }
+.aq-sidebar-user { padding: 14px 18px; border-bottom: 1px solid #eef1f7; }
+.aq-nav { list-style: none; margin: 0; padding: 8px 0; }
+.aq-nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px; color: #2c3e50; text-decoration: none;
+    font-size: 14px; transition: background .15s, color .15s;
+}
+.aq-nav-link:hover { background: #eef4ff; color: #1a73e8; }
+.aq-nav-link i { width: 20px; text-align: center; color: #5a6c84; font-size: 15px; }
+.aq-nav-link:hover i { color: #1a73e8; }
+.aq-nav-add { color: #00796b; }
+.aq-nav-add i { color: #00796b; }
+.aq-nav-add:hover { background: #e0f7fa; color: #00796b; }
+.aq-nav-add:hover i { color: #00796b; }
+.aq-nav-danger { color: #c62828; }
+.aq-nav-danger:hover { background: #ffeaea; color: #c62828; }
+.aq-nav-danger i { color: #c62828; }
+.aq-nav-section {
+    padding: 14px 18px 6px; font-size: 11px; font-weight: 700;
+    color: #98a4b8; text-transform: uppercase; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 8px;
+}
+.aq-nav-section i { color: #98a4b8; font-size: 12px; }
+
+@media (min-width: 992px) {
+    .aq-sidebar { transform: translateX(0); box-shadow: none; }
+    .aq-backdrop { display: none !important; }
+    html body.aq-has-sidebar { padding-right: 280px !important; }
+    html body.aq-has-sidebar .aq-header { margin-right: 0; }
+    html body.aq-has-sidebar > * { max-width: 100%; box-sizing: border-box; }
+}
+@media (max-width: 991.98px) {
+    html body.aq-has-sidebar { padding-right: 0 !important; }
+}
+</style>
+
+<script>
+function aqOpenSidebar() { document.body.classList.add('aq-sidebar-open'); }
+function aqCloseSidebar() { document.body.classList.remove('aq-sidebar-open'); }
+function aqOpenCrudModal(formId, actionUrl) {
+    var f = document.getElementById(formId);
+    if (f) { f.action = actionUrl; f.reset(); }
+    aqCloseSidebar();
+}
+document.body.classList.add('aq-has-sidebar');
+</script>

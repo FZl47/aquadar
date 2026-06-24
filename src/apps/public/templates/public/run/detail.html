@@ -5,6 +5,8 @@
 
 {% block Title %}جزئیات آبیاری #{{ run.id }}{% endblock %}
 
+{% block Breadcrumbs %}{% aq_breadcrumb "آبیاری‌ها|public:run_list" run.id %}{% endblock %}
+
 {% block Style %}
 <style>
     body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }

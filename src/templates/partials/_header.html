@@ -1,0 +1,70 @@
+{% load i18n %}
+{% load static %}
+
+<header class="aq-header">
+    <div class="aq-header-inner">
+        <div class="aq-header-left">
+            <button class="aq-hamburger d-lg-none" type="button" onclick="aqOpenSidebar()" aria-label="{% trans 'Open menu' %}">
+                <i class="icon-reorder"></i>
+            </button>
+            <a href="{% url 'public:index' %}" class="aq-brand">
+                <img src="{% static 'img/logo.png' %}" alt="logo">
+                <span>{% block HeaderTitle %}{% trans "Aquadar" %}{% endblock %}</span>
+            </a>
+        </div>
+        <div class="aq-header-right">
+            {% block HeaderQuickActions %}
+                <a href="{% url 'public:index' %}" class="aq-qa" title="{% trans 'Dashboard' %}"><i class="icon-home"></i></a>
+                {% if user.role == 'supervisor' or user.is_superuser %}
+                <a href="{% url 'public:run_list' %}" class="aq-qa" title="{% trans 'Irrigations' %}"><i class="icon-play-circle"></i></a>
+                <a href="{% url 'public:report_activity__list' %}" class="aq-qa" title="{% trans 'Activity Reports' %}"><i class="icon-list-alt"></i></a>
+                <a href="{% url 'public:plot_vegetation_map' %}" class="aq-qa" title="{% trans 'Vegetation Map' %}"><i class="icon-leaf"></i></a>
+                <a href="{% url 'public:plot_moisture_map' %}" class="aq-qa" title="{% trans 'Moisture Map' %}"><i class="icon-tint"></i></a>
+                {% endif %}
+            {% endblock %}
+            {% if user.is_authenticated %}
+            <span class="aq-user d-none d-md-inline">{{ user.get_full_name|default:user.username }}</span>
+            <a href="{% url 'account:logout' %}" class="aq-qa aq-qa-danger" title="{% trans 'Logout' %}"><i class="icon-signout"></i></a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+<style>
+.aq-header {
+    background: #fff; border-bottom: 1px solid #e6eaf2;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04); position: sticky; top: 0; z-index: 1020;
+}
+.aq-header-inner {
+    max-width: 100%; padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.aq-header-left, .aq-header-right { display: flex; align-items: center; gap: 8px; }
+.aq-hamburger {
+    background: #f0f4ff; border: none; color: #1a73e8;
+    width: 38px; height: 38px; border-radius: 8px; font-size: 18px; cursor: pointer;
+    transition: background .15s; display: inline-flex; align-items: center; justify-content: center;
+}
+.aq-hamburger:hover { background: #dde7ff; }
+.aq-brand {
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: #1a1a2e; font-weight: 700; font-size: 16px;
+}
+.aq-brand img { width: 30px; height: 30px; border-radius: 6px; }
+.aq-qa {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #f6f8fc; color: #5a6c84; text-decoration: none;
+    font-size: 15px; transition: background .15s, color .15s;
+}
+.aq-qa:hover { background: #e8efff; color: #1a73e8; }
+.aq-qa i { line-height: 1; }
+.aq-qa-danger { background: #fde8e8; color: #c62828; }
+.aq-qa-danger:hover { background: #fbd0d0; color: #c62828; }
+.aq-user { font-size: 13px; color: #5a6c84; margin: 0 4px; }
+@media (max-width: 576px) {
+    .aq-header-inner { padding: 8px 10px; }
+    .aq-brand span { display: none; }
+    .aq-qa { width: 34px; height: 34px; }
+}
+</style>

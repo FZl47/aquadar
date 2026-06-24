@@ -191,6 +191,14 @@ def fetch_vegetation_indices(plot_id):
     if image_png:
         vi.image.save(f'ndvi_{plot_id}_{vi.id}.png', ContentFile(image_png), save=True)
 
+    satellite_image_png = data.get('satellite_image_png')
+    if satellite_image_png:
+        vi.satellite_image.save(f'satellite_{plot_id}_{vi.id}.png', ContentFile(satellite_image_png), save=True)
+
+    moisture_image_png = data.get('moisture_image_png')
+    if moisture_image_png:
+        vi.moisture_image.save(f'ndmi_{plot_id}_{vi.id}.png', ContentFile(moisture_image_png), save=True)
+
     logger.info('Vegetation indices stored for plot %s (VI %s)', plot_id, vi.id)
     return vi.id
 

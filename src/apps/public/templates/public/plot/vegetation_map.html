@@ -1,201 +1,335 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}{% trans "Vegetation Map" %}{% endblock %}
 
+{% block Breadcrumbs %}{% aq_breadcrumb "نقشه پوشش گیاهی" %}{% endblock %}
+
 {% block Link %}
-<link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
-<link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+    <link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
 {% endblock %}
 
 {% block Style %}
-<style>
-body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
-.container { max-width: 1200px; margin: 20px auto; }
-.page-header { background: linear-gradient(135deg, #27ae60, #145a32); border-radius: 14px; padding: 22px 28px; margin-bottom: 18px; color: #fff; }
-.card { background: #fff; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 18px; }
-#veg-map { height: 600px; width: 100%; border-radius: 10px; border: 1px solid #ddd; }
-.filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-.filter-bar select { padding: 6px 12px; border-radius: 8px; border: 1px solid #cfd8dc; font-size: 13px; min-width: 200px; }
-.legend { background: #fff; padding: 10px 14px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.15); font-size: 12px; line-height: 1.7; }
-.legend .row-item { display: flex; align-items: center; gap: 8px; }
-.legend .swatch { width: 18px; height: 12px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,0.15); }
-.info-popup b { color: #145a32; }
-.info-popup .row-info { font-size: 12px; margin: 2px 0; }
-.empty-msg { text-align: center; padding: 30px; color: #777; font-size: 14px; }
-</style>
+    <style>
+        body {
+            font-family: 'YekanBakhFaNum', monospace;
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #27ae60, #145a32);
+            border-radius: 14px;
+            padding: 22px 28px;
+            margin-bottom: 18px;
+            color: #fff;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 18px;
+        }
+
+        #veg-map {
+            height: 600px;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .filter-bar select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #cfd8dc;
+            font-size: 13px;
+            min-width: 200px;
+        }
+
+        .legend {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .legend .row-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend .swatch {
+            width: 18px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+        }
+
+        .info-popup b {
+            color: #145a32;
+        }
+
+        .info-popup .row-info {
+            font-size: 12px;
+            margin: 2px 0;
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
 {% endblock %}
 
 {% block Content %}
-<div class="container">
+    <div class="container">
 
-    {% csrf_token %}
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-        <div>
-            <div style="font-size:22px;font-weight:bold;">🌿 {% trans "Vegetation Map" %}</div>
-            <div style="opacity:.85;font-size:13px;margin-top:4px;">
-                {% trans "Plots colored by latest NDVI (vegetation index)." %}
+        {% csrf_token %}
+        <div class="page-header"
+             style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">🌿 {% trans "Vegetation Map" %}</div>
+                <div style="opacity:.85;font-size:13px;margin-top:4px;">
+                    {% trans "Plots colored by latest NDVI (vegetation index)." %}
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'public:index' %}" class="btn btn-light btn-sm"
+                   style="border-radius:8px;font-weight:600;">← {% trans "Back to Dashboard" %}</a>
+                <a href="{% url 'public:plot_moisture_map' %}" class="btn btn-light btn-sm"
+                   style="border-radius:8px;font-weight:600;">💧 {% trans "Moisture Map" %}</a>
+                <button id="analyze-all-btn" class="btn btn-light btn-sm" style="border-radius:8px;font-weight:600;"
+                        data-farm-id="{{ farm_id }}">
+                    🔍 {% trans "Analyze all plots" %}
+                </button>
             </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="{% url 'public:index' %}" class="btn btn-light btn-sm" style="border-radius:8px;font-weight:600;">← {% trans "Back to Dashboard" %}</a>
-            <a href="{% url 'public:plot_moisture_map' %}" class="btn btn-light btn-sm" style="border-radius:8px;font-weight:600;">💧 {% trans "Moisture Map" %}</a>
-            <button id="analyze-all-btn" class="btn btn-light btn-sm" style="border-radius:8px;font-weight:600;"
-                    data-farm-id="{{ farm_id }}">
-                🔍 {% trans "Analyze all plots" %}
-            </button>
+
+        <div class="card">
+            <form method="get" class="filter-bar">
+                <label for="farm-select" style="font-weight:600;font-size:13px;">{% trans "Farm" %}:</label>
+                <select id="farm-select" name="farm" onchange="this.form.submit()">
+                    <option value="">{% trans "All farms" %}</option>
+                    {% for f in farms %}
+                        <option value="{{ f.id }}"
+                                {% if farm_id == f.id|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>
+                    {% endfor %}
+                </select>
+                <a href="{% url 'public:plot_vegetation_map' %}" class="btn btn-outline-secondary btn-sm"
+                   style="border-radius:8px;">{% trans "Reset" %}</a>
+            </form>
+            <div id="analyze-status"
+                 style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;font-size:13px;"></div>
+            <div id="veg-map"></div>
+            <div id="empty-msg" class="empty-msg"
+                 style="display:none;">{% trans "No plots with boundary or location to display." %}</div>
         </div>
-    </div>
 
-    <div class="card">
-        <form method="get" class="filter-bar">
-            <label for="farm-select" style="font-weight:600;font-size:13px;">{% trans "Farm" %}:</label>
-            <select id="farm-select" name="farm" onchange="this.form.submit()">
-                <option value="">{% trans "All farms" %}</option>
-                {% for f in farms %}
-                    <option value="{{ f.id }}" {% if farm_id == f.id|stringformat:"s" %}selected{% endif %}>{{ f.name }}</option>
-                {% endfor %}
-            </select>
-            <a href="{% url 'public:plot_vegetation_map' %}" class="btn btn-outline-secondary btn-sm" style="border-radius:8px;">{% trans "Reset" %}</a>
-        </form>
-        <div id="analyze-status" style="display:none;margin-bottom:10px;padding:8px 12px;border-radius:8px;font-size:13px;"></div>
-        <div id="veg-map"></div>
-        <div id="empty-msg" class="empty-msg" style="display:none;">{% trans "No plots with boundary or location to display." %}</div>
     </div>
-
-</div>
 {% endblock %}
 
 {% block Script %}
-<script>
-(function() {
-    const plots = {{ plots_json|safe }};
-    const map = L.map('veg-map').setView([32.5, 53.5], 8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap',
-    }).addTo(map);
+    <script>
+        (function () {
+            const plots = {{ plots_json|safe }};
+            const map = L.map('veg-map').setView([32.5, 53.5], 8);
+            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            });
+            const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: '© Esri'
+            });
+            const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '© Google',
+                subdomains: ['0', '1', '2', '3']
+            });
+            const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '© CartoDB'
+            });
+            streetLayer.addTo(map);
+            labelsLayer.addTo(map);
+            L.control.layers(
+                {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
+                {'نام شهرها و مناطق': labelsLayer}
+            ).addTo(map);
 
-    const NDVI_RANGES = {{ ndvi_ranges_json|safe }};
-    // NDVI_RANGES: [{min, max, score, label, color}, ...] from gee.py NDVI_SCORE_RANGES
+            const NDVI_RANGES = {{ ndvi_ranges_json|safe }};
 
-    function _ndviRange(ndvi) {
-        if (ndvi === null || ndvi === undefined) return null;
-        for (const r of NDVI_RANGES) { if (ndvi >= r.min && ndvi < r.max) return r; }
-        return NDVI_RANGES[NDVI_RANGES.length - 1];
-    }
-    function ndviColor(ndvi) { const r = _ndviRange(ndvi); return r ? r.color : '#9e9e9e'; }
-    function ndviLabel(ndvi) {
-        if (ndvi === null || ndvi === undefined) return '{% trans "No data" %}';
-        const r = _ndviRange(ndvi); return r ? r.label : '{% trans "No data" %}';
-    }
-    function ndviScore(ndvi) { const r = _ndviRange(ndvi); return r ? r.score : null; }
+            // NDVI_RANGES: [{min, max, score, label, color}, ...] from gee.py NDVI_SCORE_RANGES
 
-    const allBounds = [];
-    let drawn = 0;
+            function _ndviRange(ndvi) {
+                if (ndvi === null || ndvi === undefined) return null;
+                for (const r of NDVI_RANGES) {
+                    if (ndvi >= r.min && ndvi < r.max) return r;
+                }
+                return NDVI_RANGES[NDVI_RANGES.length - 1];
+            }
 
-    function polyBounds(boundary) {
-        let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-        boundary.forEach(pt => {
-            if (pt[0] < minLat) minLat = pt[0];
-            if (pt[0] > maxLat) maxLat = pt[0];
-            if (pt[1] < minLng) minLng = pt[1];
-            if (pt[1] > maxLng) maxLng = pt[1];
-        });
-        return [[minLat, minLng], [maxLat, maxLng]];
-    }
+            function ndviColor(ndvi) {
+                const r = _ndviRange(ndvi);
+                return r ? r.color : '#9e9e9e';
+            }
 
-    plots.forEach(p => {
-        const color = ndviColor(p.ndvi);
-        const score = ndviScore(p.ndvi);
-        const popup = `
+            function ndviLabel(ndvi) {
+                if (ndvi === null || ndvi === undefined) return '{% trans "No data" %}';
+                const r = _ndviRange(ndvi);
+                return r ? r.label : '{% trans "No data" %}';
+            }
+
+            function ndviScore(ndvi) {
+                const r = _ndviRange(ndvi);
+                return r ? r.score : null;
+            }
+
+            const allBounds = [];
+            let drawn = 0;
+
+            function polyBounds(boundary) {
+                let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+                boundary.forEach(pt => {
+                    if (pt[0] < minLat) minLat = pt[0];
+                    if (pt[0] > maxLat) maxLat = pt[0];
+                    if (pt[1] < minLng) minLng = pt[1];
+                    if (pt[1] > maxLng) maxLng = pt[1];
+                });
+                return [[minLat, minLng], [maxLat, maxLng]];
+            }
+
+            plots.forEach(p => {
+                const color = ndviColor(p.ndvi);
+                const score = ndviScore(p.ndvi);
+                const popup = `
             <div class="info-popup">
                 <b>${p.name}</b><br>
                 <div class="row-info">{% trans "Zone" %}: ${p.zone}</div>
-                <div class="row-info">{% trans "Observed at" %}: ${p.observed_at ? p.observed_at.slice(0,10) : '-'}</div>
+                <div class="row-info">{% trans "Observed at" %}: ${p.observed_at ? p.observed_at.slice(0, 10) : '-'}</div>
                 <div class="row-info">NDVI: <b>${p.ndvi !== null && p.ndvi !== undefined ? p.ndvi.toFixed(3) : '-'}</b> (${ndviLabel(p.ndvi)})</div>
                 <div class="row-info">{% trans "Greenness score" %}: <b>${score !== null ? score + '%' : '-'}</b></div>
                 <div class="row-info">NDMI: <b>${p.ndmi !== null && p.ndmi !== undefined ? p.ndmi.toFixed(3) : '-'}</b></div>
                 <a href="${p.detail_url}" class="btn btn-sm btn-success" style="margin-top:6px;">{% trans "Open detail" %}</a>
             </div>
         `;
-        if (p.boundary && p.boundary.length >= 3) {
-            const bounds = polyBounds(p.boundary);
-            // Overlay actual NDVI raster if available — per-pixel accuracy instead of one solid color
-            if (p.veg_image) {
-                L.imageOverlay(p.veg_image, bounds, { opacity: 0.85, interactive: false }).addTo(map);
+                if (p.boundary && p.boundary.length >= 3) {
+                    const bounds = polyBounds(p.boundary);
+                    // Overlay actual NDVI raster if available — per-pixel accuracy instead of one solid color
+                    if (p.veg_image) {
+                        L.imageOverlay(p.veg_image, bounds, {opacity: 0.85, interactive: false}).addTo(map);
+                    }
+                    const poly = L.polygon(p.boundary, {
+                        color: color, weight: 2,
+                        fillColor: color,
+                        fillOpacity: p.veg_image ? 0 : 0.5,
+                    }).addTo(map).bindPopup(popup);
+                    allBounds.push(poly.getBounds());
+                    drawn++;
+                } else if (p.center) {
+                    const marker = L.circleMarker(p.center, {
+                        radius: 10,
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.6
+                    })
+                        .addTo(map)
+                        .bindPopup(popup);
+                    allBounds.push(L.latLngBounds([p.center, p.center]));
+                    drawn++;
+                }
+            });
+
+            if (drawn === 0) {
+                document.getElementById('empty-msg').style.display = 'block';
+            } else if (allBounds.length) {
+                const combined = allBounds.reduce((a, b) => a.extend(b));
+                map.fitBounds(combined, {padding: [40, 40], maxZoom: 16});
             }
-            const poly = L.polygon(p.boundary, {
-                color: color, weight: 2,
-                fillColor: color,
-                fillOpacity: p.veg_image ? 0 : 0.5,
-            }).addTo(map).bindPopup(popup);
-            allBounds.push(poly.getBounds());
-            drawn++;
-        } else if (p.center) {
-            const marker = L.circleMarker(p.center, { radius: 10, color: color, fillColor: color, fillOpacity: 0.6 })
-                .addTo(map)
-                .bindPopup(popup);
-            allBounds.push(L.latLngBounds([p.center, p.center]));
-            drawn++;
-        }
-    });
 
-    if (drawn === 0) {
-        document.getElementById('empty-msg').style.display = 'block';
-    } else if (allBounds.length) {
-        const combined = allBounds.reduce((a, b) => a.extend(b));
-        map.fitBounds(combined, { padding: [40, 40], maxZoom: 16 });
-    }
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const analyzeUrl = "{% url 'public:plot_analyze' %}";
+            const statusBox = document.getElementById('analyze-status');
 
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const analyzeUrl = "{% url 'public:plot_analyze' %}";
-    const statusBox = document.getElementById('analyze-status');
-
-    function showStatus(msg, ok) {
-        statusBox.style.display = 'block';
-        statusBox.style.background = ok ? '#e8f5e9' : '#ffebee';
-        statusBox.style.color = ok ? '#1b5e20' : '#b71c1c';
-        statusBox.textContent = msg;
-    }
-
-    function postAnalyze(body, btn) {
-        const oldText = btn ? btn.textContent : null;
-        if (btn) { btn.disabled = true; btn.textContent = 'در حال انجام...'; }
-        fetch(analyzeUrl, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: body,
-        })
-        .then(r => r.json())
-        .then(d => {
-            if (d.success) {
-                showStatus(`{% trans "Analysis queued for" %} ${d.queued} {% trans "plot(s). Results appear after processing." %}`, true);
-            } else {
-                showStatus(d.error || '{% trans "Request failed" %}', false);
+            function showStatus(msg, ok) {
+                statusBox.style.display = 'block';
+                statusBox.style.background = ok ? '#e8f5e9' : '#ffebee';
+                statusBox.style.color = ok ? '#1b5e20' : '#b71c1c';
+                statusBox.textContent = msg;
             }
-        })
-        .catch(() => showStatus('{% trans "Request failed" %}', false))
-        .finally(() => { if (btn) { btn.disabled = false; btn.textContent = oldText; } });
-    }
 
-    document.getElementById('analyze-all-btn').addEventListener('click', function() {
-        const farmId = this.dataset.farmId || '';
-        postAnalyze('farm=' + encodeURIComponent(farmId), this);
-    });
+            function postAnalyze(body, btn) {
+                const oldText = btn ? btn.textContent : null;
+                if (btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'در حال انجام...';
+                }
+                fetch(analyzeUrl, {
+                    method: 'POST',
+                    headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: body,
+                })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.success) {
+                            showStatus(`{% trans "Analysis queued for" %} ${d.queued} {% trans "plot(s). Results appear after processing." %}`, true);
+                        } else {
+                            showStatus(d.error || '{% trans "Request failed" %}', false);
+                        }
+                    })
+                    .catch(() => showStatus('{% trans "Request failed" %}', false))
+                    .finally(() => {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.textContent = oldText;
+                        }
+                    });
+            }
 
-    const legend = L.control({ position: 'bottomright' });
-    legend.onAdd = function() {
-        const div = L.DomUtil.create('div', 'legend');
-        let html = '<div style="font-weight:bold;margin-bottom:6px;">NDVI</div>';
-        for (const r of [...NDVI_RANGES].reverse()) {
-            html += `<div class="row-item"><span class="swatch" style="background:${r.color}"></span> ${r.label} (${r.min} – ${r.max})</div>`;
-        }
-        div.innerHTML = html;
-        return div;
-    };
-    legend.addTo(map);
-})();
-</script>
+            document.getElementById('analyze-all-btn').addEventListener('click', function () {
+                const farmId = this.dataset.farmId || '';
+                postAnalyze('farm=' + encodeURIComponent(farmId), this);
+            });
+
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function () {
+                const div = L.DomUtil.create('div', 'legend');
+                let html = '<div style="font-weight:bold;margin-bottom:6px;">NDVI</div>';
+                for (const r of [...NDVI_RANGES].reverse()) {
+                    html += `<div class="row-item"><span class="swatch" style="background:${r.color}"></span> ${r.label} (${r.min} – ${r.max})</div>`;
+                }
+                div.innerHTML = html;
+                return div;
+            };
+            legend.addTo(map);
+        })();
+
+
+        // add icon select maps
+        document.querySelector('.leaflet-control-layers-toggle').innerHTML = `🗺️`
+    </script>
 {% endblock %}

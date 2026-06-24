@@ -1,8 +1,11 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block Title %}تحلیل‌های برگ — {{ target_name }}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "تحلیل برگ" target_name %}{% endblock %}
 
 {% block Style %}
 <style>

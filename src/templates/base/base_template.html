@@ -44,6 +44,17 @@
 
 </head>
 <body class="{% block BodyClass %}{% endblock %}">
+{% block Chrome %}
+    {% if user.is_authenticated %}
+        {% include 'partials/_header.html' %}
+        {% include 'partials/_sidebar.html' %}
+        {% if user.is_superuser or user.role == 'supervisor' %}
+            {% include 'partials/_crud_modals.html' %}
+        {% endif %}
+        {% include 'partials/_breadcrumb_style.html' %}
+        {% block Breadcrumbs %}{% endblock %}
+    {% endif %}
+{% endblock %}
 {% block Content %}
 {% endblock %}
 <script>

@@ -48,11 +48,17 @@ except ImportError:
     _PilImage = None
     _PIL_OK = False
 
-# Pistachio (Pistacia vera) reference NDVI/NDMI ranges
-PISTACHIO_NDVI_HEALTHY_MIN = 0.35  # NDVI ≥ 0.35 → healthy pistachio canopy
-PISTACHIO_NDVI_STRESSED_MIN = 0.15 # NDVI 0.15-0.35 → moisture/nutrient stress
-PISTACHIO_NDMI_ADEQUATE_MIN = 0.03 # NDMI ≥ 0.03 → adequate soil moisture
-PISTACHIO_NDMI_STRESS_MIN = -0.12  # NDMI -0.12 to 0.03 → mild water stress
+# Pistachio (Pistacia vera) reference NDVI/NDMI ranges.
+# Calibrated against Kerman/Rafsanjan Sentinel-2 observations: even well-managed
+# orchards rarely exceed plot-mean NDVI 0.30 (canopy is ≤30% of pixel area, the
+# rest is bare soil between trees) and semi-arid NDMI typically sits negative.
+# These thresholds reflect that — anything 0.18+ NDVI is a healthy orchard,
+# 0.30+ is vigorous; NDMI ≥ -0.05 is adequate for drought-tolerant pistachio.
+PISTACHIO_NDVI_HEALTHY_MIN = 0.18    # NDVI ≥ 0.18 → healthy pistachio canopy
+PISTACHIO_NDVI_VIGOROUS_MIN = 0.30   # NDVI ≥ 0.30 → vigorous canopy (peak season)
+PISTACHIO_NDVI_STRESSED_MIN = 0.10   # NDVI 0.10–0.18 → sparse / young / stressed
+PISTACHIO_NDMI_ADEQUATE_MIN = -0.05  # NDMI ≥ -0.05 → adequate (drought-tolerant)
+PISTACHIO_NDMI_STRESS_MIN = -0.20    # NDMI -0.20 to -0.05 → mild water stress
 
 logger = logging.getLogger(__name__)
 
@@ -71,12 +77,13 @@ _BANDS = {
     'swir': 'B11',
     'rededge': 'B05',
     'blue': 'B02',
+    'green': 'B03',
     'scl': 'SCL',
 }
 
 _DEFAULT_DAYS_BACK = 60
-_POINT_BUFFER_M = 50  # GPS fallback buffer (30-100 m range)
-_TARGET_RES = 10.0    # metres
+_POINT_BUFFER_M = 30  # GPS fallback buffer (tight for small pistachio plots)
+_TARGET_RES = 10.0    # metres (Sentinel-2 native resolution for B02/B03/B04/B08)
 
 
 # Geometry helpers
@@ -236,10 +243,32 @@ def _read_stack(item, geometry):
     target_crs = f'EPSG:{epsg}'
 
     try:
-        bx0, by0, bx1, by1 = transform_bounds('EPSG:4326', target_crs, minx, miny, maxx, maxy)
+        # Project the polygon *itself* to UTM and take the bounding box of the
+        # projected vertices. transform_bounds samples only the lat/lng bbox
+        # corners; for non-trivial polygons (square plots, tilted geometries) it
+        # can return a tighter rectangle than the actual UTM extent — clipping
+        # half the AOI off the raster grid.
+        geom_utm = transform_geom('EPSG:4326', target_crs, geometry)
+        utm_coords = []
+        for ring in geom_utm.get('coordinates') or []:
+            for pt in ring:
+                if len(pt) >= 2:
+                    utm_coords.append((float(pt[0]), float(pt[1])))
+        if utm_coords:
+            xs = [c[0] for c in utm_coords]
+            ys = [c[1] for c in utm_coords]
+            bx0, by0, bx1, by1 = min(xs), min(ys), max(xs), max(ys)
+        else:
+            bx0, by0, bx1, by1 = transform_bounds('EPSG:4326', target_crs, minx, miny, maxx, maxy)
     except Exception as exc:
         logger.error('AOI reprojection failed: %s', exc)
         return None, None
+
+    # Add a half-pixel buffer so vertices on the bbox edge don't round-fall outside the grid.
+    bx0 -= _TARGET_RES / 2
+    by0 -= _TARGET_RES / 2
+    bx1 += _TARGET_RES / 2
+    by1 += _TARGET_RES / 2
 
     width = max(int(math.ceil((bx1 - bx0) / _TARGET_RES)), 1)
     height = max(int(math.ceil((by1 - by0) / _TARGET_RES)), 1)
@@ -268,7 +297,6 @@ def _read_stack(item, geometry):
         return None, None
 
     try:
-        geom_utm = transform_geom('EPSG:4326', target_crs, geometry)
         aoi_mask = geometry_mask(
             [geom_utm], out_shape=(height, width), transform=transform, invert=True,
         )
@@ -312,60 +340,202 @@ def _compute_indices(bands, valid):
                 'max': round(float(np.max(finite)), 4),
             }
     out['_ndvi_array'] = np.where(valid, ndvi, np.nan)
+    out['_ndmi_array'] = np.where(valid, ndmi, np.nan)
     return out
 
 
-# NDVI colour ramp matching the map legend (very-poor red -> excellent green).
-# Extended NDVI colour ramp: water (blue) → bare (gray) → sparse (red) → dense (dark green)
+# NDVI colour ramp — pistachio-calibrated, finer gradient. Stops are denser in
+# the 0.10–0.35 band (where pistachio orchard plot-means actually live) so
+# visual differences inside that range stay readable instead of all painting red.
 _NDVI_RAMP = (
-    (-0.05, (33,  150, 243)),   # water / snow
-    (0.10,  (158, 158, 158)),   # bare soil / urban
-    (0.20,  (211,  47,  47)),   # very sparse vegetation
-    (0.35,  (239, 108,   0)),   # sparse
-    (0.50,  (251, 192,  45)),   # moderate
-    (0.65,  (124, 179,  66)),   # good canopy
-    (10.0,  (27,   94,  32)),   # dense / healthy
+    (-0.05, ( 33, 150, 243)),  # water / snow
+    ( 0.03, (158, 158, 158)),  # bare soil / urban
+    ( 0.08, (200, 100, 100)),  # very sparse (struggling)
+    ( 0.12, (211,  47,  47)),  # stressed pistachio (low)
+    ( 0.15, (239, 108,   0)),  # stressed pistachio
+    ( 0.18, (251, 140,   0)),  # acceptable (lower)
+    ( 0.22, (251, 192,  45)),  # acceptable
+    ( 0.26, (205, 220,  57)),  # healthy pistachio (lower)
+    ( 0.30, (139, 195,  74)),  # healthy pistachio
+    ( 0.36, (124, 179,  66)),  # vigorous pistachio
+    ( 0.45, ( 76, 175,  80)),  # very vigorous
+    (10.0,  ( 27,  94,  32)),  # excellent / dense crop
 )
-_NDVI_PNG_MAX_DIM = 768
+_NDVI_PNG_SIZE = 1024  # final PNG output size (px) — high resolution thumbnail.
+# Bilinear upsample factor applied to NDVI/NDMI/satellite arrays before colour
+# ramp + final resize. 8× turns a 10×10 sensor grid into an 80×80 smoothed grid,
+# making the final 1024 PNG look continuous instead of "pixel pixel" blocky.
+_RENDER_UPSCALE = 8
+
+# NDMI colour ramp — pistachio-calibrated. Pistachio is drought-tolerant: NDMI
+# is typically negative in semi-arid orchards, so adequate-moisture band starts
+# at -0.05 (not 0.00). Stops are denser around the irrigation decision range.
+_NDMI_RAMP = (
+    (-0.30, (183,  28,  28)),  # extreme drought
+    (-0.22, (211,  47,  47)),  # severe drought
+    (-0.16, (230,  74,  25)),  # water stress
+    (-0.10, (239, 108,   0)),  # mild stress
+    (-0.05, (251, 192,  45)),  # borderline
+    ( 0.00, (174, 213, 129)),  # adequate (low)
+    ( 0.05, ( 79, 195, 247)),  # adequate
+    ( 0.10, ( 41, 182, 246)),  # good (low)
+    ( 0.18, (  2, 136, 209)),  # good moisture
+    (10.0,  (  1,  87, 155)),  # well irrigated
+)
 
 
-def _ndvi_png(ndvi_array):
-    """Render an NDVI array to a coloured PNG (bytes) for the vegetation thumbnail."""
+def _upsample_index(arr, factor=_RENDER_UPSCALE):
+    """Bilinear-upsample a float index array (NaN-aware).
+
+    NaNs are replaced with 0 before resize (PIL can't handle NaNs), but a
+    parallel binary "valid" mask is upsampled with NEAREST so the original
+    masked region is preserved without smearing bogus values across the edge.
+    Returns (smooth_arr, valid_mask). Values where ``valid_mask`` is False
+    should be ignored / drawn transparent.
+    """
+    np = _np
+    Image = _PilImage
+    h, w = arr.shape
+    if factor <= 1 or h == 0 or w == 0:
+        return arr, np.isfinite(arr)
+    nw, nh = max(int(w * factor), 1), max(int(h * factor), 1)
+
+    finite = np.isfinite(arr)
+    # Fill NaNs with the finite median (not 0) — bilinear smearing at the AOI
+    # edge then biases toward typical data instead of dragging boundary pixels
+    # toward a fake "0" colour.
+    if finite.any():
+        fill = float(np.median(arr[finite]))
+    else:
+        fill = 0.0
+    src = np.where(finite, arr, fill).astype('float32')
+    smooth_img = Image.fromarray(src, mode='F').resize((nw, nh), Image.BILINEAR)
+    smooth = np.array(smooth_img)
+
+    mask_src = (finite.astype('uint8') * 255)
+    mask_img = Image.fromarray(mask_src, mode='L').resize((nw, nh), Image.NEAREST)
+    valid = np.array(mask_img) > 0
+    return smooth, valid
+
+
+def _apply_ramp_linear(values, valid, ramp):
+    """Map a float array to RGBA via linear interpolation between ramp stops.
+
+    Stops are ``((threshold, (r, g, b)), ...)`` sorted ascending. Below the
+    first stop returns the first colour; above the last returns the last.
+    Between adjacent stops interpolates each channel linearly — gives a smooth
+    gradient instead of the previous stepped/posterised look.
+    """
+    np = _np
+    h, w = values.shape
+    rgb = np.zeros((h, w, 3), dtype='uint8')
+
+    stops = list(ramp)
+    thresholds = np.array([s[0] for s in stops], dtype='float32')
+    colors = np.array([s[1] for s in stops], dtype='float32')
+
+    clipped = np.clip(values, thresholds[0], thresholds[-1] - 1e-6)
+    idx = np.searchsorted(thresholds, clipped, side='right') - 1
+    idx = np.clip(idx, 0, len(stops) - 2)
+
+    lo_t = thresholds[idx]
+    hi_t = thresholds[idx + 1]
+    span = np.maximum(hi_t - lo_t, 1e-9)
+    frac = np.clip((clipped - lo_t) / span, 0.0, 1.0)[..., None]
+    lo_c = colors[idx]
+    hi_c = colors[idx + 1]
+    blended = lo_c + (hi_c - lo_c) * frac
+
+    rgb[:] = np.clip(blended, 0, 255).astype('uint8')
+    alpha = np.where(valid, 255, 0).astype('uint8')
+    return rgb, alpha
+
+
+def _index_png(arr, ramp, label):
+    """Render a vegetation/moisture index array to a smooth coloured PNG."""
     if not _NUMPY_OK or not _PIL_OK:
         return None
     np = _np
     Image = _PilImage
     try:
-        h, w = ndvi_array.shape
-        rgb = np.zeros((h, w, 3), dtype='uint8')
-        alpha = np.zeros((h, w), dtype='uint8')
-
-        # No-data pixels: light gray at 50% opacity so background shows through
-        nan_mask = ~np.isfinite(ndvi_array)
-        rgb[nan_mask] = (200, 200, 200)
-        alpha[nan_mask] = 128
-
-        for thresh, color in _NDVI_RAMP:
-            sel = np.isfinite(ndvi_array) & (ndvi_array < thresh) & (alpha == 0)
-            rgb[sel] = color
-            alpha[sel] = 255
-
+        smooth, valid = _upsample_index(arr, _RENDER_UPSCALE)
+        rgb, alpha = _apply_ramp_linear(smooth, valid, ramp)
         rgba = np.dstack([rgb, alpha])
         img = Image.fromarray(rgba, mode='RGBA')
-        if max(h, w) > _NDVI_PNG_MAX_DIM:
-            scale = _NDVI_PNG_MAX_DIM / max(h, w)
-            img = img.resize(
-                (max(int(w * scale), 1), max(int(h * scale), 1)),
-                Image.LANCZOS,
-            )
-        pad = 20
-        padded = Image.new('RGBA', (img.width + 2 * pad, img.height + 2 * pad), (245, 245, 245, 255))
-        padded.paste(img, (pad, pad))
+        h, w = rgba.shape[:2]
+        scale = _NDVI_PNG_SIZE / max(h, w, 1)
+        img = img.resize(
+            (max(int(w * scale), 1), max(int(h * scale), 1)),
+            Image.LANCZOS,
+        )
         buf = io.BytesIO()
-        padded.save(buf, format='PNG', optimize=True)
+        img.save(buf, format='PNG', optimize=True)
         return buf.getvalue()
     except Exception as exc:
-        logger.error('NDVI thumbnail render failed: %s', exc)
+        logger.error('%s thumbnail render failed: %s', label, exc)
+        return None
+
+
+def _ndvi_png(ndvi_array):
+    """Render an NDVI array to a smooth coloured PNG (bytes)."""
+    return _index_png(ndvi_array, _NDVI_RAMP, 'NDVI')
+
+
+def _ndmi_png(ndmi_array):
+    """Render an NDMI array to a smooth coloured PNG (bytes) with transparent BG."""
+    return _index_png(ndmi_array, _NDMI_RAMP, 'NDMI')
+
+
+def _satellite_png(bands, aoi_mask):
+    """Render a true-colour (R/G/B) PNG from Sentinel-2 B04/B03/B02.
+
+    Each band is bilinearly upsampled by ``_RENDER_UPSCALE`` before being
+    composited so the visible texture matches the smoothed NDVI/NDMI rasters
+    instead of looking blockier.
+    """
+    if not _NUMPY_OK or not _PIL_OK:
+        return None
+    np = _np
+    Image = _PilImage
+    try:
+        scale = 1.0 / 10000.0
+        gain = 3.5
+
+        def _upsample_band(band):
+            h, w = band.shape
+            if _RENDER_UPSCALE <= 1 or h == 0 or w == 0:
+                return band.astype('float32')
+            nw, nh = max(int(w * _RENDER_UPSCALE), 1), max(int(h * _RENDER_UPSCALE), 1)
+            img = Image.fromarray(band.astype('float32'), mode='F').resize((nw, nh), Image.BILINEAR)
+            return np.array(img)
+
+        r_up = _upsample_band(bands['red'])
+        g_up = _upsample_band(bands['green'])
+        b_up = _upsample_band(bands['blue'])
+
+        r8 = np.clip(r_up * scale * gain, 0, 1)
+        g8 = np.clip(g_up * scale * gain, 0, 1)
+        b8 = np.clip(b_up * scale * gain, 0, 1)
+
+        r = (r8 * 255).astype('uint8')
+        g = (g8 * 255).astype('uint8')
+        b = (b8 * 255).astype('uint8')
+
+        mask_img = Image.fromarray((aoi_mask.astype('uint8') * 255), mode='L').resize(
+            (r.shape[1], r.shape[0]), Image.NEAREST,
+        )
+        alpha = np.array(mask_img).astype('uint8')
+
+        rgba = np.dstack([r, g, b, alpha])
+        img = Image.fromarray(rgba, mode='RGBA')
+        h_px, w_px = rgba.shape[:2]
+        scale = _NDVI_PNG_SIZE / max(h_px, w_px, 1)
+        img = img.resize((max(int(w_px * scale), 1), max(int(h_px * scale), 1)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='PNG', optimize=True)
+        return buf.getvalue()
+    except Exception as exc:
+        logger.error('Satellite thumbnail render failed: %s', exc)
         return None
 
 
@@ -402,42 +572,62 @@ def compute_vegetation_indices(plot, start_date=None, end_date=None, cloud_cover
         logger.warning('No Sentinel-2 items found for plot geometry')
         return {}
 
-    # Try items from least to most cloudy until one yields valid pixels.
-    for item in items:
+    # Scan top-N candidates and pick the one with the best AOI coverage —
+    # plots that straddle two Sentinel-2 tiles otherwise get rendered from a
+    # single partial tile, leaving half the plot transparent.
+    candidate_limit = 6
+    coverage_target = 0.95
+    best = None  # (ratio, item, bands, aoi_mask, valid, pixel_count)
+    for item in items[:candidate_limit]:
         bands, aoi_mask = _read_stack(item, geometry)
         if bands is None:
             continue
         scl = bands['scl']
         bad = np.isin(scl.astype('int16'), _SCL_BAD)
-        valid = aoi_mask & (~bad)
+        # Pixels with zero reflectance in red/NIR fall outside the tile footprint
+        # (Sentinel-2 no-data) and must be excluded too.
+        nodata = (bands['red'] == 0) | (bands['nir'] == 0)
+        valid = aoi_mask & (~bad) & (~nodata)
         pixel_count = int(np.count_nonzero(valid))
         if pixel_count == 0:
             continue
+        aoi_total = int(np.count_nonzero(aoi_mask)) or 1
+        ratio = pixel_count / aoi_total
+        if best is None or ratio > best[0]:
+            best = (ratio, item, bands, aoi_mask, valid, pixel_count)
+        if ratio >= coverage_target:
+            break
 
-        indices = _compute_indices(bands, valid)
-        ndvi_array = indices.pop('_ndvi_array')
-        observed = (item.properties.get('datetime') or end_date.isoformat())[:10]
+    if best is None:
+        logger.warning('No cloud-free pixels for plot geometry in date range')
+        return {}
 
-        return {
-            'ndvi_mean': indices['ndvi']['mean'],
-            'ndvi_min': indices['ndvi']['min'],
-            'ndvi_max': indices['ndvi']['max'],
-            'ndmi_mean': indices['ndmi']['mean'],
-            'ndre_mean': indices['ndre']['mean'],
-            'evi_mean': indices['evi']['mean'],
-            'savi_mean': indices['savi']['mean'],
-            'msavi_mean': indices['msavi']['mean'],
-            'date_range': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
-            'geometry_type': geometry_type,
-            'image_id': item.id,
-            'observed_at': observed,
-            'pixel_count': pixel_count,
-            'source': SOURCE,
-            'image_png': _ndvi_png(ndvi_array),
-        }
+    ratio, item, bands, aoi_mask, valid, pixel_count = best
+    indices = _compute_indices(bands, valid)
+    ndvi_array = indices.pop('_ndvi_array')
+    ndmi_array = indices.pop('_ndmi_array')
+    observed = (item.properties.get('datetime') or end_date.isoformat())[:10]
 
-    logger.warning('No cloud-free pixels for plot geometry in date range')
-    return {}
+    return {
+        'ndvi_mean': indices['ndvi']['mean'],
+        'ndvi_min': indices['ndvi']['min'],
+        'ndvi_max': indices['ndvi']['max'],
+        'ndmi_mean': indices['ndmi']['mean'],
+        'ndre_mean': indices['ndre']['mean'],
+        'evi_mean': indices['evi']['mean'],
+        'savi_mean': indices['savi']['mean'],
+        'msavi_mean': indices['msavi']['mean'],
+        'date_range': {'start': start_date.isoformat(), 'end': end_date.isoformat()},
+        'geometry_type': geometry_type,
+        'image_id': item.id,
+        'observed_at': observed,
+        'pixel_count': pixel_count,
+        'coverage_ratio': round(ratio, 3),
+        'source': SOURCE,
+        'image_png': _ndvi_png(ndvi_array),
+        'moisture_image_png': _ndmi_png(ndmi_array),
+        'satellite_image_png': _satellite_png(bands, valid),
+    }
 
 
 # Weather (Open-Meteo current conditions, key-less)
@@ -522,27 +712,30 @@ def _clamp(value, low=0.0, high=100.0):
     return max(low, min(high, value))
 
 
-# Centralized NDVI score ranges — single source of truth for all scoring, colors, labels.
-# Boundaries align with pistachio reference constants above.
+# Centralized NDVI score ranges — pistachio-calibrated against real Sentinel-2
+# observations of Kerman/Rafsanjan orchards. Even peak-season vigorous
+# orchards rarely exceed plot-mean NDVI 0.30; 0.18 is already healthy, 0.10 is
+# young/sparse. Scoring shifted so a 0.20 plot reads as healthy, not "poor".
 NDVI_SCORE_RANGES = {
-    1: {"min": -1.0,  "max":  0.10, "score":  5,  "label": "Bare / desert",   "color": "#9e9e9e"},
-    2: {"min":  0.10, "max":  0.20, "score": 20,  "label": "Very poor",       "color": "#d32f2f"},
-    3: {"min":  0.20, "max":  0.35, "score": 40,  "label": "Poor / stressed", "color": "#ef6c00"},
-    4: {"min":  0.35, "max":  0.50, "score": 65,  "label": "Moderate",        "color": "#fbc02d"},
-    5: {"min":  0.50, "max":  0.70, "score": 85,  "label": "Good",            "color": "#7cb342"},
-    6: {"min":  0.70, "max":  1.00, "score": 100, "label": "Excellent",       "color": "#1b5e20"},
+    1: {"min": -1.0,  "max":  0.05, "score":  5,   "label": "Bare / desert",        "color": "#9e9e9e"},
+    2: {"min":  0.05, "max":  0.10, "score": 30,   "label": "Very poor",            "color": "#d32f2f"},
+    3: {"min":  0.10, "max":  0.15, "score": 55,   "label": "Stressed pistachio",   "color": "#ef6c00"},
+    4: {"min":  0.15, "max":  0.20, "score": 78,   "label": "Acceptable pistachio", "color": "#fbc02d"},
+    5: {"min":  0.20, "max":  0.30, "score": 92,   "label": "Healthy pistachio",    "color": "#7cb342"},
+    6: {"min":  0.30, "max":  1.00, "score": 100,  "label": "Vigorous pistachio",   "color": "#1b5e20"},
 }
 
-# Centralized NDMI score ranges — single source of truth.
-# PISTACHIO_NDMI_ADEQUATE_MIN (0.03) sits inside level 4 (adequate moisture).
-# PISTACHIO_NDMI_STRESS_MIN (-0.12) sits inside level 2 (water stress).
+# Centralized NDMI score ranges — pistachio-calibrated (drought-tolerant crop
+# in semi-arid climate). NDMI sits naturally negative for pistachio orchards,
+# so adequate-moisture band starts at -0.05 (not 0.00). Mild stress no longer
+# auto-fails the plot — pistachio handles it.
 NDMI_SCORE_RANGES = {
-    1: {"min": -1.0,  "max": -0.20, "score":  5,  "label": "Severe drought",    "color": "#d32f2f"},
-    2: {"min": -0.20, "max": -0.10, "score": 20,  "label": "Water stress",      "color": "#ef6c00"},
-    3: {"min": -0.10, "max":  0.00, "score": 40,  "label": "Mild stress",       "color": "#fbc02d"},
-    4: {"min":  0.00, "max":  0.10, "score": 65,  "label": "Adequate moisture", "color": "#4fc3f7"},
-    5: {"min":  0.10, "max":  0.20, "score": 85,  "label": "Good moisture",     "color": "#0288d1"},
-    6: {"min":  0.20, "max":  1.00, "score": 100, "label": "Well irrigated",    "color": "#01579b"},
+    1: {"min": -1.0,  "max": -0.25, "score": 10,   "label": "Severe drought",    "color": "#d32f2f"},
+    2: {"min": -0.25, "max": -0.15, "score": 40,   "label": "Water stress",      "color": "#ef6c00"},
+    3: {"min": -0.15, "max": -0.05, "score": 65,   "label": "Mild stress",       "color": "#fbc02d"},
+    4: {"min": -0.05, "max":  0.05, "score": 85,   "label": "Adequate moisture", "color": "#4fc3f7"},
+    5: {"min":  0.05, "max":  0.15, "score": 95,   "label": "Good moisture",     "color": "#0288d1"},
+    6: {"min":  0.15, "max":  1.00, "score": 100,  "label": "Well irrigated",    "color": "#01579b"},
 }
 
 
@@ -588,42 +781,42 @@ def evaluate_plot_health(indices, weather, water_m3=None):
     suggestions = []
 
     if greenness is not None:
-        if greenness is not None and greenness <= 20:
+        if greenness <= 30:
             problems.append({
                 'title': _('Weak vegetation cover'),
                 'severity': 'high',
-                'description': _('Low greenness index (NDVI=%(ndvi)s). Pistachio healthy range: NDVI ≥ 0.35.') % {'ndvi': ndvi},
+                'description': _('Low greenness index (NDVI=%(ndvi)s). Pistachio healthy range: NDVI ≥ 0.18 (orchards with wide tree spacing).') % {'ndvi': ndvi},
             })
-            suggestions.append(_('Check plant nutrition, pests, and irrigation adequacy. For pistachio, target NDVI ≥ 0.35.'))
-        elif greenness <= 40:
+            suggestions.append(_('Check plant nutrition, pests, and irrigation. For pistachio orchards, target plot-mean NDVI ≥ 0.18.'))
+        elif greenness <= 55:
             problems.append({
-                'title': _('Moderate vegetation cover'),
+                'title': _('Marginal pistachio vigour'),
                 'severity': 'medium',
-                'description': _('Moderate greenness index (NDVI=%(ndvi)s). Pistachio optimal NDVI: 0.35–0.65.') % {'ndvi': ndvi},
+                'description': _('Borderline greenness index (NDVI=%(ndvi)s). Healthy pistachio plot-mean: NDVI 0.18–0.30.') % {'ndvi': ndvi},
             })
-            suggestions.append(_('Periodic monitoring and improved nutrition program recommended. Pistachio optimal NDVI: 0.35–0.65.'))
+            suggestions.append(_('Monitor canopy and nutrition. Pistachio plot-mean NDVI typically peaks at 0.20–0.30; do not expect dense-crop values (0.5+).'))
 
     if moisture is not None:
-        if moisture is not None and moisture <= 20:
+        if moisture <= 40:
             problems.append({
                 'title': _('Moisture stress / water deficit'),
                 'severity': 'high',
-                'description': _('Low moisture index (NDMI=%(ndmi)s). Pistachio requires NDMI ≥ 0.03.') % {'ndmi': ndmi},
+                'description': _('Low moisture index (NDMI=%(ndmi)s). Pistachio adequate: NDMI ≥ -0.05.') % {'ndmi': ndmi},
             })
-            suggestions.append(_('Increase irrigation frequency or volume. Pistachio target NDMI ≥ 0.03.'))
-        elif moisture <= 40:
+            suggestions.append(_('Increase irrigation frequency or volume. Pistachio target NDMI ≥ -0.05 (drought-tolerant but stressed below).'))
+        elif moisture <= 65:
             problems.append({
-                'title': _('Soil moisture declining'),
+                'title': _('Soil moisture borderline'),
                 'severity': 'medium',
-                'description': _('Moisture index declining (NDMI=%(ndmi)s). Pistachio adequate range: NDMI 0.03–0.25.') % {'ndmi': ndmi},
+                'description': _('Moisture index borderline (NDMI=%(ndmi)s). Pistachio adequate range: NDMI -0.05–0.15.') % {'ndmi': ndmi},
             })
-            suggestions.append(_('Monitor irrigation schedule carefully. Pistachio adequate NDMI: 0.03–0.25.'))
+            suggestions.append(_('Monitor irrigation schedule. Pistachio adequate NDMI: -0.05–0.15.'))
 
-    if ndre is not None and float(ndre) < 0.2:
+    if ndre is not None and float(ndre) < 0.10:
         problems.append({
             'title': _('Possible nitrogen deficiency'),
             'severity': 'medium',
-            'description': _('Low red-edge index (NDRE=%(ndre)s).') % {'ndre': ndre},
+            'description': _('Low red-edge index (NDRE=%(ndre)s) for pistachio canopy.') % {'ndre': ndre},
         })
         suggestions.append(_('Check nitrogen fertilisation status.'))
 
@@ -692,15 +885,17 @@ def evaluate_plot_health(indices, weather, water_m3=None):
     # Precipitation bonus: recent rain reduces irrigation need (up to +5)
     precip_bonus = 5 if (precip is not None and precip > 2) else 0
 
-    # NDVI/NDMI form the main score (90%); water is a secondary factor (10%);
-    # weather contributes only via heat_penalty and precip_bonus.
+    # Weighting: NDVI is the primary indicator for pistachio orchard health
+    # (canopy fraction), NDMI is secondary (semi-arid orchards run NDMI low
+    # without being unhealthy), water is a sanity factor. Weather contributes
+    # only via heat_penalty and precip_bonus.
     _parts = []
     if greenness is not None:
-        _parts.append((greenness, 0.50))
+        _parts.append((greenness, 0.60))
     if moisture is not None:
-        _parts.append((moisture, 0.40))
+        _parts.append((moisture, 0.25))
     if water_score is not None:
-        _parts.append((water_score, 0.10))
+        _parts.append((water_score, 0.15))
 
     if _parts:
         _total_w = sum(w for _, w in _parts)
