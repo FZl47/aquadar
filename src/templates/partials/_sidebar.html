@@ -41,8 +41,10 @@
             <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:plot_create' %}"><i class="icon-plus"></i><span>{% trans "Add Plot" %}</span></a></li>
             <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editOutletModal" href="#" onclick="aqOpenCrudModal('editOutletForm','{% url 'public:outlet_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Outlet" %}</span></a></li>
 
-            <li class="aq-nav-section"><i class="icon-tasks"></i> {% trans "Operations" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span></a></li>
+            <li class="aq-nav-section"><i class="icon-play-circle"></i> {% trans "Irrigations" %}</li>
+            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
+
+            <li class="aq-nav-section"><i class="icon-list-alt"></i> {% trans "Reports" %}</li>
             <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
             <li><a class="aq-nav-link" href="{% url 'public:report_manure__list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization Reports" %}</span></a></li>
 
@@ -50,7 +52,10 @@
             <li><a class="aq-nav-link" href="{% url 'public:plot_vegetation_map' %}"><i class="icon-leaf"></i><span>{% trans "Vegetation Map" %}</span></a></li>
             <li><a class="aq-nav-link" href="{% url 'public:plot_moisture_map' %}"><i class="icon-tint"></i><span>{% trans "Moisture Map" %}</span></a></li>
             {% else %}
-            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span></a></li>
+            <li class="aq-nav-section"><i class="icon-play-circle"></i> {% trans "Irrigations" %}</li>
+            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
+
+            <li class="aq-nav-section"><i class="icon-list-alt"></i> {% trans "Reports" %}</li>
             <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
             {% endif %}
 

@@ -94,6 +94,20 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            # django-q workers + web requests hit the same SQLite file
+            # concurrently; without WAL + a longer busy timeout, writers
+            # collide and raise "database is locked" (seen failing
+            # apps.public.tasks.analyze_plot in django_q Task log).
+            'timeout': 30,
+            'init_command': (
+                'PRAGMA journal_mode=WAL;'
+                'PRAGMA synchronous=NORMAL;'
+                'PRAGMA mmap_size=134217728;'
+                'PRAGMA journal_size_limit=67108864;'
+                'PRAGMA cache_size=2000;'
+            ),
+        },
     }
 }
 
@@ -166,7 +180,7 @@ Q_CLUSTER = {
     'workers': 6,
     'recycle': 500,
     'timeout': 300,
-    'retry': 120,
+    'retry': 900,
     'queue_limit': 50,
     'bulk': 10,
     'orm': 'default',

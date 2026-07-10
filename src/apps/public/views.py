@@ -1273,6 +1273,7 @@ class PlotVegetationMapView(SuperVisorUserRequiredMixin, TemplateView):
         )
         latest_image = Subquery(
             PlotVegetationIndex.objects.filter(plot=OuterRef('pk'))
+            .exclude(image='').exclude(image__isnull=True)
             .order_by('-observed_at').values('image')[:1]
         )
         latest_report_at = Subquery(
@@ -1334,12 +1335,20 @@ class PlotVegetationMapView(SuperVisorUserRequiredMixin, TemplateView):
         context['plots_json'] = json.dumps(plots_payload, ensure_ascii=False)
         context['farms'] = Farm.objects.all()
         context['farm_id'] = farm_id
-        from .gee import NDVI_SCORE_RANGES, NDMI_SCORE_RANGES
+        from .gee import (
+            NDVI_SCORE_RANGES, NDMI_SCORE_RANGES,
+            PISTACHIO_NDVI_PCT_MAX, PISTACHIO_NDMI_PCT_MIN, PISTACHIO_NDMI_PCT_MAX,
+        )
         from django.utils.translation import gettext as _gettext
         ndvi_ranges = [{**v, 'label': _gettext(v['label'])} for v in NDVI_SCORE_RANGES.values()]
         ndmi_ranges = [{**v, 'label': _gettext(v['label'])} for v in NDMI_SCORE_RANGES.values()]
         context['ndvi_ranges_json'] = json.dumps(ndvi_ranges, ensure_ascii=False)
         context['ndmi_ranges_json'] = json.dumps(ndmi_ranges, ensure_ascii=False)
+        context['pct_constants_json'] = json.dumps({
+            'ndvi_max': PISTACHIO_NDVI_PCT_MAX,
+            'ndmi_min': PISTACHIO_NDMI_PCT_MIN,
+            'ndmi_max': PISTACHIO_NDMI_PCT_MAX,
+        })
         return context
 
 
@@ -1350,13 +1359,18 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         farm_id = self.request.GET.get('farm', '').strip()
         latest_vi = PlotVegetationIndex.objects.filter(plot=OuterRef('pk')).order_by('-observed_at')
+        latest_vi_with_moist = (
+            PlotVegetationIndex.objects.filter(plot=OuterRef('pk'))
+            .exclude(moisture_image='').exclude(moisture_image__isnull=True)
+            .order_by('-observed_at')
+        )
         qs = (
             Plot.objects.select_related('zone__farm')
             .annotate(
                 latest_ndmi=Subquery(latest_vi.values('ndmi')[:1]),
                 latest_ndvi=Subquery(latest_vi.values('ndvi')[:1]),
                 latest_at=Subquery(latest_vi.values('observed_at')[:1]),
-                latest_moisture_image=Subquery(latest_vi.values('moisture_image')[:1]),
+                latest_moisture_image=Subquery(latest_vi_with_moist.values('moisture_image')[:1]),
             )
         )
         if farm_id.isdigit():
@@ -1388,12 +1402,20 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
         context['plots_json'] = json.dumps(plots_payload, ensure_ascii=False)
         context['farms'] = Farm.objects.all()
         context['farm_id'] = farm_id
-        from .gee import NDMI_SCORE_RANGES, NDVI_SCORE_RANGES
+        from .gee import (
+            NDMI_SCORE_RANGES, NDVI_SCORE_RANGES,
+            PISTACHIO_NDVI_PCT_MAX, PISTACHIO_NDMI_PCT_MIN, PISTACHIO_NDMI_PCT_MAX,
+        )
         from django.utils.translation import gettext as _gettext
         ndmi_ranges = [{**v, 'label': _gettext(v['label'])} for v in NDMI_SCORE_RANGES.values()]
         ndvi_ranges = [{**v, 'label': _gettext(v['label'])} for v in NDVI_SCORE_RANGES.values()]
         context['ndmi_ranges_json'] = json.dumps(ndmi_ranges, ensure_ascii=False)
         context['ndvi_ranges_json'] = json.dumps(ndvi_ranges, ensure_ascii=False)
+        context['pct_constants_json'] = json.dumps({
+            'ndvi_max': PISTACHIO_NDVI_PCT_MAX,
+            'ndmi_min': PISTACHIO_NDMI_PCT_MIN,
+            'ndmi_max': PISTACHIO_NDMI_PCT_MAX,
+        })
         return context
 
 

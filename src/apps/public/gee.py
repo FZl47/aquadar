@@ -71,9 +71,14 @@ SOURCE = 'Sentinel-2 / Microsoft Planetary Computer'
 _SCL_BAD = (0, 1, 3, 8, 9, 10, 11)
 
 # Planetary Computer Sentinel-2 L2A asset keys.
+# NDMI uses B8A (narrow NIR, 865 nm, 20 m) rather than the broad B08: the
+# standard Gao (1996) moisture index pairs 860 nm NIR with SWIR1 (B11), and
+# both bands share the same 20 m native grid, so the ratio is spectrally and
+# spatially consistent. B08 (broad NIR, 10 m) stays for NDVI/EVI/SAVI/MSAVI.
 _BANDS = {
     'red': 'B04',
     'nir': 'B08',
+    'nir08': 'B8A',
     'swir': 'B11',
     'rededge': 'B05',
     'blue': 'B02',
@@ -281,7 +286,15 @@ def _read_stack(item, geometry):
             return None, None
 
     def _fetch_band(name, key):
-        resampling = Resampling.nearest if name == 'scl' else Resampling.bilinear
+        if name == 'scl':
+            resampling = Resampling.nearest
+        elif name in ('swir', 'nir08'):
+            # B11 and B8A are 20 m native; cubic resample to the 10 m grid
+            # preserves gradient detail better than bilinear and improves NDMI
+            # sharpness.
+            resampling = Resampling.cubic
+        else:
+            resampling = Resampling.bilinear
         arr = _read_band(assets[key].href, target_crs, transform, width, height, resampling)
         return name, arr.astype('float32')
 
@@ -307,12 +320,31 @@ def _read_stack(item, geometry):
     return bands, aoi_mask
 
 
+def _dilate_mask(mask, iterations=1):
+    """Binary-dilate a boolean mask with a 3×3 kernel (numpy-only).
+
+    SCL routinely under-detects cloud/shadow fringes by a pixel or two; growing
+    the bad-pixel mask keeps that contaminated halo out of the statistics.
+    """
+    np = _np
+    out = mask
+    for _i in range(iterations):
+        padded = np.pad(out, 1, mode='edge')
+        out = (
+            padded[0:-2, 0:-2] | padded[0:-2, 1:-1] | padded[0:-2, 2:]
+            | padded[1:-1, 0:-2] | padded[1:-1, 1:-1] | padded[1:-1, 2:]
+            | padded[2:, 0:-2] | padded[2:, 1:-1] | padded[2:, 2:]
+        )
+    return out
+
+
 # Index computation
 def _compute_indices(bands, valid):
     import numpy as np
 
     scale = 1.0 / 10000.0
     nir = bands['nir'] * scale
+    nir08 = bands['nir08'] * scale
     red = bands['red'] * scale
     swir = bands['swir'] * scale
     rededge = bands['rededge'] * scale
@@ -320,7 +352,8 @@ def _compute_indices(bands, valid):
 
     with np.errstate(divide='ignore', invalid='ignore'):
         ndvi = (nir - red) / (nir + red)
-        ndmi = (nir - swir) / (nir + swir)
+        # Gao (1996) NDMI: narrow NIR (B8A) with SWIR1 (B11) — both 20 m native.
+        ndmi = (nir08 - swir) / (nir08 + swir)
         ndre = (nir - rededge) / (nir + rededge)
         evi = 2.5 * (nir - red) / (nir + 6.0 * red - 7.5 * blue + 1.0)
         savi = 1.5 * (nir - red) / (nir + red + 0.5)
@@ -334,31 +367,36 @@ def _compute_indices(bands, valid):
         if finite.size == 0:
             out[name] = {'mean': None, 'min': None, 'max': None}
         else:
+            # min/max as 2nd/98th percentiles — raw extremes on a small plot are
+            # dominated by single-pixel sensor noise / residual cloud fringe and
+            # mislead the UI range display.
             out[name] = {
                 'mean': round(float(np.mean(finite)), 4),
-                'min': round(float(np.min(finite)), 4),
-                'max': round(float(np.max(finite)), 4),
+                'min': round(float(np.percentile(finite, 2)), 4),
+                'max': round(float(np.percentile(finite, 98)), 4),
             }
     out['_ndvi_array'] = np.where(valid, ndvi, np.nan)
     out['_ndmi_array'] = np.where(valid, ndmi, np.nan)
     return out
 
 
-# NDVI colour ramp — pistachio-calibrated, finer gradient. Stops are denser in
-# the 0.10–0.35 band (where pistachio orchard plot-means actually live) so
-# visual differences inside that range stay readable instead of all painting red.
+# NDVI colour ramp — pistachio-calibrated and aligned with NDVI_SCORE_RANGES so
+# the map colour matches the verdict the scoring gives: 0.10–0.15 stressed
+# (orange), 0.15–0.20 acceptable (yellow), 0.20–0.30 healthy (green), 0.30+
+# vigorous (dark green). Previously green only started near 0.26, so a plot the
+# score called "healthy" (mean 0.21, score 92) rendered alarming orange.
 _NDVI_RAMP = (
     (-0.05, ( 33, 150, 243)),  # water / snow
     ( 0.03, (158, 158, 158)),  # bare soil / urban
-    ( 0.08, (200, 100, 100)),  # very sparse (struggling)
-    ( 0.12, (211,  47,  47)),  # stressed pistachio (low)
-    ( 0.15, (239, 108,   0)),  # stressed pistachio
-    ( 0.18, (251, 140,   0)),  # acceptable (lower)
-    ( 0.22, (251, 192,  45)),  # acceptable
-    ( 0.26, (205, 220,  57)),  # healthy pistachio (lower)
-    ( 0.30, (139, 195,  74)),  # healthy pistachio
-    ( 0.36, (124, 179,  66)),  # vigorous pistachio
-    ( 0.45, ( 76, 175,  80)),  # very vigorous
+    ( 0.06, (183,  28,  28)),  # very poor / struggling
+    ( 0.10, (229,  57,  53)),  # stressed pistachio (low)
+    ( 0.13, (239, 108,   0)),  # stressed pistachio
+    ( 0.15, (251, 192,  45)),  # acceptable pistachio
+    ( 0.18, (212, 225,  87)),  # acceptable → healthy transition
+    ( 0.20, (156, 204, 101)),  # healthy pistachio (low)
+    ( 0.25, (124, 179,  66)),  # healthy pistachio
+    ( 0.30, ( 67, 160,  71)),  # vigorous pistachio (low)
+    ( 0.40, ( 46, 125,  50)),  # vigorous pistachio
     (10.0,  ( 27,  94,  32)),  # excellent / dense crop
 )
 _NDVI_PNG_SIZE = 1024  # final PNG output size (px) — high resolution thumbnail.
@@ -366,20 +404,36 @@ _NDVI_PNG_SIZE = 1024  # final PNG output size (px) — high resolution thumbnai
 # ramp + final resize. 8× turns a 10×10 sensor grid into an 80×80 smoothed grid,
 # making the final 1024 PNG look continuous instead of "pixel pixel" blocky.
 _RENDER_UPSCALE = 8
+# NDMI uses a higher factor because SWIR B11 is 20 m native (half the spatial
+# resolution of NIR/red), so the effective NDMI grid is sparser and needs more
+# pre-upsampling to look as sharp as NDVI.
+_NDMI_RENDER_UPSCALE = 16
 
-# NDMI colour ramp — pistachio-calibrated. Pistachio is drought-tolerant: NDMI
-# is typically negative in semi-arid orchards, so adequate-moisture band starts
-# at -0.05 (not 0.00). Stops are denser around the irrigation decision range.
+# NDMI colour ramp — pistachio-calibrated, dense stops around the irrigation
+# decision range (-0.15 to 0.10) so per-pixel differences stay visually
+# distinguishable instead of all blending into one band. Pistachio is
+# drought-tolerant: NDMI is typically negative in semi-arid orchards, so the
+# adequate-moisture band starts at -0.05 (not 0.00).
 _NDMI_RAMP = (
-    (-0.30, (183,  28,  28)),  # extreme drought
+    (-0.35, (127,   0,   0)),  # extreme drought
+    (-0.30, (183,  28,  28)),
+    (-0.25, (198,  40,  40)),
     (-0.22, (211,  47,  47)),  # severe drought
+    (-0.19, (220,  60,  35)),
     (-0.16, (230,  74,  25)),  # water stress
+    (-0.13, (235,  90,  12)),
     (-0.10, (239, 108,   0)),  # mild stress
+    (-0.07, (245, 150,  20)),
     (-0.05, (251, 192,  45)),  # borderline
+    (-0.02, (220, 215,  90)),
     ( 0.00, (174, 213, 129)),  # adequate (low)
+    ( 0.02, (130, 210, 175)),
     ( 0.05, ( 79, 195, 247)),  # adequate
+    ( 0.08, ( 55, 188, 246)),
     ( 0.10, ( 41, 182, 246)),  # good (low)
+    ( 0.14, ( 20, 160, 230)),
     ( 0.18, (  2, 136, 209)),  # good moisture
+    ( 0.25, (  1, 110, 180)),
     (10.0,  (  1,  87, 155)),  # well irrigated
 )
 
@@ -451,14 +505,14 @@ def _apply_ramp_linear(values, valid, ramp):
     return rgb, alpha
 
 
-def _index_png(arr, ramp, label):
+def _index_png(arr, ramp, label, upscale=_RENDER_UPSCALE):
     """Render a vegetation/moisture index array to a smooth coloured PNG."""
     if not _NUMPY_OK or not _PIL_OK:
         return None
     np = _np
     Image = _PilImage
     try:
-        smooth, valid = _upsample_index(arr, _RENDER_UPSCALE)
+        smooth, valid = _upsample_index(arr, upscale)
         rgb, alpha = _apply_ramp_linear(smooth, valid, ramp)
         rgba = np.dstack([rgb, alpha])
         img = Image.fromarray(rgba, mode='RGBA')
@@ -483,7 +537,7 @@ def _ndvi_png(ndvi_array):
 
 def _ndmi_png(ndmi_array):
     """Render an NDMI array to a smooth coloured PNG (bytes) with transparent BG."""
-    return _index_png(ndmi_array, _NDMI_RAMP, 'NDMI')
+    return _index_png(ndmi_array, _NDMI_RAMP, 'NDMI', upscale=_NDMI_RENDER_UPSCALE)
 
 
 def _satellite_png(bands, aoi_mask):
@@ -499,7 +553,24 @@ def _satellite_png(bands, aoi_mask):
     Image = _PilImage
     try:
         scale = 1.0 / 10000.0
-        gain = 3.5
+
+        # Adaptive contrast: stretch each band between its 2nd/98th percentile
+        # over AOI pixels instead of a fixed gain. Desert scenes with a fixed
+        # 3.5× gain either wash out (bright soil) or stay murky (low sun angle);
+        # the percentile stretch adapts per scene. A shared low/high across the
+        # three bands would preserve exact hue ratios but kills contrast when
+        # one band dominates, so stretch per band with a floor on the span.
+        def _stretch_limits(band):
+            vals = band[aoi_mask] * scale
+            vals = vals[_np.isfinite(vals)]
+            if vals.size < 16:
+                return 0.0, 1.0 / 3.5  # fallback ≈ old fixed gain
+            lo = float(_np.percentile(vals, 2))
+            hi = float(_np.percentile(vals, 98))
+            if hi - lo < 0.02:  # near-uniform scene — avoid noise amplification
+                mid = (hi + lo) / 2
+                lo, hi = mid - 0.01, mid + 0.01
+            return lo, hi
 
         def _upsample_band(band):
             h, w = band.shape
@@ -509,17 +580,17 @@ def _satellite_png(bands, aoi_mask):
             img = Image.fromarray(band.astype('float32'), mode='F').resize((nw, nh), Image.BILINEAR)
             return np.array(img)
 
-        r_up = _upsample_band(bands['red'])
-        g_up = _upsample_band(bands['green'])
-        b_up = _upsample_band(bands['blue'])
+        def _band_to_u8(band):
+            lo, hi = _stretch_limits(band)
+            up = _upsample_band(band) * scale
+            norm = np.clip((up - lo) / max(hi - lo, 1e-6), 0, 1)
+            # Mild gamma lift so shadowed rows between tree lines stay readable.
+            norm = norm ** 0.9
+            return (norm * 255).astype('uint8')
 
-        r8 = np.clip(r_up * scale * gain, 0, 1)
-        g8 = np.clip(g_up * scale * gain, 0, 1)
-        b8 = np.clip(b_up * scale * gain, 0, 1)
-
-        r = (r8 * 255).astype('uint8')
-        g = (g8 * 255).astype('uint8')
-        b = (b8 * 255).astype('uint8')
+        r = _band_to_u8(bands['red'])
+        g = _band_to_u8(bands['green'])
+        b = _band_to_u8(bands['blue'])
 
         mask_img = Image.fromarray((aoi_mask.astype('uint8') * 255), mode='L').resize(
             (r.shape[1], r.shape[0]), Image.NEAREST,
@@ -583,7 +654,7 @@ def compute_vegetation_indices(plot, start_date=None, end_date=None, cloud_cover
         if bands is None:
             continue
         scl = bands['scl']
-        bad = np.isin(scl.astype('int16'), _SCL_BAD)
+        bad = _dilate_mask(np.isin(scl.astype('int16'), _SCL_BAD))
         # Pixels with zero reflectance in red/NIR fall outside the tile footprint
         # (Sentinel-2 no-data) and must be excluded too.
         nodata = (bands['red'] == 0) | (bands['nir'] == 0)
@@ -749,14 +820,45 @@ def _score_from_ranges(value, ranges):
     return ranges[max(ranges.keys())]["score"]
 
 
+# Pistachio percent mapping. Greenness/moisture % is now a linear function of the
+# raw NDVI/NDMI rate (-1..1) instead of a stepped band score. Pistachio plots get
+# a *boosted* rate: plot-mean NDVI rarely exceeds 0.30 even on a vigorous orchard,
+# so [0, 0.30] is stretched to [0, 100]% instead of using the full [-1, 1] range
+# (which would cap a healthy pistachio at ~65%). NDMI [-0.20, 0.15] → [0, 100]%.
+PISTACHIO_NDVI_PCT_MAX = PISTACHIO_NDVI_VIGOROUS_MIN  # NDVI 0.30 → 100%
+PISTACHIO_NDMI_PCT_MIN = PISTACHIO_NDMI_STRESS_MIN    # NDMI -0.20 → 0%
+PISTACHIO_NDMI_PCT_MAX = 0.15                          # NDMI 0.15 → 100%
+
+
 def _ndvi_to_greenness(ndvi):
-    """Pistachio-calibrated NDVI → greenness score from NDVI_SCORE_RANGES."""
-    return _score_from_ranges(None if ndvi is None else float(ndvi), NDVI_SCORE_RANGES)
+    """NDVI rate → pistachio-boosted greenness percent (0–100).
+
+    Linear map: NDVI ≤ 0 → 0%, NDVI ≥ PISTACHIO_NDVI_PCT_MAX (0.30) → 100%.
+    """
+    if ndvi is None:
+        return None
+    v = max(-1.0, min(1.0, float(ndvi)))
+    if v <= 0:
+        return 0
+    pct = (v / PISTACHIO_NDVI_PCT_MAX) * 100.0
+    return int(round(max(0.0, min(100.0, pct))))
 
 
 def _ndmi_to_moisture(ndmi):
-    """Pistachio-calibrated NDMI → moisture score from NDMI_SCORE_RANGES."""
-    return _score_from_ranges(None if ndmi is None else float(ndmi), NDMI_SCORE_RANGES)
+    """NDMI rate → pistachio-boosted moisture percent (0–100).
+
+    Linear map between PISTACHIO_NDMI_PCT_MIN (-0.20 → 0%) and
+    PISTACHIO_NDMI_PCT_MAX (0.15 → 100%). Drought-tolerant semi-arid pistachio
+    sits naturally negative, so the lower bound is below 0.
+    """
+    if ndmi is None:
+        return None
+    v = max(-1.0, min(1.0, float(ndmi)))
+    span = PISTACHIO_NDMI_PCT_MAX - PISTACHIO_NDMI_PCT_MIN
+    if span <= 0:
+        return None
+    pct = (v - PISTACHIO_NDMI_PCT_MIN) / span * 100.0
+    return int(round(max(0.0, min(100.0, pct))))
 
 
 def evaluate_plot_health(indices, weather, water_m3=None):

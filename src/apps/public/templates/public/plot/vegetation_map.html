@@ -182,6 +182,7 @@
             ).addTo(map);
 
             const NDVI_RANGES = {{ ndvi_ranges_json|safe }};
+            const PCT = {{ pct_constants_json|safe }};
 
             // NDVI_RANGES: [{min, max, score, label, color}, ...] from gee.py NDVI_SCORE_RANGES
 
@@ -204,9 +205,12 @@
                 return r ? r.label : '{% trans "No data" %}';
             }
 
+            // Linear pistachio-boosted greenness percent: NDVI ≤ 0 → 0%, NDVI ≥ ndvi_max → 100%.
             function ndviScore(ndvi) {
-                const r = _ndviRange(ndvi);
-                return r ? r.score : null;
+                if (ndvi === null || ndvi === undefined) return null;
+                const v = Math.max(-1, Math.min(1, ndvi));
+                if (v <= 0) return 0;
+                return Math.round(Math.max(0, Math.min(100, (v / PCT.ndvi_max) * 100)));
             }
 
             const allBounds = [];

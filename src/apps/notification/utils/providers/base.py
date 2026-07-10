@@ -1,5 +1,6 @@
-import threading
 import abc
+
+from django_q.tasks import async_task
 
 from apps.notification.models import NotificationUser
 
@@ -15,7 +16,7 @@ class BaseProvider(abc.ABC):
     Each provider is responsible for delivering notifications
     through a specific communication channel.
 
-    The public `send` method always runs in a separate thread.
+    The public `send` method always runs as a django-q background task.
     Subclasses must implement `_send` only.
     """
 
@@ -27,15 +28,15 @@ class BaseProvider(abc.ABC):
         """
         Public method used to send a notification.
 
-        This method runs the actual sending logic in a
-        background thread. Subclasses MUST NOT override this method.
+        This method queues the actual sending logic on django-q.
+        Subclasses MUST NOT override this method.
         """
-        thread = threading.Thread(
-            target=self._send_wrapper,
-            args=(self.notification,),
-            daemon=True
+        provider_path = f'{type(self).__module__}.{type(self).__qualname__}'
+        async_task(
+            'apps.notification.utils.providers.base._run_provider_send',
+            provider_path,
+            self.notification.pk,
         )
-        thread.start()
 
     @abc.abstractmethod
     def _send(self, notification: NotificationUser) -> None:
@@ -62,3 +63,17 @@ class BaseProvider(abc.ABC):
         Can be overridden if needed.
         """
         pass
+
+
+def _run_provider_send(provider_class_path: str, notification_id: int) -> None:
+    """django-q entry point: re-fetch the notification and dispatch `_send`."""
+    from django.utils.module_loading import import_string
+
+    try:
+        notification = NotificationUser.objects.get(pk=notification_id)
+    except NotificationUser.DoesNotExist:
+        return
+
+    provider_class = import_string(provider_class_path)
+    provider = provider_class(notification)
+    provider._send_wrapper(notification)

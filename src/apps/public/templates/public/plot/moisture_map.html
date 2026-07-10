@@ -184,6 +184,7 @@
             ).addTo(map);
 
             const NDMI_RANGES = {{ ndmi_ranges_json|safe }};
+            const PCT = {{ pct_constants_json|safe }};
 
             // NDMI_RANGES: [{min, max, score, label, color}, ...] from gee.py NDMI_SCORE_RANGES
 
@@ -206,9 +207,13 @@
                 return r ? r.label : '{% trans "No data" %}';
             }
 
+            // Linear pistachio-boosted moisture percent: NDMI ndmi_min → 0%, NDMI ndmi_max → 100%.
             function ndmiScore(ndmi) {
-                const r = _ndmiRange(ndmi);
-                return r ? r.score : null;
+                if (ndmi === null || ndmi === undefined) return null;
+                const v = Math.max(-1, Math.min(1, ndmi));
+                const span = PCT.ndmi_max - PCT.ndmi_min;
+                if (span <= 0) return null;
+                return Math.round(Math.max(0, Math.min(100, ((v - PCT.ndmi_min) / span) * 100)));
             }
 
             const allBounds = [];
