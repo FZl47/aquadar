@@ -758,6 +758,43 @@ class PlotVegetationSoilReport(BaseModel):
         return f"{self.plot.name} | {self.label or '-'}"
 
 
+class ManualIrrigation(BaseModel):
+    plot = models.ForeignKey(Plot, on_delete=models.CASCADE, related_name='manual_irrigations', verbose_name=_('Plot'))
+    outlet = models.ForeignKey(Outlet, on_delete=models.SET_NULL, null=True, blank=True, related_name='manual_irrigations', verbose_name=_('Outlet'))
+    registered_by = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True, related_name='manual_irrigations_registered', verbose_name=_('Registered By'))
+    reporter = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='manual_irrigations_reported', verbose_name=_('Reporter (Waterman)'))
+    start_datetime = models.DateTimeField(verbose_name=_('Start Datetime'))
+    end_datetime = models.DateTimeField(verbose_name=_('End Datetime'))
+    gps_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name=_('GPS Latitude'))
+    gps_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name=_('GPS Longitude'))
+    description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = _('Manual Irrigation')
+        verbose_name_plural = _('Manual Irrigations')
+
+    def __str__(self):
+        return f"Manual {self.plot} | {self.start_datetime.strftime('%Y-%m-%d')}"
+
+    @property
+    def duration_seconds(self):
+        return max(0, int((self.end_datetime - self.start_datetime).total_seconds()))
+
+    @property
+    def duration_minutes(self):
+        return round(self.duration_seconds / 60, 2)
+
+    @property
+    def water_liters(self):
+        discharge_rate = float(self.plot.zone.farm.discharge_rate or 0)
+        return round(discharge_rate * self.duration_seconds, 2)
+
+    @property
+    def water_m3(self):
+        return round(self.water_liters / 1000, 3)
+
+
 class PlotWeather(BaseModel):
     """Standalone weather snapshot for a plot, fetched by GPS (not tied to RunStatus)."""
     SOURCE_TYPES = (

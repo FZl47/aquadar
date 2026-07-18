@@ -435,6 +435,12 @@
                 <div class="stat-value" style="color:#3498db;">{{ stats.total_water }}</div>
                 <div class="stat-label">{% trans "Water this run (m³)" %}</div>
             </div>
+            <div class="stat-card" style="border-top:3px solid #0288d1;">
+                <div style="color:#0288d1;font-size:22px;">🖊</div>
+                <div class="stat-value" style="color:#0288d1;">{{ manual_irr_water_m3 }}</div>
+                <div class="stat-label">آب آبیاری دستی (m³)</div>
+                <div class="index-hint">{{ manual_irr_count }} آبیاری — {{ manual_irr_duration_hours }} ساعت</div>
+            </div>
             <div class="stat-card" style="border-top:3px solid #e74c3c;">
                 <div style="color:#e74c3c;font-size:22px;">🌡</div>
                 <div class="stat-value" style="color:#e74c3c;">{{ stats.avg_temperature }}°</div>

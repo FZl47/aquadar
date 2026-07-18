@@ -1,4 +1,7 @@
+import jdatetime
+
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from . import models
@@ -142,3 +145,87 @@ class RunStatusForm(forms.ModelForm):
             'gps_lat': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
             'gps_lng': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001'}),
         }
+
+
+class ManualIrrigationForm(forms.Form):
+    plot = forms.ModelChoiceField(
+        queryset=models.Plot.objects.none(),
+        label=_('Plot'),
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_mi_plot'}),
+    )
+    outlet = forms.ModelChoiceField(
+        queryset=models.Outlet.objects.none(),
+        required=False,
+        label=_('Outlet'),
+        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_mi_outlet'}),
+    )
+    reporter = forms.ModelChoiceField(
+        queryset=None,
+        required=False,
+        label=_('Reporter (Waterman)'),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )
+    start_jalali = forms.CharField(
+        label=_('Start Date and Time (Jalali)'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20 08:30',
+            'dir': 'ltr',
+            'id': 'id_start_jalali',
+        }),
+    )
+    end_jalali = forms.CharField(
+        label=_('End Date and Time (Jalali)'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20 10:30',
+            'dir': 'ltr',
+            'id': 'id_end_jalali',
+        }),
+    )
+    gps_lat = forms.DecimalField(
+        required=False,
+        max_digits=9,
+        decimal_places=6,
+        label=_('GPS Latitude'),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'id': 'id_mi_gps_lat'}),
+    )
+    gps_lng = forms.DecimalField(
+        required=False,
+        max_digits=9,
+        decimal_places=6,
+        label=_('GPS Longitude'),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.000001', 'id': 'id_mi_gps_lng'}),
+    )
+    description = forms.CharField(
+        required=False,
+        label=_('Description'),
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        User = get_user_model()
+        super().__init__(*args, **kwargs)
+        self.fields['plot'].queryset = models.Plot.objects.select_related('zone__farm').all()
+        self.fields['outlet'].queryset = models.Outlet.objects.select_related('plot__zone__farm').all()
+        self.fields['reporter'].queryset = User.objects.all()
+
+    def _parse_jalali(self, value):
+        try:
+            return jdatetime.datetime.strptime(value.strip(), '%Y/%m/%d %H:%M').togregorian()
+        except (ValueError, AttributeError):
+            raise forms.ValidationError(_('Invalid date. Use format: 1404/04/20 08:30'))
+
+    def clean_start_jalali(self):
+        return self._parse_jalali(self.cleaned_data['start_jalali'])
+
+    def clean_end_jalali(self):
+        return self._parse_jalali(self.cleaned_data['end_jalali'])
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get('start_jalali')
+        end = cleaned.get('end_jalali')
+        if start and end and end <= start:
+            raise forms.ValidationError(_('End date must be after start date.'))
+        return cleaned

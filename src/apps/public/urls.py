@@ -70,4 +70,8 @@ urlpatterns = [
     path('outlets/<int:pk>/leaf/', views.leaf_list, {'entity': 'outlet'}, name='outlet_leaf_list'),
 
     path('irrigation/<int:pk>/stop/', views.SupervisorStopIrrigationView.as_view(), name='stop_irrigation'),
+
+    path('manual-irrigation/', views.ManualIrrigationListView.as_view(), name='manual_irrigation_list'),
+    path('manual-irrigation/create/', views.ManualIrrigationCreateView.as_view(), name='manual_irrigation_create'),
+    path('manual-irrigation/<int:pk>/delete/', views.ManualIrrigationDeleteView.as_view(), name='manual_irrigation_delete'),
 ]

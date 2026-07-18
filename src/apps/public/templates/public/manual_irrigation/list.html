@@ -1,0 +1,123 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}آبیاری‌های دستی{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آبیاری دستی" %}{% endblock %}
+
+{% block Link %}
+<link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+{% endblock %}
+
+{% block Style %}
+<style>
+body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+.page-header { background: linear-gradient(135deg, #0288d1, #01579b); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+.table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
+.table-card thead th { background: #f0f4fa; font-weight: 700; font-size: 13px; color: #555; border: none; padding: 10px 12px; }
+.table-card tbody td { padding: 10px 12px; vertical-align: middle; font-size: 13px; }
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+.stat-value { font-size: 24px; font-weight: bold; margin: 6px 0 3px; }
+.stat-label { font-size: 11px; color: #888; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1200px;margin:30px auto;">
+
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">آبیاری‌های دستی</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">ثبت‌شده توسط ادمین</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 داشبورد</a>
+                <a href="{% url 'public:manual_irrigation_create' %}" class="btn btn-sm" style="background:#fff;color:#0288d1;border-radius:8px;font-weight:600;">+ ثبت آبیاری دستی</a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Summary stats -->
+    <div class="stat-cards">
+        <div class="stat-card" style="border-top:3px solid #0288d1;">
+            <div style="color:#0288d1;font-size:20px;">📋</div>
+            <div class="stat-value" style="color:#0288d1;">{{ irrigations.count }}</div>
+            <div class="stat-label">تعداد کل</div>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
+            <span>لیست آبیاری‌های دستی</span>
+        </div>
+        {% if irrigations %}
+        <div class="table-responsive">
+        <table class="table table-hover" style="margin:0;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>زمین</th>
+                    <th>کیز</th>
+                    <th>شروع (شمسی)</th>
+                    <th>پایان (شمسی)</th>
+                    <th>مدت (دقیقه)</th>
+                    <th>آب مصرفی (m³)</th>
+                    <th>آبیار</th>
+                    <th>ثبت‌کننده</th>
+                    <th>تاریخ ثبت</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for irr in irrigations %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    <a href="{{ irr.plot.get_absolute_url }}" style="color:#0288d1;font-weight:600;text-decoration:none;">
+                        {{ irr.plot.name }}
+                    </a>
+                    <div style="font-size:11px;color:#aaa;">{{ irr.plot.zone.farm.name }} / {{ irr.plot.zone.name }}</div>
+                </td>
+                <td>{% if irr.outlet %}کیز {{ irr.outlet.number }}{% else %}<span style="color:#ccc;">—</span>{% endif %}</td>
+                <td style="direction:ltr;text-align:right;">{{ irr.start_datetime|jalali }}</td>
+                <td style="direction:ltr;text-align:right;">{{ irr.end_datetime|jalali }}</td>
+                <td><strong>{{ irr.duration_minutes }}</strong></td>
+                <td><strong style="color:#0288d1;">{{ irr.water_m3 }}</strong></td>
+                <td>{% if irr.reporter %}{{ irr.reporter.get_full_name }}{% else %}<span style="color:#ccc;">—</span>{% endif %}</td>
+                <td style="font-size:12px;color:#888;">{% if irr.registered_by %}{{ irr.registered_by.get_full_name }}{% else %}—{% endif %}</td>
+                <td style="font-size:11px;color:#aaa;white-space:nowrap;">{{ irr.created_at|jalali }}</td>
+                <td>
+                    <form method="post" action="{% url 'public:manual_irrigation_delete' irr.pk %}" style="display:inline;" onsubmit="return confirm('این آبیاری حذف شود؟');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm" style="background:#fce4ec;color:#b71c1c;border:none;border-radius:6px;font-size:12px;padding:3px 8px;">حذف</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:60px 20px;color:#aaa;">
+            <div style="font-size:40px;margin-bottom:12px;">💧</div>
+            <div>هیچ آبیاری دستی ثبت نشده است</div>
+            <a href="{% url 'public:manual_irrigation_create' %}" class="btn btn-primary" style="margin-top:16px;">+ ثبت اولین آبیاری</a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

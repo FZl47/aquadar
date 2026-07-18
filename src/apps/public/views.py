@@ -25,7 +25,7 @@ from apps.core.forms.utils import form_validate_err
 
 from . import forms, models
 from .models import (
-    Farm, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
+    Farm, ManualIrrigation, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
     PlotVegetationIndex, PlotWeather, Run, RunStatus, Zone,
     ManureCategory, ReportManure, UserActivityReport,
 )
@@ -48,7 +48,7 @@ def get_general_stats():
     )
     return {
         'waterman_users': User.objects.filter(role='waterman'),
-        'total_farms': counts['total_farms'] or 0,
+        'total_farms': Farm.objects.filter(is_active=True).count(),
         'total_zones': counts['total_zones'] or 0,
         'total_plots': counts['total_plots'] or 0,
         'total_outlets': counts['total_outlets'] or 0,
@@ -67,13 +67,22 @@ def get_runs_last_30_days():
         .annotate(count=Count('id'))
         .order_by('date')
     )
-    date_dict = {item['date']: item['count'] for item in runs_by_date}
-    labels, data = [], []
+    manual_by_date = (
+        ManualIrrigation.objects.filter(start_datetime__gte=thirty_days_ago)
+        .annotate(date=TruncDate('start_datetime'))
+        .values('date')
+        .annotate(count=Count('id'))
+        .order_by('date')
+    )
+    run_dict = {item['date']: item['count'] for item in runs_by_date}
+    manual_dict = {item['date']: item['count'] for item in manual_by_date}
+    labels, data, manual_data = [], [], []
     for i in range(30):
         day = (timezone.now() - timedelta(days=29 - i)).date()
         labels.append(day.strftime('%m/%d'))
-        data.append(date_dict.get(day, 0))
-    return {'labels': labels, 'data': data}
+        data.append(run_dict.get(day, 0))
+        manual_data.append(manual_dict.get(day, 0))
+    return {'labels': labels, 'data': data, 'manual_data': manual_data}
 
 
 def get_run_status_distribution():
@@ -219,8 +228,10 @@ class Index(TemplateView):
         )
         return {
             **stats,
+            'total_manual_irrigations': ManualIrrigation.objects.count(),
             'runs_labels': json.dumps(runs_chart['labels']),
             'runs_data': json.dumps(runs_chart['data']),
+            'runs_manual_data': json.dumps(runs_chart['manual_data']),
             'status_labels': json.dumps(status_chart['labels']),
             'status_data': json.dumps(status_chart['data']),
             'duration_labels': json.dumps(duration_chart['labels']),
@@ -456,6 +467,7 @@ class ZoneDetail(SuperVisorUserRequiredMixin, DetailView):
         context['plots_count'] = zone.get_plots().count()
         context['outlets_count'] = outlets.count()
         context['runs_count'] = Run.objects.filter(outlet__plot__zone=zone).count()
+        context['manual_irrigations_count'] = ManualIrrigation.objects.filter(plot__zone=zone).count()
         context['reports_count'] = models.SystemReport.objects.filter(outlet__plot__zone=zone).count()
         context['manure_count'] = ReportManure.objects.filter(plot__zone=zone).count()
         context['chart_labels'] = [x['day'].strftime('%Y-%m-%d') for x in qs]
@@ -476,20 +488,31 @@ def get_plot_outlet_water_data(plot_id):
 
     last_group = plot.run_groups.exclude(status='canceled').order_by('-created_at').first()
 
-    empty_base = {
-        'plot': plot,
-        'farm': farm,
-        'last_group': None,
-        'discharge_rate': float(discharge_rate),
-        'outlets': [],
-        'total_plot_seconds': 0,
-        'total_plot_hours': 0,
-        'total_plot_liters': 0,
-        'total_plot_m3': 0,
+    manual_qs = ManualIrrigation.objects.filter(plot=plot)
+    manual_total_seconds = sum(m.duration_seconds for m in manual_qs)
+    manual_total_liters = Decimal(manual_total_seconds) * discharge_rate
+
+    manual_base = {
+        'manual_irr_count': manual_qs.count(),
+        'manual_irr_seconds': manual_total_seconds,
+        'manual_irr_hours': round(manual_total_seconds / 3600, 2),
+        'manual_irr_liters': round(float(manual_total_liters), 2),
+        'manual_irr_m3': round(float(manual_total_liters / Decimal('1000')), 3),
     }
 
     if not last_group:
-        return empty_base
+        return {
+            'plot': plot,
+            'farm': farm,
+            'last_group': None,
+            'discharge_rate': float(discharge_rate),
+            'outlets': [],
+            'total_plot_seconds': 0,
+            'total_plot_hours': 0,
+            'total_plot_liters': 0,
+            'total_plot_m3': 0,
+            **manual_base,
+        }
 
     now_naive = timezone.now()
 
@@ -554,6 +577,7 @@ def get_plot_outlet_water_data(plot_id):
         'total_plot_hours': round(total_plot_seconds / 3600, 2),
         'total_plot_liters': round(float(total_plot_liters), 2),
         'total_plot_m3': round(float(total_plot_liters / Decimal('1000')), 3),
+        **manual_base,
     }
 
 
@@ -778,6 +802,36 @@ class FarmDetailView(SuperVisorUserRequiredMixin, DetailView):
         context['active_runs'] = Run.objects.filter(
             outlet__plot__zone__farm=farm, status='open'
         ).count()
+
+        # Irrigation totals
+        total_runs = Run.objects.filter(outlet__plot__zone__farm=farm).count()
+        start_sub = Subquery(RunStatus.objects.filter(run=OuterRef('pk'), status='start').values('created_at')[:1])
+        end_sub = Subquery(RunStatus.objects.filter(run=OuterRef('pk'), status='end').values('created_at')[:1])
+        dur_agg = (
+            Run.objects.filter(outlet__plot__zone__farm=farm)
+            .annotate(start_time=start_sub, end_time=end_sub)
+            .filter(start_time__isnull=False, end_time__isnull=False)
+            .aggregate(
+                total_dur=Sum(ExpressionWrapper(F('end_time') - F('start_time'), output_field=DurationField()))
+            )
+        )
+        run_seconds = int(dur_agg['total_dur'].total_seconds()) if dur_agg['total_dur'] else 0
+
+        manual_qs = ManualIrrigation.objects.filter(plot__zone__farm=farm)
+        manual_seconds = sum(m.duration_seconds for m in manual_qs)
+
+        discharge_rate = float(farm.discharge_rate or 0)
+        context['irr_stats'] = {
+            'total_runs': total_runs,
+            'run_hours': round(run_seconds / 3600, 1),
+            'run_water_m3': round(discharge_rate * run_seconds / 1000, 2),
+            'manual_count': manual_qs.count(),
+            'manual_hours': round(manual_seconds / 3600, 1),
+            'manual_water_m3': round(discharge_rate * manual_seconds / 1000, 2),
+            'combined_hours': round((run_seconds + manual_seconds) / 3600, 1),
+            'combined_water_m3': round(discharge_rate * (run_seconds + manual_seconds) / 1000, 2),
+        }
+
         context['leaf_analyses'] = farm.leaf_analyses.order_by('-created_at')[:6]
         context['leaf_upload_url'] = reverse('public:farm_leaf_upload', args=[farm.pk])
         context['leaf_list_url'] = reverse('public:farm_leaf_list', args=[farm.pk])
@@ -1079,12 +1133,19 @@ class PlotDetailView(SuperVisorUserRequiredMixin, DetailView):
         )
         total_seconds = int(dur_agg['total_duration'].total_seconds()) if dur_agg['total_duration'] else 0
         discharge_rate = float(plot.zone.farm.discharge_rate or 0)
+        manual_irr_qs = ManualIrrigation.objects.filter(plot=plot)
+        manual_total_seconds = sum(m.duration_seconds for m in manual_irr_qs)
+        manual_water_liters = round(discharge_rate * manual_total_seconds, 2)
+        manual_water_m3 = round(manual_water_liters / 1000, 3)
         context['stats'] = {
             'total_water': round(discharge_rate * total_seconds / 1000, 2),
             'avg_temperature': round(float(pw_stats['avg_temperature'] or 0), 1),
             'avg_wind_speed': round(float(pw_stats['avg_wind_speed'] or 0), 1),
             'avg_humidity': round(float(pw_stats['avg_humidity'] or 0), 1),
         }
+        context['manual_irr_count'] = manual_irr_qs.count()
+        context['manual_irr_water_m3'] = manual_water_m3
+        context['manual_irr_duration_hours'] = round(manual_total_seconds / 3600, 2)
         context['active_run_group'] = active_rg
 
         context['last_weather_check'] = PlotWeather.objects.filter(plot=plot).order_by('-created_at').first()
@@ -1524,6 +1585,62 @@ class PlotWeatherFetchView(SuperVisorUserRequiredMixin, View):
             )
         task_id = async_task('apps.public.tasks.fetch_weather_for_plot', plot.pk, 'manual')
         return JsonResponse({'success': True, 'queued': True, 'task_id': task_id})
+
+
+class ManualIrrigationListView(SuperVisorUserRequiredMixin, TemplateView):
+    template_name = 'public/manual_irrigation/list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['irrigations'] = ManualIrrigation.objects.select_related(
+            'plot__zone__farm', 'outlet', 'registered_by', 'reporter'
+        ).all()
+        return context
+
+
+class ManualIrrigationCreateView(SuperVisorUserRequiredMixin, View):
+    template_name = 'public/manual_irrigation/form.html'
+
+    def _get_outlets_json(self):
+        data = {}
+        for outlet in models.Outlet.objects.select_related('plot').all():
+            data.setdefault(outlet.plot_id, []).append({'id': outlet.pk, 'number': outlet.number})
+        return json.dumps(data)
+
+    def get(self, request):
+        return render(request, self.template_name, {
+            'form': forms.ManualIrrigationForm(),
+            'outlets_by_plot': self._get_outlets_json(),
+        })
+
+    def post(self, request):
+        f = forms.ManualIrrigationForm(request.POST)
+        if f.is_valid():
+            ManualIrrigation.objects.create(
+                plot=f.cleaned_data['plot'],
+                outlet=f.cleaned_data.get('outlet'),
+                registered_by=request.user,
+                reporter=f.cleaned_data.get('reporter'),
+                start_datetime=f.cleaned_data['start_jalali'],
+                end_datetime=f.cleaned_data['end_jalali'],
+                gps_lat=f.cleaned_data.get('gps_lat'),
+                gps_lng=f.cleaned_data.get('gps_lng'),
+                description=f.cleaned_data.get('description'),
+            )
+            messages.success(request, _('Manual irrigation registered successfully'))
+            return redirect(reverse('public:manual_irrigation_list'))
+        return render(request, self.template_name, {
+            'form': f,
+            'outlets_by_plot': self._get_outlets_json(),
+        })
+
+
+class ManualIrrigationDeleteView(SuperVisorUserRequiredMixin, View):
+    def post(self, request, pk):
+        mi = get_object_or_404(ManualIrrigation, pk=pk)
+        mi.delete()
+        messages.success(request, _('Manual irrigation deleted'))
+        return redirect(reverse('public:manual_irrigation_list'))
 
 
 

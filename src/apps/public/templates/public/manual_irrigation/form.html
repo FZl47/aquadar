@@ -1,0 +1,439 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}ثبت آبیاری دستی{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آبیاری دستی|public:manual_irrigation_list" "ثبت جدید" %}{% endblock %}
+
+{% block Link %}
+<link rel="stylesheet" href="{% static 'css/leaflet.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/bootstrap5-2.min.css' %}"/>
+{% endblock %}
+
+{% block Style %}
+<style>
+body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+.page-header { background: linear-gradient(135deg, #0288d1, #01579b); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
+.form-card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 24px; }
+.section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; border-right: 4px solid #0288d1; padding-right: 10px; color: #1a1a2e; }
+.form-label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+#mi-map { height: 300px; border-radius: 10px; border: 1px solid #ddd; margin-top: 8px; }
+.duration-preview { background: #e3f2fd; border-radius: 8px; padding: 10px 14px; font-size: 14px; color: #0288d1; margin-top: 8px; display: none; }
+.hint { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+/* ─── Jalali Calendar Picker ─── */
+.jcal-wrap { position: relative; }
+.jcal-input-row { display: flex; gap: 6px; }
+.jcal-input-row input[type="text"] { flex: 1; }
+.jcal-btn { background: #0288d1; color: #fff; border: none; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+.jcal-btn:hover { background: #0277bd; }
+.jcal-popup {
+    position: fixed; z-index: 9999;
+    background: #fff; border: 1px solid #ddd; border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.14); padding: 12px;
+    width: 260px; direction: rtl; font-family: 'YekanBakhFaNum', monospace;
+    user-select: none;
+}
+.jcal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.jcal-nav-btn { background: #e3f2fd; border: none; border-radius: 6px; width: 30px; height: 30px; font-size: 16px; cursor: pointer; color: #0288d1; display: flex; align-items: center; justify-content: center; }
+.jcal-nav-btn:hover { background: #b3d4f0; }
+.jcal-month-label { font-weight: 700; font-size: 13px; color: #1a1a2e; }
+.jcal-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 10px; color: #aaa; margin-bottom: 4px; }
+.jcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.jcal-cell { text-align: center; padding: 5px 2px; border-radius: 6px; font-size: 12px; }
+.jcal-day { cursor: pointer; color: #2c3e50; }
+.jcal-day:hover { background: #e3f2fd; color: #0288d1; }
+.jcal-day.selected { background: #0288d1; color: #fff !important; font-weight: 700; }
+.jcal-day.today { border: 1px solid #0288d1; }
+.jcal-time-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0; font-size: 12px; }
+.jcal-time-row label { white-space: nowrap; color: #555; }
+.jcal-time-row input { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 4px 8px; font-size: 13px; direction: ltr; }
+.jcal-confirm { margin-top: 10px; width: 100%; background: #0288d1; color: #fff; border: none; border-radius: 8px; padding: 7px; font-size: 13px; cursor: pointer; font-family: 'YekanBakhFaNum', monospace; font-weight: 600; }
+.jcal-confirm:hover { background: #0277bd; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:800px;margin:30px auto;">
+
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">ثبت آبیاری دستی</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">ادمین می‌تواند آبیاری را به صورت دستی ثبت کند</div>
+        <div style="margin-top:12px;">
+            <a href="{% url 'public:manual_irrigation_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← بازگشت به لیست</a>
+        </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <!-- Farm/Plot/Outlet -->
+        <div class="form-card">
+            <div class="section-title">زمین و کیز</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">زمین <span style="color:#e53935;">*</span></label>
+                    {{ form.plot }}
+                    {% if form.plot.errors %}<div class="text-danger" style="font-size:12px;">{{ form.plot.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">کیز (اختیاری)</label>
+                    {{ form.outlet }}
+                    {% if form.outlet.errors %}<div class="text-danger" style="font-size:12px;">{{ form.outlet.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Dates with Jalali Calendar -->
+        <div class="form-card">
+            <div class="section-title">زمان آبیاری (تقویم شمسی)</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">تاریخ و ساعت شروع <span style="color:#e53935;">*</span></label>
+                    <div class="jcal-wrap">
+                        <div class="jcal-input-row">
+                            {{ form.start_jalali }}
+                            <button type="button" class="jcal-btn" onclick="event.stopPropagation();JCal.open('id_start_jalali')">📅</button>
+                        </div>
+                    </div>
+                    <div class="hint">مثال: 1404/04/20 08:30</div>
+                    {% if form.start_jalali.errors %}<div class="text-danger" style="font-size:12px;">{{ form.start_jalali.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">تاریخ و ساعت پایان <span style="color:#e53935;">*</span></label>
+                    <div class="jcal-wrap">
+                        <div class="jcal-input-row">
+                            {{ form.end_jalali }}
+                            <button type="button" class="jcal-btn" onclick="event.stopPropagation();JCal.open('id_end_jalali')">📅</button>
+                        </div>
+                    </div>
+                    <div class="hint">مثال: 1404/04/20 10:30</div>
+                    {% if form.end_jalali.errors %}<div class="text-danger" style="font-size:12px;">{{ form.end_jalali.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-12">
+                    <div class="duration-preview" id="duration-preview">
+                        ⏱ مدت آبیاری: <strong id="duration-text">—</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporter (admin field hidden) -->
+        <div class="form-card">
+            <div class="section-title">آبیار</div>
+            <div class="col-md-6">
+                <label class="form-label">فرد گزارش‌دهنده (آبیار)</label>
+                {{ form.reporter }}
+                {% if form.reporter.errors %}<div class="text-danger" style="font-size:12px;">{{ form.reporter.errors.0 }}</div>{% endif %}
+            </div>
+        </div>
+
+        <!-- GPS / Map -->
+        <div class="form-card">
+            <div class="section-title">موقعیت مکانی (GPS)</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">عرض جغرافیایی (Latitude)</label>
+                    {{ form.gps_lat }}
+                    {% if form.gps_lat.errors %}<div class="text-danger" style="font-size:12px;">{{ form.gps_lat.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">طول جغرافیایی (Longitude)</label>
+                    {{ form.gps_lng }}
+                    {% if form.gps_lng.errors %}<div class="text-danger" style="font-size:12px;">{{ form.gps_lng.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="hint" style="margin-top:6px;">روی نقشه کلیک کنید تا موقعیت انتخاب شود</div>
+            <div id="mi-map"></div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-card">
+            <div class="section-title">توضیحات</div>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="text-danger" style="font-size:12px;">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <a href="{% url 'public:manual_irrigation_list' %}" class="btn btn-secondary">انصراف</a>
+            <button type="submit" class="btn btn-primary" style="background:#0288d1;border-color:#0288d1;padding:10px 28px;">ثبت آبیاری</button>
+        </div>
+
+    </form>
+</div>
+
+<!-- Jalali Calendar Popup (shared, moved by JS) -->
+<div id="jcal-popup" class="jcal-popup" style="display:none;">
+    <div class="jcal-nav">
+        <button type="button" class="jcal-nav-btn" onclick="JCal.prevMonth()">›</button>
+        <span class="jcal-month-label" id="jcal-month-label"></span>
+        <button type="button" class="jcal-nav-btn" onclick="JCal.nextMonth()">‹</button>
+    </div>
+    <div class="jcal-weekdays">
+        <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+    </div>
+    <div class="jcal-grid" id="jcal-grid"></div>
+    <div class="jcal-time-row">
+        <label>ساعت:</label>
+        <input type="time" id="jcal-time" value="08:00">
+    </div>
+    <button type="button" class="jcal-confirm" onclick="JCal.confirm()">تأیید</button>
+</div>
+
+{% endblock %}
+
+{% block Script %}
+<script src="{% static 'js/leaflet.js' %}"></script>
+<script>
+// ─── Jalali Utils ───────────────────────────────────────────────────────
+const JMONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
+function jLeap(jy) {
+    const breaks = [-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2324,2394,2456,3178];
+    let bl = breaks.length, jump, leapJ = -14, jp = breaks[0];
+    const jy1 = jy + 979;
+    const n = jy1 % 2820 + 474;
+    for (let i = 1; i < bl; i++) {
+        const jb = breaks[i];
+        jump = jb - jp;
+        if (n < jb) { leapJ += Math.floor(jump * 682 / 2816); break; }
+        leapJ += Math.floor(jump * 682 / 2816);
+        jp = jb;
+    }
+    const n1 = n - jp;
+    leapJ += Math.floor(n1 * 682 / 2816);
+    const leapG = Math.floor(jy1 / 4) - Math.floor((Math.floor(jy1 / 100) + 1) * 3 / 4) - 150;
+    return (leapJ - leapG) % 4 === 0;
+}
+
+function jDays(jy, jm) {
+    if (jm <= 6) return 31;
+    if (jm <= 11) return 30;
+    return jLeap(jy) ? 30 : 29;
+}
+
+function j2g(jy, jm, jd) {
+    const jy_ = jy - 979, jm_ = jm - 1, jd_ = jd - 1;
+    let jdn = 365*jy_ + Math.floor(jy_/4)*8 + Math.floor((jy_%4+3)/4);
+    for (let i = 0; i < jm_; i++) jdn += (i < 6) ? 31 : 30;
+    jdn += jd_;
+    let gdn = jdn + 79;
+    let gy = 1600 + 400 * Math.floor(gdn / 146097);
+    gdn %= 146097;
+    let leap = true;
+    if (gdn >= 36525) {
+        gdn--; gy += 100 * Math.floor(gdn/36524); gdn %= 36524;
+        if (gdn >= 365) gdn++; else leap = false;
+    }
+    gy += 4 * Math.floor(gdn/1461); gdn %= 1461;
+    if (gdn >= 366) { leap = false; gdn--; }
+    gy += Math.floor(gdn/365); gdn %= 365;
+    const gmd = [31, leap?29:28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let gm = 0;
+    for (; gm < 12 && gdn >= gmd[gm]; gm++) gdn -= gmd[gm];
+    return [gy, gm+1, gdn+1];
+}
+
+function g2j(gy, gm, gd) {
+    gy -= 1600; gm -= 1; gd -= 1;
+    const gmo = [0,31,59,90,120,151,181,212,243,273,304,334];
+    let gdn = 365*gy + Math.floor((gy+3)/4) - Math.floor((gy+99)/100) + Math.floor((gy+399)/400);
+    gdn += gmo[gm] + gd;
+    if (gm > 1 && ((gy%4===0&&gy%100!==0)||gy%400===0)) gdn++;
+    let jdn = gdn - 79;
+    let jy = 979 + 33 * Math.floor(jdn/12053); jdn %= 12053;
+    jy += 4 * Math.floor(jdn/1461); jdn %= 1461;
+    if (jdn >= 366) { jy += Math.floor((jdn-1)/365); jdn = (jdn-1)%365; }
+    let jm = 0;
+    for (; jm < 11; jm++) { const ml = jm<6?31:30; if (jdn<ml) break; jdn -= ml; }
+    return [jy, jm+1, jdn+1];
+}
+
+// Get today's Jalali date
+const _today = new Date();
+const [TODAY_JY, TODAY_JM, TODAY_JD] = g2j(_today.getFullYear(), _today.getMonth()+1, _today.getDate());
+
+function parseShamsi(val) {
+    if (!val) return null;
+    const m = val.trim().match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+    if (!m) return null;
+    return { jy:+m[1], jm:+m[2], jd:+m[3], h:+m[4], min:+m[5] };
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtJalali(jy, jm, jd, h, min) { return `${jy}/${pad(jm)}/${pad(jd)} ${pad(h)}:${pad(min)}`; }
+
+// ─── JCal ─────────────────────────────────────────────────────────────
+const JCal = {
+    targetId: null,
+    year: TODAY_JY,
+    month: TODAY_JM,
+    selDay: null,
+
+    open(inputId) {
+        this.targetId = inputId;
+        const inp = document.getElementById(inputId);
+        const parsed = parseShamsi(inp ? inp.value : '');
+        if (parsed) {
+            this.year = parsed.jy; this.month = parsed.jm; this.selDay = parsed.jd;
+            document.getElementById('jcal-time').value = `${pad(parsed.h)}:${pad(parsed.min)}`;
+        } else {
+            this.year = TODAY_JY; this.month = TODAY_JM; this.selDay = null;
+            document.getElementById('jcal-time').value = '08:00';
+        }
+        this._render();
+        const popup = document.getElementById('jcal-popup');
+        popup.style.display = 'block';
+        const btn = inp ? inp.nextElementSibling : null;
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+            popup.style.right = (window.innerWidth - rect.right) + 'px';
+        }
+    },
+
+    _render() {
+        document.getElementById('jcal-month-label').textContent = `${JMONTHS[this.month-1]} ${this.year}`;
+        const days = jDays(this.year, this.month);
+        const [gy, gm, gd] = j2g(this.year, this.month, 1);
+        const jsDay = new Date(gy, gm-1, gd).getDay(); // 0=Sun
+        const firstOffset = (jsDay + 1) % 7; // Sat=0 (RTL week starts Sat)
+        let html = '';
+        for (let i = 0; i < firstOffset; i++) html += '<span class="jcal-cell"></span>';
+        for (let d = 1; d <= days; d++) {
+            let cls = 'jcal-cell jcal-day';
+            if (d === this.selDay) cls += ' selected';
+            if (d === TODAY_JD && this.month === TODAY_JM && this.year === TODAY_JY) cls += ' today';
+            html += `<span class="${cls}" data-d="${d}">${d}</span>`;
+        }
+        document.getElementById('jcal-grid').innerHTML = html;
+        document.getElementById('jcal-grid').querySelectorAll('.jcal-day').forEach(el => {
+            el.addEventListener('click', (e) => { e.stopPropagation(); this.selDay = +el.dataset.d; this._render(); });
+        });
+    },
+
+    prevMonth() {
+        if (this.month === 1) { this.month = 12; this.year--; } else this.month--;
+        this.selDay = null; this._render();
+    },
+    nextMonth() {
+        if (this.month === 12) { this.month = 1; this.year++; } else this.month++;
+        this.selDay = null; this._render();
+    },
+
+    confirm() {
+        if (!this.selDay) { alert('لطفاً یک روز انتخاب کنید'); return; }
+        const timeVal = document.getElementById('jcal-time').value || '00:00';
+        const [h, min] = timeVal.split(':').map(Number);
+        const inp = document.getElementById(this.targetId);
+        if (inp) {
+            inp.value = fmtJalali(this.year, this.month, this.selDay, h, min||0);
+            inp.dispatchEvent(new Event('input'));
+        }
+        this.close();
+    },
+
+    close() { document.getElementById('jcal-popup').style.display = 'none'; }
+};
+
+// Stop all clicks inside the popup from reaching the document close handler
+document.getElementById('jcal-popup').addEventListener('click', function(e) {
+    e.stopPropagation();
+});
+
+document.addEventListener('click', function() {
+    JCal.close();
+});
+
+// ─── Outlet filter by plot ─────────────────────────────────────────────
+const outletsByPlot = {{ outlets_by_plot|safe }};
+const plotSel = document.getElementById('id_mi_plot');
+const outletSel = document.getElementById('id_mi_outlet');
+
+function updateOutlets() {
+    const plotId = plotSel ? plotSel.value : '';
+    const outlets = (outletsByPlot[plotId] || []);
+    if (outletSel) {
+        outletSel.innerHTML = '<option value="">— انتخاب کیز —</option>';
+        outlets.forEach(function(o) {
+            outletSel.innerHTML += '<option value="' + o.id + '">کیز ' + o.number + '</option>';
+        });
+    }
+}
+if (plotSel) { plotSel.addEventListener('change', updateOutlets); updateOutlets(); }
+
+// ─── Duration preview ──────────────────────────────────────────────────
+function parseShamsiToMs(val) {
+    const p = parseShamsi(val);
+    if (!p) return null;
+    const [gy, gm, gd] = j2g(p.jy, p.jm, p.jd);
+    const d = new Date(gy, gm-1, gd, p.h, p.min, 0);
+    return d.getTime();
+}
+
+function updateDuration() {
+    const startMs = parseShamsiToMs(document.getElementById('id_start_jalali').value);
+    const endMs = parseShamsiToMs(document.getElementById('id_end_jalali').value);
+    const box = document.getElementById('duration-preview');
+    if (startMs && endMs && endMs > startMs) {
+        const diff = endMs - startMs;
+        const hours = Math.floor(diff / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        document.getElementById('duration-text').textContent = (hours > 0 ? hours + ' ساعت و ' : '') + mins + ' دقیقه';
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
+}
+document.getElementById('id_start_jalali').addEventListener('input', updateDuration);
+document.getElementById('id_end_jalali').addEventListener('input', updateDuration);
+
+// ─── Leaflet map for GPS ───────────────────────────────────────────────
+const latInput = document.getElementById('id_mi_gps_lat');
+const lngInput = document.getElementById('id_mi_gps_lng');
+const initLat = parseFloat(latInput.value) || 33.0;
+const initLng = parseFloat(lngInput.value) || 53.0;
+const map = L.map('mi-map').setView([initLat, initLng], 7);
+ const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            });
+            const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 19,
+                attribution: '© Esri'
+            });
+            const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '© Google',
+                subdomains: ['0', '1', '2', '3']
+            });
+            const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '© CartoDB'
+            });
+            streetLayer.addTo(map);
+            labelsLayer.addTo(map);
+            L.control.layers(
+                {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
+                {'نام شهرها و مناطق': labelsLayer}
+            ).addTo(map);
+let marker = null;
+if (latInput.value && lngInput.value) {
+    marker = L.marker([initLat, initLng]).addTo(map);
+}
+map.on('click', function(e) {
+    latInput.value = e.latlng.lat.toFixed(6);
+    lngInput.value = e.latlng.lng.toFixed(6);
+    if (marker) marker.setLatLng(e.latlng);
+    else marker = L.marker(e.latlng).addTo(map);
+});
+</script>
+{% endblock %}

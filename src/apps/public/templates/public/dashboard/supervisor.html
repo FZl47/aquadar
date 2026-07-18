@@ -40,6 +40,7 @@ canvas { width: 100%; height: 300px; }
             <button class="btn btn-sm" style="background:#e65100;color:#fff;border-radius:8px;" onclick="document.getElementById('editZoneForm').action='{% url 'public:zone_create' %}';document.getElementById('editZoneForm').reset();new bootstrap.Modal(document.getElementById('editZoneModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Zone" %}</button>
             <a href="{% url 'public:plot_create' %}" class="btn btn-sm" style="background:#2e7d32;color:#fff;border-radius:8px;text-decoration:none;"><i class="fa fa-plus"></i> {% trans "Add Plot" %}</a>
             <button class="btn btn-sm" style="background:#7b1fa2;color:#fff;border-radius:8px;" onclick="document.getElementById('editOutletForm').action='{% url 'public:outlet_create' %}';document.getElementById('editOutletForm').reset();new bootstrap.Modal(document.getElementById('editOutletModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Outlet" %}</button>
+            <a href="{% url 'public:manual_irrigation_create' %}" class="btn btn-sm" style="background:#0288d1;color:#fff;border-radius:8px;text-decoration:none;"><i class="fa fa-plus"></i> ثبت آبیاری دستی</a>
         </div>
     </div>
 
@@ -85,6 +86,12 @@ canvas { width: 100%; height: 300px; }
             <div class="card" style="border-right:4px solid #8e44ad;">
                 <div style="color:#8e44ad;font-size:13px;font-weight:600;">{% trans "Fertilization Reports" %}</div>
                 <div class="stat-number" style="color:#8e44ad;">{{ total_manure_reports }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:manual_irrigation_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #0288d1;">
+                <div style="color:#0288d1;font-size:13px;font-weight:600;">آبیاری دستی</div>
+                <div class="stat-number" style="color:#0288d1;">{{ total_manual_irrigations }}</div>
             </div>
         </a>
     </div>
@@ -247,6 +254,7 @@ canvas { width: 100%; height: 300px; }
 <script>
 const runsLabels = JSON.parse("{{ runs_labels|escapejs }}");
 const runsData = JSON.parse("{{ runs_data|escapejs }}");
+const runsManualData = JSON.parse("{{ runs_manual_data|escapejs }}");
 const statusLabels = JSON.parse("{{ status_labels|escapejs }}");
 const statusData = JSON.parse("{{ status_data|escapejs }}");
 const durationLabels = JSON.parse("{{ duration_labels|escapejs }}");
@@ -260,9 +268,12 @@ new Chart(document.getElementById('runsChart'), {
     type: 'line',
     data: {
         labels: runsLabels,
-        datasets: [{ label: '{% trans "Irrigations" %}', data: runsData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.4, borderWidth: 2 }]
+        datasets: [
+            { label: '{% trans "Irrigations" %}', data: runsData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.4, borderWidth: 2 },
+            { label: 'آبیاری دستی', data: runsManualData, borderColor: '#0288d1', backgroundColor: 'rgba(2,136,209,0.08)', fill: true, tension: 0.4, borderWidth: 2, borderDash: [5,4] }
+        ]
     },
-    options: { responsive: true, plugins: { legend: { display: false } } }
+    options: { responsive: true, plugins: { legend: { display: true } } }
 });
 
 new Chart(document.getElementById('statusChart'), {
