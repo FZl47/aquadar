@@ -23,15 +23,170 @@ class UserActivityReportForm(forms.ModelForm):
         }
 
 
-class ReportManureForm(forms.ModelForm):
+class FertilizationRecordForm(forms.ModelForm):
+    """Waterman / compact form to register fertilization on a known plot."""
     class Meta:
-        model = models.ReportManure
-        fields = ['category', 'title', 'description']
+        model = models.FertilizationRecord
+        fields = ['category', 'title', 'quantity', 'unit', 'description']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+
+def _plots_by_farm_map():
+    """{farm_id: [{id, label}, ...]} for client-side farm→plot filtering."""
+    data = {}
+    qs = models.Plot.objects.select_related('zone__farm').order_by('zone__farm_id', 'name')
+    for p in qs:
+        farm_id = str(p.zone.farm_id)
+        data.setdefault(farm_id, []).append({
+            'id': p.pk,
+            'label': f'{p.zone.name} / {p.name}',
+        })
+    return data
+
+
+class FarmPlotFilterFormMixin:
+    """Adds a convenience Farm filter that narrows the Plot queryset.
+
+    Must be mixed into a Form/ModelForm; inserts ``farm`` into ``self.fields``
+    during ``_setup_farm_plot_fields()`` (plain mixin attributes are not
+    collected by Django's form metaclass).
+    """
+
+    def _setup_farm_plot_fields(self):
+        plots = models.Plot.objects.select_related('zone__farm').order_by(
+            'zone__farm__name', 'name'
+        )
+
+        farm_id = None
+        if self.data.get('farm'):
+            farm_id = self.data.get('farm')
+        elif self.initial.get('farm'):
+            farm_id = self.initial.get('farm')
+        elif self.initial.get('plot'):
+            try:
+                plot = plots.filter(pk=self.initial['plot']).first()
+                if plot:
+                    farm_id = plot.zone.farm_id
+                    self.initial.setdefault('farm', farm_id)
+            except (TypeError, ValueError):
+                pass
+        elif self.data.get('plot'):
+            try:
+                plot = plots.filter(pk=self.data.get('plot')).first()
+                if plot:
+                    farm_id = plot.zone.farm_id
+            except (TypeError, ValueError):
+                pass
+
+        self.fields['farm'] = forms.ModelChoiceField(
+            queryset=models.Farm.objects.filter(is_active=True).order_by('name'),
+            required=False,
+            label=_('Farm'),
+            widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_farm'}),
+            initial=farm_id if not self.data else None,
+        )
+
+        if farm_id:
+            self.fields['plot'].queryset = plots.filter(zone__farm_id=farm_id)
+            if not self.data:
+                self.initial['farm'] = farm_id
+        else:
+            # No farm chosen yet — show all plots; JS filters on farm change.
+            self.fields['plot'].queryset = plots
+
+        self.fields['plot'].widget.attrs.update({'id': 'id_plot', 'class': 'form-control'})
+        self.order_fields(['farm', 'plot'] + [
+            name for name in self.fields if name not in ('farm', 'plot')
+        ])
+
+    def clean(self):
+        cleaned = super().clean()
+        farm = cleaned.get('farm')
+        plot = cleaned.get('plot')
+        if farm and plot and plot.zone.farm_id != farm.id:
+            self.add_error('plot', _('Selected plot does not belong to the selected farm.'))
+        return cleaned
+
+
+class SupervisorFertilizationForm(FarmPlotFilterFormMixin, forms.ModelForm):
+    """Supervisor form to register fertilization for any plot."""
+    class Meta:
+        model = models.FertilizationRecord
+        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'description']
+        widgets = {
+            'plot': forms.Select(attrs={'class': 'form-control', 'id': 'id_plot'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._setup_farm_plot_fields()
+        self.fields['category'].queryset = models.FertilizerCategory.objects.all()
+        self.fields['category'].required = False
+
+
+class FertilizerCategoryForm(forms.ModelForm):
+    class Meta:
+        model = models.FertilizerCategory
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+
+class FoliarSprayCategoryForm(forms.ModelForm):
+    class Meta:
+        model = models.FoliarSprayCategory
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+
+class ReportFoliarSprayForm(forms.ModelForm):
+    class Meta:
+        model = models.ReportFoliarSpray
+        fields = ['category', 'title', 'quantity', 'unit', 'description']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+
+class SupervisorFoliarSprayForm(FarmPlotFilterFormMixin, forms.ModelForm):
+    """Supervisor form to register foliar spray for any plot."""
+    class Meta:
+        model = models.ReportFoliarSpray
+        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'description']
+        widgets = {
+            'plot': forms.Select(attrs={'class': 'form-control', 'id': 'id_plot'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._setup_farm_plot_fields()
+        self.fields['category'].queryset = models.FoliarSprayCategory.objects.all()
+        self.fields['category'].required = False
 
 
 class FarmForm(forms.ModelForm):

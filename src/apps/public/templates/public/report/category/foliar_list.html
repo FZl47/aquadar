@@ -1,0 +1,95 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}{% trans "Solution / Spray Categories" %}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "محلول‌پاشی|public:foliar_spray_list" "انواع محلول" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #00897b, #00695c);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+    @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
+    .card { background: #fff; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    .card h4 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { font-weight: 600; font-size: 13px; color: #555; }
+    .cat-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; gap: 10px; }
+    .cat-row:last-child { border-bottom: none; }
+    .use-badge { background: #e0f2f1; color: #00695c; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1000px;margin:30px auto;">
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">🏷 {% trans "Solution / Spray Categories" %}</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">انواع محلول برای انتخاب هنگام ثبت محلول‌پاشی</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <a href="{% url 'public:foliar_spray_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← {% trans "Foliar Spray Records" %}</a>
+                <a href="{% url 'public:foliar_spray_create' %}" class="btn btn-sm" style="background:#fff;color:#00897b;border-radius:8px;font-weight:600;">+ {% trans "Register Foliar Spray" %}</a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="layout">
+        <div class="card">
+            <h4>+ {% trans "Add solution type" %}</h4>
+            <form method="post" action="{% url 'public:foliar_spray_category_create' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>{% trans "Title" %} <span class="text-danger">*</span></label>
+                    {{ form.title }}
+                </div>
+                <div class="form-group">
+                    <label>{% trans "Description" %}</label>
+                    {{ form.description }}
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:#00897b;border-color:#00897b;border-radius:8px;font-weight:600;">
+                    {% trans "Save category" %}
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h4>{% trans "Existing categories" %} ({{ categories|length }})</h4>
+            {% for cat in categories %}
+            <div class="cat-row">
+                <div>
+                    <div style="font-weight:700;">{{ cat.title }}</div>
+                    {% if cat.description %}<div style="font-size:12px;color:#888;">{{ cat.description }}</div>{% endif %}
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="use-badge">{{ cat.use_count }} {% trans "uses" %}</span>
+                    <form method="post" action="{% url 'public:foliar_spray_category_delete' cat.pk %}"
+                          onsubmit="return confirm('{% trans "Delete this category?" %}');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:6px;">🗑</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-muted text-center py-4">{% trans "No categories yet. Add one on the left." %}</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

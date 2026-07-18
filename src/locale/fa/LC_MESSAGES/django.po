@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-24 05:03+0330\n"
+"POT-Creation-Date: 2026-07-19 03:06+0330\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -75,7 +75,7 @@ msgid "Role"
 msgstr "نقش"
 
 #: .\apps\account\models.py:62 .\apps\public\models.py:44
-#: .\apps\public\templates\public\dashboard\supervisor.html:50
+#: .\apps\public\templates\public\dashboard\supervisor.html:51
 #: .\templates\partials\_sidebar.html:32
 msgid "Farms"
 msgstr "مزارع"
@@ -181,9 +181,16 @@ msgstr "نوع"
 #: .\apps\notification\templates\notification\list.html:196
 #: .\apps\notification\templates\notification\personal-list.html:180
 #: .\apps\public\models.py:483 .\apps\public\models.py:506
-#: .\apps\public\models.py:562 .\apps\public\models.py:579
-#: .\apps\public\models.py:591
-#: .\apps\public\templates\public\dashboard\supervisor.html:125
+#: .\apps\public\models.py:563 .\apps\public\models.py:588
+#: .\apps\public\models.py:613 .\apps\public\models.py:637
+#: .\apps\public\models.py:661
+#: .\apps\public\templates\public\dashboard\supervisor.html:138
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:59
+#: .\apps\public\templates\public\report\category\foliar_list.html:59
+#: .\apps\public\templates\public\report\fertilization\form.html:54
+#: .\apps\public\templates\public\report\fertilization\list.html:78
+#: .\apps\public\templates\public\report\foliar_spray\form.html:54
+#: .\apps\public\templates\public\report\foliar_spray\list.html:78
 msgid "Title"
 msgstr "عنوان"
 
@@ -191,8 +198,14 @@ msgstr "عنوان"
 #: .\apps\notification\templates\notification\create.html:141
 #: .\apps\notification\templates\notification\create.html:148
 #: .\apps\notification\templates\notification\detail.html:162
-#: .\apps\public\models.py:484 .\apps\public\models.py:507
-#: .\apps\public\models.py:563 .\apps\public\models.py:580
+#: .\apps\public\forms.py:280 .\apps\public\models.py:484
+#: .\apps\public\models.py:507 .\apps\public\models.py:564
+#: .\apps\public\models.py:589 .\apps\public\models.py:614
+#: .\apps\public\models.py:638 .\apps\public\models.py:840
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:63
+#: .\apps\public\templates\public\report\category\foliar_list.html:63
+#: .\apps\public\templates\public\report\fertilization\form.html:71
+#: .\apps\public\templates\public\report\foliar_spray\form.html:71
 msgid "Description"
 msgstr "توضیحات"
 
@@ -368,8 +381,10 @@ msgstr "جستجو بر اساس عنوان یا کاربر"
 
 #: .\apps\notification\templates\notification\list.html:202
 #: .\apps\notification\templates\notification\personal-list.html:186
-#: .\apps\public\templates\public\dashboard\supervisor.html:129
-#: .\apps\public\templates\public\plot\detail.html:1176
+#: .\apps\public\templates\public\dashboard\supervisor.html:142
+#: .\apps\public\templates\public\plot\detail.html:1269
+#: .\apps\public\templates\public\report\fertilization\list.html:83
+#: .\apps\public\templates\public\report\foliar_spray\list.html:83
 msgid "Date"
 msgstr "تاریخ"
 
@@ -396,32 +411,85 @@ msgstr "علامت‌گذاری همه به عنوان خوانده شده"
 msgid "Search by title"
 msgstr "جستجو بر اساس عنوان"
 
-#: .\apps\public\forms.py:63
+#: .\apps\public\forms.py:144
 msgid "Boundary"
 msgstr "مرز"
 
-#: .\apps\public\forms.py:90 .\apps\public\views.py:1229
-#: .\apps\public\views.py:1230
+#: .\apps\public\forms.py:171 .\apps\public\views.py:1506
+#: .\apps\public\views.py:1507
 msgid "Invalid boundary format"
 msgstr "فرمت مرز نامعتبر است"
 
-#: .\apps\public\forms.py:92
+#: .\apps\public\forms.py:173
 msgid "Boundary must be a list of points"
 msgstr "مرز باید لیستی از نقاط باشد"
 
-#: .\apps\public\forms.py:96
+#: .\apps\public\forms.py:177
 msgid "Each point must be [lat, lng]"
 msgstr "هر نقطه باید [عرض جغرافیایی، طول جغرافیایی] باشد"
 
-#: .\apps\public\forms.py:100
+#: .\apps\public\forms.py:181
 msgid "Coordinates must be numbers"
 msgstr "مختصات باید عدد باشند"
 
-#: .\apps\public\gee.py:840
+#: .\apps\public\forms.py:231 .\apps\public\models.py:93
+#: .\apps\public\models.py:167 .\apps\public\models.py:282
+#: .\apps\public\models.py:587 .\apps\public\models.py:636
+#: .\apps\public\models.py:832
+#: .\apps\public\templates\public\dashboard\supervisor.html:238
+#: .\apps\public\templates\public\report\fertilization\form.html:40
+#: .\apps\public\templates\public\report\fertilization\list.html:80
+#: .\apps\public\templates\public\report\foliar_spray\form.html:40
+#: .\apps\public\templates\public\report\foliar_spray\list.html:80
+#: .\templates\partials\_crud_modals.html:46
+msgid "Plot"
+msgstr "زمین"
+
+#: .\apps\public\forms.py:237 .\apps\public\models.py:170
+#: .\apps\public\models.py:303 .\apps\public\models.py:508
+#: .\apps\public\models.py:833
+#: .\apps\public\templates\public\dashboard\supervisor.html:115
+#: .\apps\public\templates\public\dashboard\supervisor.html:241
+#: .\apps\public\templates\public\dashboard\supervisor.html:320
+#: .\apps\public\templates\public\plot\detail.html:645
+msgid "Outlet"
+msgstr "خروجی"
+
+#: .\apps\public\forms.py:243 .\apps\public\models.py:835
+msgid "Reporter (Waterman)"
+msgstr "گزارش‌دهنده (آبیار)"
+
+#: .\apps\public\forms.py:247
+msgid "Start Date and Time (Jalali)"
+msgstr "تاریخ و ساعت شروع (شمسی)"
+
+#: .\apps\public\forms.py:256
+msgid "End Date and Time (Jalali)"
+msgstr "تاریخ و ساعت پایان (شمسی)"
+
+#: .\apps\public\forms.py:268 .\apps\public\models.py:86
+#: .\apps\public\models.py:448 .\apps\public\models.py:838
+msgid "GPS Latitude"
+msgstr "عرض جغرافیایی GPS"
+
+#: .\apps\public\forms.py:275 .\apps\public\models.py:88
+#: .\apps\public\models.py:450 .\apps\public\models.py:839
+msgid "GPS Longitude"
+msgstr "طول جغرافیایی GPS"
+
+#: .\apps\public\forms.py:295
+msgid "Invalid date. Use format: 1404/04/20 08:30"
+msgstr "تاریخ نامعتبر است. فرمت: 1404/04/20 08:30"
+
+#: .\apps\public\forms.py:308
+msgid "End date must be after start date."
+msgstr "تاریخ پایان باید بعد از تاریخ شروع باشد."
+
+#: .\apps\public\gee.py:888
 msgid "Weak vegetation cover"
 msgstr "پوشش گیاهی ضعیف"
 
-#: .\apps\public\gee.py:842
+#: .\apps\public\gee.py:890
 #, python-format
 msgid ""
 "Low greenness index (NDVI=%(ndvi)s). Pistachio healthy range: NDVI ≥ 0.18 "
@@ -430,7 +498,7 @@ msgstr ""
 "شاخص سبزینگی پایین (NDVI=%(ndvi)s). محدوده سالم پسته: NDVI ≥ ۰.۱۸ (باغ‌هایی "
 "با فاصله زیاد بین درختان)."
 
-#: .\apps\public\gee.py:844
+#: .\apps\public\gee.py:892
 msgid ""
 "Check plant nutrition, pests, and irrigation. For pistachio orchards, target "
 "plot-mean NDVI ≥ 0.18."
@@ -438,11 +506,11 @@ msgstr ""
 "تغذیه گیاه، آفات و آبیاری را بررسی کنید. برای باغ‌های پسته میانگین NDVI زمین "
 "را ≥ ۰.۱۸ هدف بگیرید."
 
-#: .\apps\public\gee.py:847
+#: .\apps\public\gee.py:895
 msgid "Marginal pistachio vigour"
 msgstr "وضعیت مرزی پسته"
 
-#: .\apps\public\gee.py:849
+#: .\apps\public\gee.py:897
 #, python-format
 msgid ""
 "Borderline greenness index (NDVI=%(ndvi)s). Healthy pistachio plot-mean: "
@@ -451,7 +519,7 @@ msgstr ""
 "شاخص سبزینگی مرزی (NDVI=%(ndvi)s). میانگین NDVI زمین برای پسته سالم: ۰.۱۸–"
 "۰.۳۰."
 
-#: .\apps\public\gee.py:851
+#: .\apps\public\gee.py:899
 msgid ""
 "Monitor canopy and nutrition. Pistachio plot-mean NDVI typically peaks at "
 "0.20–0.30; do not expect dense-crop values (0.5+)."
@@ -459,16 +527,16 @@ msgstr ""
 "تاج درخت و تغذیه را پایش کنید. میانگین NDVI زمین پسته معمولاً در محدوده ۰.۲۰–"
 "۰.۳۰ اوج می‌گیرد؛ انتظار مقادیر محصولات متراکم (۰.۵+) را نداشته باشید."
 
-#: .\apps\public\gee.py:856
+#: .\apps\public\gee.py:904
 msgid "Moisture stress / water deficit"
 msgstr "تنش رطوبتی / کمبود آب"
 
-#: .\apps\public\gee.py:858
+#: .\apps\public\gee.py:906
 #, python-format
 msgid "Low moisture index (NDMI=%(ndmi)s). Pistachio adequate: NDMI ≥ -0.05."
 msgstr "شاخص رطوبت پایین (NDMI=%(ndmi)s). رطوبت مناسب پسته: NDMI ≥ ‎-۰.۰۵."
 
-#: .\apps\public\gee.py:860
+#: .\apps\public\gee.py:908
 msgid ""
 "Increase irrigation frequency or volume. Pistachio target NDMI ≥ -0.05 "
 "(drought-tolerant but stressed below)."
@@ -476,11 +544,11 @@ msgstr ""
 "تناوب یا حجم آبیاری را افزایش دهید. هدف NDMI ≥ ‎-۰.۰۵ برای پسته (مقاوم به "
 "خشکی ولی در زیر این مقدار تحت تنش)."
 
-#: .\apps\public\gee.py:863
+#: .\apps\public\gee.py:911
 msgid "Soil moisture borderline"
 msgstr "رطوبت خاک در حد مرزی"
 
-#: .\apps\public\gee.py:865
+#: .\apps\public\gee.py:913
 #, python-format
 msgid ""
 "Moisture index borderline (NDMI=%(ndmi)s). Pistachio adequate range: NDMI "
@@ -489,104 +557,104 @@ msgstr ""
 "شاخص رطوبت در حد مرزی است (NDMI=%(ndmi)s). محدوده مناسب پسته: NDMI ‎-۰.۰۵–"
 "۰.۱۵."
 
-#: .\apps\public\gee.py:867
+#: .\apps\public\gee.py:915
 msgid "Monitor irrigation schedule. Pistachio adequate NDMI: -0.05–0.15."
 msgstr "برنامه آبیاری را پایش کنید. NDMI مناسب پسته: ‎-۰.۰۵–۰.۱۵."
 
-#: .\apps\public\gee.py:871
+#: .\apps\public\gee.py:919
 msgid "Possible nitrogen deficiency"
 msgstr "احتمال کمبود نیتروژن"
 
-#: .\apps\public\gee.py:873
+#: .\apps\public\gee.py:921
 #, python-format
 msgid "Low red-edge index (NDRE=%(ndre)s) for pistachio canopy."
 msgstr "شاخص لبه قرمز برای تاج پسته پایین است (NDRE=%(ndre)s)."
 
-#: .\apps\public\gee.py:875
+#: .\apps\public\gee.py:923
 msgid "Check nitrogen fertilisation status."
 msgstr "وضعیت کوددهی نیتروژن را بررسی کنید."
 
-#: .\apps\public\gee.py:886
+#: .\apps\public\gee.py:934
 msgid "Severe heat stress"
 msgstr "تنش گرمایی شدید"
 
-#: .\apps\public\gee.py:888
+#: .\apps\public\gee.py:936
 #, python-format
 msgid "Current temperature is very high (%(temp)s°C)."
 msgstr "دمای فعلی بسیار بالا است (%(temp)s درجه سانتیگراد)."
 
-#: .\apps\public\gee.py:890
+#: .\apps\public\gee.py:938
 msgid "Irrigate during cooler hours and increase frequency."
 msgstr "در ساعات خنک‌تر آبیاری کنید و تناوب را افزایش دهید."
 
-#: .\apps\public\gee.py:894
+#: .\apps\public\gee.py:942
 msgid "Heat stress risk"
 msgstr "خطر تنش گرمایی"
 
-#: .\apps\public\gee.py:896
+#: .\apps\public\gee.py:944
 #, python-format
 msgid "Current temperature is high (%(temp)s°C)."
 msgstr "دمای فعلی بالا است (%(temp)s درجه سانتیگراد)."
 
-#: .\apps\public\gee.py:898
+#: .\apps\public\gee.py:946
 msgid "Irrigate during cooler hours."
 msgstr "در ساعات خنک‌تر آبیاری کنید."
 
-#: .\apps\public\gee.py:902
+#: .\apps\public\gee.py:950
 msgid "High wind speed"
 msgstr "سرعت باد زیاد"
 
-#: .\apps\public\gee.py:904
+#: .\apps\public\gee.py:952
 #, python-format
 msgid "Current wind speed is high (%(wind)s m/s)."
 msgstr "سرعت باد فعلی زیاد است (%(wind)s متر بر ثانیه)."
 
-#: .\apps\public\gee.py:906
+#: .\apps\public\gee.py:954
 msgid "Avoid sprinkler irrigation during strong winds."
 msgstr "در باد شدید از آبیاری بارانی خودداری کنید."
 
-#: .\apps\public\gee.py:909
+#: .\apps\public\gee.py:957
 msgid "Reduce irrigation volume due to recent precipitation."
 msgstr "به دلیل بارندگی اخیر حجم آبیاری را کاهش دهید."
 
-#: .\apps\public\gee.py:914
+#: .\apps\public\gee.py:962
 msgid "No irrigation recorded"
 msgstr "هیچ آبیاری ثبت نشده"
 
-#: .\apps\public\gee.py:916
+#: .\apps\public\gee.py:964
 msgid "No irrigation water recorded in the last 30 days."
 msgstr "هیچ آب آبیاری‌ای در ۳۰ روز گذشته ثبت نشده است."
 
-#: .\apps\public\gee.py:918
+#: .\apps\public\gee.py:966
 msgid "Check irrigation system and schedule."
 msgstr "سیستم و برنامه آبیاری را بررسی کنید."
 
-#: .\apps\public\gee.py:921
+#: .\apps\public\gee.py:969
 msgid "Very low irrigation"
 msgstr "آبیاری بسیار کم"
 
-#: .\apps\public\gee.py:923
+#: .\apps\public\gee.py:971
 #, python-format
 msgid "Only %(water)s m³ of irrigation water in the last 30 days."
 msgstr "فقط %(water)s متر مکعب آب آبیاری در ۳۰ روز گذشته."
 
-#: .\apps\public\gee.py:925
+#: .\apps\public\gee.py:973
 msgid "Review and increase irrigation schedule."
 msgstr "برنامه آبیاری را بازبینی و افزایش دهید."
 
-#: .\apps\public\gee.py:962
+#: .\apps\public\gee.py:1010
 msgid "Insufficient data for plot condition analysis."
 msgstr "داده کافی برای تحلیل وضعیت زمین وجود ندارد."
 
-#: .\apps\public\gee.py:966
+#: .\apps\public\gee.py:1014
 msgid "Overall plot condition is good."
 msgstr "وضعیت کلی زمین خوب است."
 
-#: .\apps\public\gee.py:968
+#: .\apps\public\gee.py:1016
 msgid "Plot condition is moderate and requires monitoring."
 msgstr "وضعیت زمین متوسط است و نیاز به پایش دارد."
 
-#: .\apps\public\gee.py:970
+#: .\apps\public\gee.py:1018
 msgid "Plot condition is poor and requires immediate attention."
 msgstr "وضعیت زمین ضعیف است و نیاز به توجه فوری دارد."
 
@@ -649,7 +717,7 @@ msgstr "تنظیمات اجرا"
 #: .\apps\public\models.py:36 .\apps\public\models.py:60
 #: .\apps\public\models.py:81 .\apps\public\models.py:166
 #: .\apps\public\templates\public\plot\detail.html:362
-#: .\apps\public\templates\public\plot\detail.html:462
+#: .\apps\public\templates\public\plot\detail.html:555
 #: .\apps\public\templates\public\plot\form.html:52
 #: .\templates\partials\_crud_modals.html:10
 #: .\templates\partials\_crud_modals.html:26
@@ -659,7 +727,7 @@ msgstr "شماره"
 
 #: .\apps\public\models.py:37 .\apps\public\models.py:62
 #: .\apps\public\models.py:82
-#: .\apps\public\templates\public\plot\detail.html:466
+#: .\apps\public\templates\public\plot\detail.html:559
 #: .\apps\public\templates\public\plot\form.html:57
 #: .\templates\partials\_crud_modals.html:11
 #: .\templates\partials\_crud_modals.html:27
@@ -679,9 +747,9 @@ msgid "Active"
 msgstr "فعال"
 
 #: .\apps\public\models.py:43 .\apps\public\models.py:61
-#: .\apps\public\models.py:592
-#: .\apps\public\templates\public\dashboard\supervisor.html:227
-#: .\apps\public\templates\public\plot\detail.html:474
+#: .\apps\public\models.py:662
+#: .\apps\public\templates\public\dashboard\supervisor.html:240
+#: .\apps\public\templates\public\plot\detail.html:567
 #: .\apps\public\templates\public\plot\moisture_map.html:138
 #: .\apps\public\templates\public\plot\vegetation_map.html:134
 #: .\templates\partials\_crud_modals.html:28
@@ -693,8 +761,8 @@ msgid "Order"
 msgstr "ترتیب"
 
 #: .\apps\public\models.py:67 .\apps\public\models.py:83
-#: .\apps\public\templates\public\dashboard\supervisor.html:226
-#: .\apps\public\templates\public\plot\detail.html:470
+#: .\apps\public\templates\public\dashboard\supervisor.html:239
+#: .\apps\public\templates\public\plot\detail.html:563
 #: .\apps\public\templates\public\plot\form.html:62
 #: .\apps\public\templates\public\plot\moisture_map.html:228
 #: .\apps\public\templates\public\plot\vegetation_map.html:236
@@ -702,7 +770,7 @@ msgid "Zone"
 msgstr "منطقه"
 
 #: .\apps\public\models.py:68
-#: .\apps\public\templates\public\dashboard\supervisor.html:56
+#: .\apps\public\templates\public\dashboard\supervisor.html:57
 #: .\templates\partials\_sidebar.html:33
 msgid "Zones"
 msgstr "منطقه ها"
@@ -710,14 +778,6 @@ msgstr "منطقه ها"
 #: .\apps\public\models.py:84 .\apps\public\templates\public\plot\form.html:67
 msgid "Avg Duration (min)"
 msgstr "میانگین مدت زمان ابیاری(دقیقه)"
-
-#: .\apps\public\models.py:86 .\apps\public\models.py:448
-msgid "GPS Latitude"
-msgstr "عرض جغرافیایی GPS"
-
-#: .\apps\public\models.py:88 .\apps\public\models.py:450
-msgid "GPS Longitude"
-msgstr "طول جغرافیایی GPS"
 
 #: .\apps\public\models.py:89
 msgid "Plot Boundary"
@@ -727,55 +787,39 @@ msgstr "مرز زمین"
 msgid "List of [lat, lng] points forming the plot polygon"
 msgstr "لیست نقاط [عرض، طول] جغرافیایی که چندضلعی زمین را تشکیل می‌دهند"
 
-#: .\apps\public\models.py:93 .\apps\public\models.py:167
-#: .\apps\public\models.py:282 .\apps\public\models.py:578
-#: .\apps\public\templates\public\dashboard\supervisor.html:225
-#: .\templates\partials\_crud_modals.html:46
-msgid "Plot"
-msgstr "زمین"
-
 #: .\apps\public\models.py:94
-#: .\apps\public\templates\public\dashboard\supervisor.html:62
+#: .\apps\public\templates\public\dashboard\supervisor.html:63
 #: .\apps\public\templates\public\plot\detail.html:357
 #: .\templates\partials\_sidebar.html:34
 msgid "Plots"
 msgstr "زمین‌ها"
 
-#: .\apps\public\models.py:170 .\apps\public\models.py:303
-#: .\apps\public\models.py:508
-#: .\apps\public\templates\public\dashboard\supervisor.html:102
-#: .\apps\public\templates\public\dashboard\supervisor.html:228
-#: .\apps\public\templates\public\dashboard\supervisor.html:303
-#: .\apps\public\templates\public\plot\detail.html:552
-msgid "Outlet"
-msgstr "خروجی"
-
 #: .\apps\public\models.py:171
-#: .\apps\public\templates\public\dashboard\supervisor.html:68
-#: .\apps\public\templates\public\plot\detail.html:546
+#: .\apps\public\templates\public\dashboard\supervisor.html:69
+#: .\apps\public\templates\public\plot\detail.html:639
 #: .\templates\partials\_sidebar.html:35
 msgid "Outlets"
 msgstr "خروجی‌ها"
 
 #: .\apps\public\models.py:212 .\apps\public\models.py:254
-#: .\apps\public\views.py:301
+#: .\apps\public\views.py:315
 msgid "Not Started"
 msgstr "شروع نشده"
 
 #: .\apps\public\models.py:213 .\apps\public\models.py:255
-#: .\apps\public\models.py:277 .\apps\public\views.py:85
-#: .\apps\public\views.py:302
+#: .\apps\public\models.py:277 .\apps\public\views.py:95
+#: .\apps\public\views.py:316
 msgid "Running"
 msgstr "در حال اجرا"
 
 #: .\apps\public\models.py:214 .\apps\public\models.py:256
 #: .\apps\public\models.py:278
-#: .\apps\public\templates\public\plot\detail.html:556
-#: .\apps\public\views.py:85 .\apps\public\views.py:303
+#: .\apps\public\templates\public\plot\detail.html:649
+#: .\apps\public\views.py:95 .\apps\public\views.py:317
 msgid "Completed"
 msgstr "تکمیل شده"
 
-#: .\apps\public\models.py:279 .\apps\public\views.py:85
+#: .\apps\public\models.py:279 .\apps\public\views.py:95
 msgid "Canceled"
 msgstr "لغو شده"
 
@@ -794,14 +838,14 @@ msgstr "گروه‌های اجرا"
 
 #: .\apps\public\models.py:299
 msgid "Open"
-msgstr ""
+msgstr "باز"
 
 #: .\apps\public\models.py:300
 msgid "Closed"
-msgstr ""
+msgstr "بسته"
 
 #: .\apps\public\models.py:305 .\apps\public\models.py:482
-#: .\apps\public\models.py:575
+#: .\apps\public\models.py:582 .\apps\public\models.py:631
 msgid "Created By"
 msgstr "ایجاد شده توسط"
 
@@ -831,6 +875,7 @@ msgid ""
 "expected by %(deviation)s minutes. This report was automatically generated "
 "by the system because the irrigation duration was below the acceptable range."
 msgstr ""
+"مدت آبیاری غیرعادی برای مزرعه %(farm)s، ناحیه %(zone)s، زمین %(plot)s، کیز %(outlet)s تشخیص داده شد. مدت واقعی: %(actual)s دقیقه. مدت مورد انتظار: %(avg)s دقیقه (تلورانس: ±%(tolerance)s دقیقه، بازه قابل قبول: %(lower)s–%(upper)s دقیقه). آبیاری %(deviation)s دقیقه کوتاه‌تر از انتظار بود. این گزارش به‌صورت خودکار توسط سیستم ایجاد شده است زیرا مدت آبیاری کمتر از بازه قابل قبول بوده است."
 
 #: .\apps\public\models.py:394
 #, python-format
@@ -842,6 +887,7 @@ msgid ""
 "expected by %(deviation)s minutes. This report was automatically generated "
 "by the system because the irrigation duration exceeded the acceptable range."
 msgstr ""
+"مدت آبیاری غیرعادی برای مزرعه %(farm)s، ناحیه %(zone)s، زمین %(plot)s، کیز %(outlet)s تشخیص داده شد. مدت واقعی: %(actual)s دقیقه. مدت مورد انتظار: %(avg)s دقیقه (تلورانس: ±%(tolerance)s دقیقه، بازه قابل قبول: %(lower)s–%(upper)s دقیقه). آبیاری %(deviation)s دقیقه طولانی‌تر از انتظار بود. این گزارش به‌صورت خودکار توسط سیستم ایجاد شده است زیرا مدت آبیاری از بازه قابل قبول فراتر رفته است."
 
 #: .\apps\public\models.py:410 .\apps\public\models.py:417
 #, fuzzy
@@ -919,22 +965,22 @@ msgid "Activity Report"
 msgstr "گزارش فعالیت"
 
 #: .\apps\public\models.py:488 .\templates\partials\_header.html:20
-#: .\templates\partials\_sidebar.html:48 .\templates\partials\_sidebar.html:59
+#: .\templates\partials\_sidebar.html:50 .\templates\partials\_sidebar.html:66
 msgid "Activity Reports"
 msgstr "گزارش‌های فعالیت"
 
 #: .\apps\public\models.py:499
-#: .\apps\public\templates\public\dashboard\supervisor.html:145
+#: .\apps\public\templates\public\dashboard\supervisor.html:158
 msgid "Low"
 msgstr "کم"
 
 #: .\apps\public\models.py:500
-#: .\apps\public\templates\public\dashboard\supervisor.html:144
+#: .\apps\public\templates\public\dashboard\supervisor.html:157
 msgid "Medium"
 msgstr "متوسط"
 
 #: .\apps\public\models.py:501
-#: .\apps\public\templates\public\dashboard\supervisor.html:143
+#: .\apps\public\templates\public\dashboard\supervisor.html:156
 msgid "High"
 msgstr "زیاد"
 
@@ -949,7 +995,7 @@ msgid "Recipients"
 msgstr "گیرندگان"
 
 #: .\apps\public\models.py:509
-#: .\apps\public\templates\public\dashboard\supervisor.html:127
+#: .\apps\public\templates\public\dashboard\supervisor.html:140
 msgid "Priority"
 msgstr "اولویت"
 
@@ -958,11 +1004,11 @@ msgid "System Report"
 msgstr "گزارش سیستمی"
 
 #: .\apps\public\models.py:513
-#: .\apps\public\templates\public\dashboard\supervisor.html:118
+#: .\apps\public\templates\public\dashboard\supervisor.html:131
 msgid "System Reports"
 msgstr "گزارش‌های سیستمی"
 
-#: .\apps\public\models.py:546 .\apps\public\models.py:632
+#: .\apps\public\models.py:546 .\apps\public\models.py:702
 msgid "Pending"
 msgstr "در انتظار"
 
@@ -971,8 +1017,8 @@ msgid "In Progress"
 msgstr "در حال انجام"
 
 #: .\apps\public\models.py:548
-#: .\apps\public\templates\public\dashboard\supervisor.html:128
-#: .\apps\public\templates\public\dashboard\supervisor.html:149
+#: .\apps\public\templates\public\dashboard\supervisor.html:141
+#: .\apps\public\templates\public\dashboard\supervisor.html:162
 msgid "Resolved"
 msgstr "حل شده"
 
@@ -992,158 +1038,272 @@ msgstr "وضعیت گزارش سیستمی"
 msgid "System Report Statuses"
 msgstr "وضعیت‌های گزارش سیستمی"
 
-#: .\apps\public\models.py:566
-msgid "Manure Category"
-msgstr "دسته‌بندی کود"
-
 #: .\apps\public\models.py:567
-msgid "Manure Categories"
-msgstr "دسته‌بندی‌های کود"
+#, fuzzy
+#| msgid "Fertilization by Category"
+msgid "Fertilizer Category"
+msgstr "کوددهی بر اساس دسته‌بندی"
+
+#: .\apps\public\models.py:568
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:6
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:34
+#: .\apps\public\templates\public\report\fertilization\list.html:38
+#: .\templates\partials\_sidebar.html:55
+#, fuzzy
+#| msgid "Fertilization by Category"
+msgid "Fertilizer Categories"
+msgstr "کوددهی بر اساس دسته‌بندی"
 
 #: .\apps\public\models.py:577
-msgid "Category"
-msgstr "دسته‌بندی"
+msgid "Kilogram (kg)"
+msgstr "کیلوگرم (kg)"
 
-#: .\apps\public\models.py:583
-msgid "Manure Report"
-msgstr "گزارش کوددهی"
+#: .\apps\public\models.py:578
+msgid "Gram (g)"
+msgstr "گرم (g)"
 
-#: .\apps\public\models.py:584
-msgid "Manure Reports"
+#: .\apps\public\models.py:579
+msgid "Ton"
+msgstr "تن"
+
+#: .\apps\public\models.py:585
+#: .\apps\public\templates\public\report\fertilization\form.html:46
+#: .\apps\public\templates\public\report\fertilization\list.html:79
+msgid "Fertilizer Type"
+msgstr "نوع کود"
+
+#: .\apps\public\models.py:591 .\apps\public\models.py:640
+#: .\apps\public\templates\public\report\fertilization\form.html:61
+#: .\apps\public\templates\public\report\fertilization\list.html:81
+#: .\apps\public\templates\public\report\foliar_spray\form.html:61
+#: .\apps\public\templates\public\report\foliar_spray\list.html:81
+msgid "Quantity"
+msgstr "مقدار"
+
+#: .\apps\public\models.py:593 .\apps\public\models.py:642
+#: .\apps\public\templates\public\report\fertilization\form.html:65
+#: .\apps\public\templates\public\report\foliar_spray\form.html:65
+msgid "Unit"
+msgstr "واحد"
+
+#: .\apps\public\models.py:594 .\apps\public\models.py:643
+msgid "Applied At"
+msgstr "زمان اعمال"
+
+#: .\apps\public\models.py:598
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization Record"
 msgstr "گزارش‌های کوددهی"
 
-#: .\apps\public\models.py:593
+#: .\apps\public\models.py:599
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:38
+#: .\apps\public\templates\public\report\fertilization\list.html:6
+#: .\apps\public\templates\public\report\fertilization\list.html:33
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization Records"
+msgstr "گزارش‌های کوددهی"
+
+#: .\apps\public\models.py:617
+#, fuzzy
+#| msgid "Fertilization by Category"
+msgid "Foliar Spray Category"
+msgstr "کوددهی بر اساس دسته‌بندی"
+
+#: .\apps\public\models.py:618
+#, fuzzy
+#| msgid "Manure Categories"
+msgid "Foliar Spray Categories"
+msgstr "دسته‌بندی‌های کود"
+
+#: .\apps\public\models.py:627
+msgid "Liter (L)"
+msgstr "لیتر (L)"
+
+#: .\apps\public\models.py:628
+msgid "Milliliter (ml)"
+msgstr "میلی‌لیتر (ml)"
+
+#: .\apps\public\models.py:634
+#: .\apps\public\templates\public\report\foliar_spray\form.html:46
+#: .\apps\public\templates\public\report\foliar_spray\list.html:79
+msgid "Solution Type"
+msgstr "نوع محلول"
+
+#: .\apps\public\models.py:647
+msgid "Foliar Spray Record"
+msgstr "ثبت محلول‌پاشی"
+
+#: .\apps\public\models.py:648
+#: .\apps\public\templates\public\report\category\foliar_list.html:38
+#: .\apps\public\templates\public\report\foliar_spray\list.html:6
+#: .\apps\public\templates\public\report\foliar_spray\list.html:33
+msgid "Foliar Spray Records"
+msgstr "ثبت‌های محلول‌پاشی"
+
+#: .\apps\public\models.py:663
 msgid "Watermans"
 msgstr "آبیاران"
 
-#: .\apps\public\models.py:595
+#: .\apps\public\models.py:665
 msgid "Supervisors"
 msgstr "ناظران"
 
-#: .\apps\public\models.py:598
+#: .\apps\public\models.py:668
 msgid "Farm User Group"
 msgstr "گروه کاربری مزرعه"
 
-#: .\apps\public\models.py:599
+#: .\apps\public\models.py:669
 msgid "Farm User Groups"
 msgstr "گروه‌های کاربری مزرعه"
 
-#: .\apps\public\models.py:623
+#: .\apps\public\models.py:693
 msgid "Vegetation Index"
 msgstr "شاخص پوشش گیاهی"
 
-#: .\apps\public\models.py:624
+#: .\apps\public\models.py:694
 msgid "Vegetation Indices"
 msgstr "شاخص‌های پوشش گیاهی"
 
-#: .\apps\public\models.py:633
+#: .\apps\public\models.py:703
 msgid "Analyzing"
 msgstr "در حال تحلیل"
 
-#: .\apps\public\models.py:634
+#: .\apps\public\models.py:704
 msgid "Done"
 msgstr "انجام شد"
 
-#: .\apps\public\models.py:635
-#: .\apps\public\templates\public\dashboard\supervisor.html:349
+#: .\apps\public\models.py:705
+#: .\apps\public\templates\public\dashboard\supervisor.html:366
 #: .\templates\base\base_template.html:94
 msgid "Error"
 msgstr "خطا"
 
-#: .\apps\public\models.py:659
-#: .\apps\public\templates\public\dashboard\supervisor.html:221
+#: .\apps\public\models.py:729
+#: .\apps\public\templates\public\dashboard\supervisor.html:234
 msgid "Leaf Analysis"
 msgstr "تحلیل برگ"
 
-#: .\apps\public\models.py:660
+#: .\apps\public\models.py:730
 msgid "Leaf Analyses"
 msgstr "تحلیل‌های برگ"
 
-#: .\apps\public\models.py:696
+#: .\apps\public\models.py:766
 msgid "Plot AI Report"
 msgstr "گزارش هوش مصنوعی زمین"
 
-#: .\apps\public\models.py:697
+#: .\apps\public\models.py:767
 msgid "Plot AI Reports"
 msgstr "گزارش‌های هوش مصنوعی زمین"
 
-#: .\apps\public\models.py:716
+#: .\apps\public\models.py:786
 msgid "Farm AI Report"
 msgstr "گزارش هوش مصنوعی مزرعه"
 
-#: .\apps\public\models.py:717
+#: .\apps\public\models.py:787
 msgid "Farm AI Reports"
 msgstr "گزارش‌های هوش مصنوعی مزرعه"
 
-#: .\apps\public\models.py:728
+#: .\apps\public\models.py:798
 msgid "Zone/Section/Point"
 msgstr "منطقه/بخش/نقطه"
 
-#: .\apps\public\models.py:729
+#: .\apps\public\models.py:799
 msgid "Identifier of the zone, section or point within the plot"
 msgstr "شناسه منطقه، بخش یا نقطه در زمین"
 
-#: .\apps\public\models.py:733
-#: .\apps\public\templates\public\plot\detail.html:1111
+#: .\apps\public\models.py:803
+#: .\apps\public\templates\public\plot\detail.html:1204
 #: .\apps\public\templates\public\plot\moisture_map.html:231
 msgid "Moisture score"
 msgstr "امتیاز رطوبت"
 
-#: .\apps\public\models.py:734
+#: .\apps\public\models.py:804
 msgid "Normalized moisture score (0-100)"
 msgstr "امتیاز رطوبت نرمال‌شده (۰-۱۰۰)"
 
-#: .\apps\public\models.py:738
-#: .\apps\public\templates\public\plot\detail.html:1110
+#: .\apps\public\models.py:808
+#: .\apps\public\templates\public\plot\detail.html:1203
 #: .\apps\public\templates\public\plot\vegetation_map.html:239
 msgid "Greenness score"
 msgstr "امتیاز سبزینگی"
 
-#: .\apps\public\models.py:739
+#: .\apps\public\models.py:809
 msgid "Normalized greenness score (0-100)"
 msgstr "امتیاز سبزینگی نرمال‌شده (۰-۱۰۰)"
 
-#: .\apps\public\models.py:743
+#: .\apps\public\models.py:813
 msgid "Moisture value"
 msgstr "مقدار رطوبت"
 
-#: .\apps\public\models.py:744
+#: .\apps\public\models.py:814
 msgid "Raw moisture value (sensor percentage or unit-based reading)"
 msgstr "مقدار خام رطوبت (درصد سنسور یا خواندن مبتنی بر واحد)"
 
-#: .\apps\public\models.py:748
+#: .\apps\public\models.py:818
 msgid "Greenness value"
 msgstr "مقدار سبزینگی"
 
-#: .\apps\public\models.py:749
+#: .\apps\public\models.py:819
 msgid "Raw greenness value (NDVI or similar vegetation index)"
 msgstr "مقدار خام سبزینگی (NDVI یا شاخص پوشش گیاهی مشابه)"
 
-#: .\apps\public\models.py:754
+#: .\apps\public\models.py:824
 msgid "Vegetation and Soil Moisture Report"
 msgstr "گزارش پوشش گیاهی و رطوبت خاک"
 
-#: .\apps\public\models.py:755
+#: .\apps\public\models.py:825
 msgid "Vegetation and Soil Moisture Reports"
 msgstr "گزارش‌های پوشش گیاهی و رطوبت خاک"
 
-#: .\apps\public\models.py:764
-#: .\apps\public\templates\public\plot\detail.html:529
+#: .\apps\public\models.py:834
+#, fuzzy
+#| msgid "Created By"
+msgid "Registered By"
+msgstr "ایجاد شده توسط"
+
+#: .\apps\public\models.py:836
+#, fuzzy
+#| msgid "Date/Time"
+msgid "Start Datetime"
+msgstr "تاریخ/زمان"
+
+#: .\apps\public\models.py:837
+#, fuzzy
+#| msgid "Date/Time"
+msgid "End Datetime"
+msgstr "تاریخ/زمان"
+
+#: .\apps\public\models.py:844
+#, fuzzy
+#| msgid "Irrigations"
+msgid "Manual Irrigation"
+msgstr "آبیاری‌ها"
+
+#: .\apps\public\models.py:845
+#, fuzzy
+#| msgid "Irrigations"
+msgid "Manual Irrigations"
+msgstr "آبیاری‌ها"
+
+#: .\apps\public\models.py:871
+#: .\apps\public\templates\public\plot\detail.html:622
 msgid "Scheduled"
 msgstr "زمان‌بندی شده"
 
-#: .\apps\public\models.py:765
-#: .\apps\public\templates\public\plot\detail.html:527
-#: .\apps\public\templates\public\plot\detail.html:1188
+#: .\apps\public\models.py:872
+#: .\apps\public\templates\public\plot\detail.html:620
+#: .\apps\public\templates\public\plot\detail.html:1281
 msgid "Manual"
 msgstr "دستی"
 
-#: .\apps\public\models.py:779
-#: .\apps\public\templates\public\plot\detail.html:489
+#: .\apps\public\models.py:886
+#: .\apps\public\templates\public\plot\detail.html:582
 msgid "Plot Weather"
 msgstr "آب‌وهوای زمین"
 
-#: .\apps\public\models.py:780
+#: .\apps\public\models.py:887
 msgid "Plot Weather Records"
 msgstr "سوابق آب‌وهوای زمین"
 
@@ -1188,7 +1348,7 @@ msgid "Leaf analysis (AI)"
 msgstr "تحلیل برگ (هوش مصنوعی)"
 
 #: .\apps\public\templates\public\_leaf_section.html:8
-#: .\apps\public\templates\public\plot\detail.html:842
+#: .\apps\public\templates\public\plot\detail.html:935
 msgid "View analysis history"
 msgstr "مشاهده تاریخچه تحلیل"
 
@@ -1197,7 +1357,7 @@ msgid "No leaf analysis registered yet."
 msgstr "هنوز تحلیل برگی ثبت نشده است."
 
 #: .\apps\public\templates\public\_leaf_section.html:35
-#: .\apps\public\templates\public\plot\detail.html:833
+#: .\apps\public\templates\public\plot\detail.html:926
 msgid "Drag a leaf image here or click to upload"
 msgstr "تصویر برگ را اینجا بکشید یا کلیک کنید تا آپلود شود"
 
@@ -1231,84 +1391,93 @@ msgstr "افزودن زمین"
 msgid "Add Outlet"
 msgstr "افزودن خروجی"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:74
-#: .\apps\public\templates\public\dashboard\supervisor.html:95
+#: .\apps\public\templates\public\dashboard\supervisor.html:75
+#: .\apps\public\templates\public\dashboard\supervisor.html:108
 msgid "Active Irrigations"
 msgstr "آبیاری‌های فعال"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:80
-#: .\templates\partials\_sidebar.html:47 .\templates\partials\_sidebar.html:58
+#: .\apps\public\templates\public\dashboard\supervisor.html:81
+#: .\templates\partials\_sidebar.html:49 .\templates\partials\_sidebar.html:65
 msgid "Reports"
 msgstr "گزارش‌ها"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:86
-#: .\templates\partials\_sidebar.html:49
-msgid "Fertilization Reports"
+#: .\apps\public\templates\public\dashboard\supervisor.html:87
+#: .\apps\public\templates\public\plot\detail.html:488
+#: .\templates\partials\_sidebar.html:51
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization"
 msgstr "گزارش‌های کوددهی"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:106
+#: .\apps\public\templates\public\dashboard\supervisor.html:93
+#: .\apps\public\templates\public\plot\detail.html:517
+#: .\templates\partials\_sidebar.html:53
+msgid "Foliar Spray"
+msgstr "محلول‌پاشی"
+
+#: .\apps\public\templates\public\dashboard\supervisor.html:119
 msgid "Stop this irrigation?"
 msgstr "آیا این آبیاری را متوقف می‌کنید؟"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:108
+#: .\apps\public\templates\public\dashboard\supervisor.html:121
 msgid "Stop"
 msgstr "توقف"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:126
+#: .\apps\public\templates\public\dashboard\supervisor.html:139
 msgid "Location"
 msgstr "موقعیت"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:130
+#: .\apps\public\templates\public\dashboard\supervisor.html:143
 msgid "Actions"
 msgstr "عملیات"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:149
+#: .\apps\public\templates\public\dashboard\supervisor.html:162
 msgid "Unresolved"
 msgstr "حل نشده"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:152
+#: .\apps\public\templates\public\dashboard\supervisor.html:165
 msgid "View"
 msgstr "مشاهده"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:155
+#: .\apps\public\templates\public\dashboard\supervisor.html:168
 msgid "No reports"
 msgstr "گزارشی وجود ندارد"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:166
+#: .\apps\public\templates\public\dashboard\supervisor.html:179
 msgid "Irrigations in last 30 days"
 msgstr "آبیاری‌ها در ۳۰ روز گذشته"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:172
+#: .\apps\public\templates\public\dashboard\supervisor.html:185
 #: .\templates\partials\_sidebar.html:36
 msgid "Irrigators"
 msgstr "آبیاران"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:178
-#: .\apps\public\templates\public\plot\detail.html:554
+#: .\apps\public\templates\public\dashboard\supervisor.html:191
+#: .\apps\public\templates\public\plot\detail.html:647
 msgid "Irrigating"
 msgstr "در حال آبیاری"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:189
+#: .\apps\public\templates\public\dashboard\supervisor.html:202
 msgid "Irrigation Status"
 msgstr "وضعیت آبیاری"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:193
+#: .\apps\public\templates\public\dashboard\supervisor.html:206
 msgid "Average Duration per Zone (minutes)"
 msgstr "میانگین مدت زمان  ابیاری هر منطقه (دقیقه)"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:197
+#: .\apps\public\templates\public\dashboard\supervisor.html:210
 msgid "Irrigations by Temperature"
 msgstr "آبیاری بر اساس دما"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:201
+#: .\apps\public\templates\public\dashboard\supervisor.html:214
 msgid "Fertilization by Category"
 msgstr "کوددهی بر اساس دسته‌بندی"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:208
+#: .\apps\public\templates\public\dashboard\supervisor.html:221
 msgid "Problematic Irrigation Definition"
 msgstr "تعریف آبیاری مشکل‌دار"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:210
+#: .\apps\public\templates\public\dashboard\supervisor.html:223
 msgid ""
 "Problematic irrigation is irrigation whose duration falls outside the "
 "average ± tolerance range. The average duration is calculated from the "
@@ -1319,63 +1488,65 @@ msgstr ""
 "میانگین مدت از تاریخچه آبیاری همان زمین محاسبه می‌شود. تلرانس را می‌توان در "
 "تنظیمات سیستم پیکربندی کرد."
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:211
+#: .\apps\public\templates\public\dashboard\supervisor.html:224
 msgid "Current tolerance:"
 msgstr "تلرانس فعلی:"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:211
-#: .\apps\public\templates\public\plot\detail.html:479
+#: .\apps\public\templates\public\dashboard\supervisor.html:224
+#: .\apps\public\templates\public\plot\detail.html:572
 msgid "minutes"
 msgstr "دقیقه"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:223
+#: .\apps\public\templates\public\dashboard\supervisor.html:236
 msgid "Scope"
 msgstr "محدوده"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:231
-#: .\apps\public\templates\public\dashboard\supervisor.html:309
+#: .\apps\public\templates\public\dashboard\supervisor.html:244
+#: .\apps\public\templates\public\dashboard\supervisor.html:326
 msgid "Select..."
 msgstr "انتخاب کنید..."
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:236
+#: .\apps\public\templates\public\dashboard\supervisor.html:249
 msgid "Drag or click to upload leaf image"
 msgstr "تصویر برگ را بکشید یا کلیک کنید تا آپلود شود"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:239
+#: .\apps\public\templates\public\dashboard\supervisor.html:252
 msgid "Analyzing image..."
 msgstr "در حال تحلیل تصویر..."
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:263
+#: .\apps\public\templates\public\dashboard\supervisor.html:278
 #: .\templates\partials\_header.html:19 .\templates\partials\_sidebar.html:44
-#: .\templates\partials\_sidebar.html:55
+#: .\templates\partials\_sidebar.html:62
 msgid "Irrigations"
 msgstr "آبیاری‌ها"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:277
+#: .\apps\public\templates\public\dashboard\supervisor.html:294
 msgid "Minutes"
 msgstr "دقیقه"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:285
+#: .\apps\public\templates\public\dashboard\supervisor.html:302
 msgid "Count"
 msgstr "تعداد"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:326
+#: .\apps\public\templates\public\dashboard\supervisor.html:343
 msgid "Please select a scope"
 msgstr "لطفاً یک محدوده انتخاب کنید"
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:327
+#: .\apps\public\templates\public\dashboard\supervisor.html:344
 msgid "Leaf analysis is done at plot level. Please select a plot."
 msgstr "تحلیل برگ در سطح زمین انجام می‌شود. لطفاً یک زمین انتخاب کنید."
 
-#: .\apps\public\templates\public\dashboard\supervisor.html:345
+#: .\apps\public\templates\public\dashboard\supervisor.html:362
 #: .\apps\public\templates\public\plot\detail.html:423
-#: .\apps\public\templates\public\plot\detail.html:1107
+#: .\apps\public\templates\public\plot\detail.html:1200
 msgid "Health Score"
 msgstr "امتیاز سلامت"
 
 #: .\apps\public\templates\public\dashboard\waterman.html:7
 #: .\apps\public\templates\public\plot\detail.html:356
 #: .\apps\public\templates\public\plot\detail.html:366
+#: .\apps\public\templates\public\report\fertilization\list.html:37
+#: .\apps\public\templates\public\report\foliar_spray\list.html:37
 #: .\templates\partials\_breadcrumb.html:6 .\templates\partials\_header.html:17
 #: .\templates\partials\_sidebar.html:28
 msgid "Dashboard"
@@ -1438,107 +1609,141 @@ msgstr "میانگین"
 msgid "Water this run (m³)"
 msgstr "آب مصرفی این آبیاری (متر مکعب)"
 
-#: .\apps\public\templates\public\plot\detail.html:441
+#: .\apps\public\templates\public\plot\detail.html:447
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization records"
+msgstr "گزارش‌های کوددهی"
+
+#: .\apps\public\templates\public\plot\detail.html:457
+msgid "Foliar spray records"
+msgstr "ثبت‌های محلول‌پاشی"
+
+#: .\apps\public\templates\public\plot\detail.html:467
 msgid "Avg temperature (°C)"
 msgstr "میانگین دما (درجه سانتیگراد)"
 
-#: .\apps\public\templates\public\plot\detail.html:442
-#: .\apps\public\templates\public\plot\detail.html:448
+#: .\apps\public\templates\public\plot\detail.html:468
+#: .\apps\public\templates\public\plot\detail.html:474
 msgid "last 10"
 msgstr "۱۰ مورد آخر"
 
-#: .\apps\public\templates\public\plot\detail.html:447
+#: .\apps\public\templates\public\plot\detail.html:473
 msgid "Avg wind speed"
 msgstr "میانگین سرعت باد"
 
-#: .\apps\public\templates\public\plot\detail.html:453
+#: .\apps\public\templates\public\plot\detail.html:479
 msgid "Avg humidity"
 msgstr "میانگین رطوبت"
 
-#: .\apps\public\templates\public\plot\detail.html:454
+#: .\apps\public\templates\public\plot\detail.html:480
 msgid "last 10 / weather API"
 msgstr "۱۰ مورد آخر / API آب‌وهوا"
 
-#: .\apps\public\templates\public\plot\detail.html:460
+#: .\apps\public\templates\public\plot\detail.html:490
+#: .\apps\public\templates\public\plot\detail.html:519
+msgid "Register"
+msgstr "ثبت"
+
+#: .\apps\public\templates\public\plot\detail.html:494
+#: .\apps\public\templates\public\plot\detail.html:523
+msgid "Total quantities"
+msgstr "مجموع مقادیر"
+
+#: .\apps\public\templates\public\plot\detail.html:512
+#: .\apps\public\templates\public\report\fertilization\list.html:118
+#, fuzzy
+#| msgid "No irrigation recorded"
+msgid "No fertilization records yet."
+msgstr "هیچ آبیاری ثبت نشده"
+
+#: .\apps\public\templates\public\plot\detail.html:541
+#: .\apps\public\templates\public\report\foliar_spray\list.html:118
+#, fuzzy
+#| msgid "No irrigation recorded"
+msgid "No foliar spray records yet."
+msgstr "هیچ آبیاری ثبت نشده"
+
+#: .\apps\public\templates\public\plot\detail.html:553
 msgid "Plot Information"
 msgstr "اطلاعات زمین"
 
-#: .\apps\public\templates\public\plot\detail.html:478
+#: .\apps\public\templates\public\plot\detail.html:571
 msgid "Avg irrigation duration"
 msgstr "میانگین مدت آبیاری"
 
-#: .\apps\public\templates\public\plot\detail.html:482
+#: .\apps\public\templates\public\plot\detail.html:575
 msgid "Irrigation count"
 msgstr "تعداد آبیاری"
 
-#: .\apps\public\templates\public\plot\detail.html:492
-#: .\apps\public\templates\public\plot\detail.html:1164
+#: .\apps\public\templates\public\plot\detail.html:585
+#: .\apps\public\templates\public\plot\detail.html:1257
 msgid "Fetch Current Weather"
 msgstr "دریافت آب‌وهوای فعلی"
 
-#: .\apps\public\templates\public\plot\detail.html:503
+#: .\apps\public\templates\public\plot\detail.html:596
 msgid "Date/Time"
 msgstr "تاریخ/زمان"
 
-#: .\apps\public\templates\public\plot\detail.html:504
-#: .\apps\public\templates\public\plot\detail.html:1177
+#: .\apps\public\templates\public\plot\detail.html:597
+#: .\apps\public\templates\public\plot\detail.html:1270
 msgid "Temp (°C)"
 msgstr "دما (°C)"
 
-#: .\apps\public\templates\public\plot\detail.html:505
-#: .\apps\public\templates\public\plot\detail.html:1178
+#: .\apps\public\templates\public\plot\detail.html:598
+#: .\apps\public\templates\public\plot\detail.html:1271
 #, python-format
 msgid "Humidity (%%)"
 msgstr "رطوبت (%%)"
 
-#: .\apps\public\templates\public\plot\detail.html:506
-#: .\apps\public\templates\public\plot\detail.html:1179
+#: .\apps\public\templates\public\plot\detail.html:599
+#: .\apps\public\templates\public\plot\detail.html:1272
 msgid "Wind (m/s)"
 msgstr "باد (متر بر ثانیه)"
 
-#: .\apps\public\templates\public\plot\detail.html:507
-#: .\apps\public\templates\public\plot\detail.html:1180
+#: .\apps\public\templates\public\plot\detail.html:600
+#: .\apps\public\templates\public\plot\detail.html:1273
 msgid "Precip (mm)"
 msgstr "بارش (میلی‌متر)"
 
-#: .\apps\public\templates\public\plot\detail.html:508
-#: .\apps\public\templates\public\plot\detail.html:1181
+#: .\apps\public\templates\public\plot\detail.html:601
+#: .\apps\public\templates\public\plot\detail.html:1274
 msgid "Solar (W/m²)"
 msgstr "تابش خورشیدی (W/m²)"
 
-#: .\apps\public\templates\public\plot\detail.html:510
-#: .\apps\public\templates\public\plot\detail.html:1183
+#: .\apps\public\templates\public\plot\detail.html:603
+#: .\apps\public\templates\public\plot\detail.html:1276
 #, python-format
 msgid "Cloud (%%)"
 msgstr "ابر (%%)"
 
-#: .\apps\public\templates\public\plot\detail.html:511
-#: .\apps\public\templates\public\plot\detail.html:1184
+#: .\apps\public\templates\public\plot\detail.html:604
+#: .\apps\public\templates\public\plot\detail.html:1277
 msgid "Source"
 msgstr "منبع"
 
-#: .\apps\public\templates\public\plot\detail.html:539
+#: .\apps\public\templates\public\plot\detail.html:632
 msgid "No weather records yet. Click 'Fetch Current Weather' to get started."
 msgstr ""
 "هنوز سابقه آب‌وهوایی ثبت نشده. برای شروع روی «دریافت آب‌وهوای فعلی» کلیک کنید."
 
-#: .\apps\public\templates\public\plot\detail.html:560
+#: .\apps\public\templates\public\plot\detail.html:653
 msgid "Details"
 msgstr "جزئیات"
 
-#: .\apps\public\templates\public\plot\detail.html:563
+#: .\apps\public\templates\public\plot\detail.html:656
 msgid "No outlets recorded"
 msgstr "هیچ خروجی ثبت نشده"
 
-#: .\apps\public\templates\public\plot\detail.html:569
+#: .\apps\public\templates\public\plot\detail.html:662
 msgid "Land Analysis"
 msgstr "تحلیل زمین"
 
-#: .\apps\public\templates\public\plot\detail.html:571
+#: .\apps\public\templates\public\plot\detail.html:664
 msgid "Instant Analysis"
 msgstr "تحلیل فوری"
 
-#: .\apps\public\templates\public\plot\detail.html:574
+#: .\apps\public\templates\public\plot\detail.html:667
 msgid ""
 "Analyzes plot condition using GPS location, latest NDVI/NDMI vegetation "
 "indices, current weather, and recent irrigation water. If a problem is "
@@ -1549,164 +1754,164 @@ msgstr ""
 "آب‌وهوای فعلی و آب آبیاری اخیر تحلیل می‌کند. در صورت شناسایی مشکل، پیشنهادات "
 "بهبود ارائه و گزارش سیستمی برای مدیر ایجاد می‌شود."
 
-#: .\apps\public\templates\public\plot\detail.html:578
+#: .\apps\public\templates\public\plot\detail.html:671
 msgid "Analyzing plot condition..."
 msgstr "در حال تحلیل وضعیت زمین..."
 
-#: .\apps\public\templates\public\plot\detail.html:579
+#: .\apps\public\templates\public\plot\detail.html:672
 msgid "Fetching satellite data and weather..."
 msgstr "در حال دریافت داده ماهواره‌ای و آب‌وهوا..."
 
-#: .\apps\public\templates\public\plot\detail.html:588
+#: .\apps\public\templates\public\plot\detail.html:681
 msgid "Latest Analysis"
 msgstr "آخرین تحلیل"
 
-#: .\apps\public\templates\public\plot\detail.html:598
-#: .\apps\public\templates\public\plot\detail.html:607
-#: .\apps\public\templates\public\plot\detail.html:616
-#: .\apps\public\templates\public\plot\detail.html:695
-#: .\apps\public\templates\public\plot\detail.html:705
-#: .\apps\public\templates\public\plot\detail.html:714
+#: .\apps\public\templates\public\plot\detail.html:691
+#: .\apps\public\templates\public\plot\detail.html:700
+#: .\apps\public\templates\public\plot\detail.html:709
+#: .\apps\public\templates\public\plot\detail.html:788
+#: .\apps\public\templates\public\plot\detail.html:798
+#: .\apps\public\templates\public\plot\detail.html:807
 msgid "No image"
 msgstr "بدون تصویر"
 
-#: .\apps\public\templates\public\plot\detail.html:602
-#: .\apps\public\templates\public\plot\detail.html:604
-#: .\apps\public\templates\public\plot\detail.html:699
-#: .\apps\public\templates\public\plot\detail.html:702
-#: .\apps\public\templates\public\plot\detail.html:804
+#: .\apps\public\templates\public\plot\detail.html:695
+#: .\apps\public\templates\public\plot\detail.html:697
+#: .\apps\public\templates\public\plot\detail.html:792
+#: .\apps\public\templates\public\plot\detail.html:795
+#: .\apps\public\templates\public\plot\detail.html:897
 msgid "Satellite"
-msgstr ""
+msgstr "ماهواره"
 
-#: .\apps\public\templates\public\plot\detail.html:632
-#: .\apps\public\templates\public\plot\detail.html:730
+#: .\apps\public\templates\public\plot\detail.html:725
+#: .\apps\public\templates\public\plot\detail.html:823
 msgid "Health"
 msgstr "سلامت"
 
-#: .\apps\public\templates\public\plot\detail.html:679
+#: .\apps\public\templates\public\plot\detail.html:772
 msgid "Analysis History"
 msgstr "تاریخچه تحلیل"
 
-#: .\apps\public\templates\public\plot\detail.html:781
+#: .\apps\public\templates\public\plot\detail.html:874
 msgid "Map Boundary Edit"
 msgstr "ویرایش مرز روی نقشه"
 
-#: .\apps\public\templates\public\plot\detail.html:783
+#: .\apps\public\templates\public\plot\detail.html:876
 msgid ""
 "Click on the map to add boundary points. Points can be dragged to reposition."
 msgstr ""
 "روی نقشه کلیک کنید تا نقاط مرزی اضافه شود. نقاط قابل کشیدن و جابه‌جایی هستند."
 
-#: .\apps\public\templates\public\plot\detail.html:790
+#: .\apps\public\templates\public\plot\detail.html:883
 msgid "Remove last point"
 msgstr "حذف آخرین نقطه"
 
-#: .\apps\public\templates\public\plot\detail.html:792
+#: .\apps\public\templates\public\plot\detail.html:885
 #: .\apps\public\templates\public\plot\form.html:78
 msgid "Clear all"
 msgstr "پاک کردن همه"
 
-#: .\apps\public\templates\public\plot\detail.html:795
+#: .\apps\public\templates\public\plot\detail.html:888
 msgid "My location"
 msgstr "موقعیت من"
 
-#: .\apps\public\templates\public\plot\detail.html:796
+#: .\apps\public\templates\public\plot\detail.html:889
 msgid "Points"
 msgstr "نقاط"
 
-#: .\apps\public\templates\public\plot\detail.html:800
+#: .\apps\public\templates\public\plot\detail.html:893
 msgid "Overlay"
-msgstr ""
+msgstr "لایه رویی"
 
-#: .\apps\public\templates\public\plot\detail.html:801
+#: .\apps\public\templates\public\plot\detail.html:894
 msgid "None"
-msgstr ""
+msgstr "هیچ‌کدام"
 
-#: .\apps\public\templates\public\plot\detail.html:815
+#: .\apps\public\templates\public\plot\detail.html:908
 msgid "Save boundary"
 msgstr "ذخیره مرز"
 
-#: .\apps\public\templates\public\plot\detail.html:824
+#: .\apps\public\templates\public\plot\detail.html:917
 msgid "Leaf Analysis (AI)"
 msgstr "تحلیل برگ (هوش مصنوعی)"
 
-#: .\apps\public\templates\public\plot\detail.html:838
+#: .\apps\public\templates\public\plot\detail.html:931
 msgid "Analyzing image... please wait"
 msgstr "در حال تحلیل تصویر... لطفاً صبر کنید"
 
-#: .\apps\public\templates\public\plot\detail.html:1017
+#: .\apps\public\templates\public\plot\detail.html:1110
 msgid ""
 "Image queued for analysis. Result will appear in history after processing."
 msgstr ""
 "تصویر برای تحلیل ارسال شد. نتیجه پس از پردازش در تاریخچه نمایش داده می‌شود."
 
-#: .\apps\public\templates\public\plot\detail.html:1026
-#: .\apps\public\templates\public\plot\detail.html:1069
-#: .\apps\public\templates\public\plot\detail.html:1098
+#: .\apps\public\templates\public\plot\detail.html:1119
+#: .\apps\public\templates\public\plot\detail.html:1162
+#: .\apps\public\templates\public\plot\detail.html:1191
 #: .\apps\public\templates\public\plot\moisture_map.html:306
 #: .\apps\public\templates\public\plot\vegetation_map.html:305
 #: .\apps\public\templates\public\plot\vegetation_map.html:308
 msgid "Request failed"
 msgstr "درخواست با خطا مواجه شد"
 
-#: .\apps\public\templates\public\plot\detail.html:1079
+#: .\apps\public\templates\public\plot\detail.html:1172
 msgid "Analysis timed out. Please try again."
 msgstr "تحلیل با تایم‌اوت مواجه شد. لطفاً دوباره تلاش کنید."
 
-#: .\apps\public\templates\public\plot\detail.html:1091
+#: .\apps\public\templates\public\plot\detail.html:1184
 msgid "Analysis failed"
 msgstr "تحلیل با خطا مواجه شد"
 
-#: .\apps\public\templates\public\plot\detail.html:1110
+#: .\apps\public\templates\public\plot\detail.html:1203
 msgid "derived from NDVI"
 msgstr "برگرفته از NDVI"
 
-#: .\apps\public\templates\public\plot\detail.html:1111
+#: .\apps\public\templates\public\plot\detail.html:1204
 msgid "derived from NDMI"
 msgstr "برگرفته از NDMI"
 
-#: .\apps\public\templates\public\plot\detail.html:1112
-#: .\apps\public\templates\public\plot\detail.html:1113
+#: .\apps\public\templates\public\plot\detail.html:1205
+#: .\apps\public\templates\public\plot\detail.html:1206
 msgid "raw (-1 to 1)"
 msgstr "خام (-۱ تا ۱)"
 
-#: .\apps\public\templates\public\plot\detail.html:1115
+#: .\apps\public\templates\public\plot\detail.html:1208
 msgid "Water this run"
 msgstr "آب مصرفی این آبیاری"
 
-#: .\apps\public\templates\public\plot\detail.html:1120
+#: .\apps\public\templates\public\plot\detail.html:1213
 msgid "Problems"
 msgstr "مشکلات"
 
-#: .\apps\public\templates\public\plot\detail.html:1131
+#: .\apps\public\templates\public\plot\detail.html:1224
 msgid "Suggestions"
 msgstr "پیشنهادات"
 
-#: .\apps\public\templates\public\plot\detail.html:1139
+#: .\apps\public\templates\public\plot\detail.html:1232
 msgid "Problem detected; system report created for admin."
 msgstr "مشکل شناسایی شد؛ گزارش سیستمی برای مدیر ایجاد شد."
 
-#: .\apps\public\templates\public\plot\detail.html:1213
+#: .\apps\public\templates\public\plot\detail.html:1306
 msgid "Weather fetch failed."
 msgstr "دریافت آب‌وهوا با خطا مواجه شد."
 
-#: .\apps\public\templates\public\plot\detail.html:1216
+#: .\apps\public\templates\public\plot\detail.html:1309
 msgid "Fetching..."
 msgstr "در حال دریافت..."
 
-#: .\apps\public\templates\public\plot\detail.html:1225
+#: .\apps\public\templates\public\plot\detail.html:1318
 msgid "Weather fetch timed out. Please try again."
 msgstr "دریافت آب‌وهوا با تایم‌اوت مواجه شد. لطفاً دوباره تلاش کنید."
 
-#: .\apps\public\templates\public\plot\detail.html:1233
+#: .\apps\public\templates\public\plot\detail.html:1326
 msgid "Weather fetched successfully."
 msgstr "آب‌وهوا با موفقیت دریافت شد."
 
-#: .\apps\public\templates\public\plot\detail.html:1236
+#: .\apps\public\templates\public\plot\detail.html:1329
 msgid "Weather fetch failed. Try again later."
 msgstr "دریافت آب‌وهوا با خطا مواجه شد. بعداً دوباره تلاش کنید."
 
-#: .\apps\public\templates\public\plot\detail.html:1244
+#: .\apps\public\templates\public\plot\detail.html:1337
 msgid "Request failed. Check your connection."
 msgstr "درخواست با خطا مواجه شد. اتصال خود را بررسی کنید."
 
@@ -1752,6 +1957,8 @@ msgstr ""
 "می‌توانید نامحدود نقطه اضافه کنید."
 
 #: .\apps\public\templates\public\plot\form.html:89
+#: .\apps\public\templates\public\report\fertilization\form.html:77
+#: .\apps\public\templates\public\report\foliar_spray\form.html:77
 #: .\templates\partials\_crud_modals.html:16
 #: .\templates\partials\_crud_modals.html:35
 #: .\templates\partials\_crud_modals.html:52
@@ -1760,13 +1967,15 @@ msgstr "ذخیره"
 
 #: .\apps\public\templates\public\plot\form.html:91
 #: .\apps\public\templates\public\plot\form.html:93
+#: .\apps\public\templates\public\report\fertilization\form.html:79
+#: .\apps\public\templates\public\report\foliar_spray\form.html:79
 msgid "Cancel"
 msgstr "لغو"
 
 #: .\apps\public\templates\public\plot\moisture_map.html:6
 #: .\apps\public\templates\public\plot\moisture_map.html:115
 #: .\apps\public\templates\public\plot\vegetation_map.html:124
-#: .\templates\partials\_header.html:22 .\templates\partials\_sidebar.html:53
+#: .\templates\partials\_header.html:22 .\templates\partials\_sidebar.html:60
 msgid "Moisture Map"
 msgstr "نقشه رطوبت"
 
@@ -1782,7 +1991,7 @@ msgstr "بازگشت به داشبورد"
 #: .\apps\public\templates\public\plot\moisture_map.html:125
 #: .\apps\public\templates\public\plot\vegetation_map.html:6
 #: .\apps\public\templates\public\plot\vegetation_map.html:115
-#: .\templates\partials\_header.html:21 .\templates\partials\_sidebar.html:52
+#: .\templates\partials\_header.html:21 .\templates\partials\_sidebar.html:59
 msgid "Vegetation Map"
 msgstr "نقشه سبزینگی"
 
@@ -1852,150 +2061,325 @@ msgstr "در حال تحلیل برای"
 msgid "plot(s). Results appear after processing."
 msgstr "زمین. نتیجه پس از پردازش نمایش داده می‌شود."
 
-#: .\apps\public\views.py:253
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:39
+#: .\apps\public\templates\public\report\fertilization\form.html:6
+#: .\apps\public\templates\public\report\fertilization\form.html:27
+#: .\apps\public\templates\public\report\fertilization\list.html:39
+#: .\templates\partials\_sidebar.html:52
+#, fuzzy
+#| msgid "User Notification"
+msgid "Register Fertilization"
+msgstr "اعلان کاربر"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:55
+msgid "Add fertilizer type"
+msgstr "افزودن نوع کود"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:67
+#: .\apps\public\templates\public\report\category\foliar_list.html:67
+#, fuzzy
+#| msgid "Manure Category"
+msgid "Save category"
+msgstr "دسته‌بندی کود"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:73
+#: .\apps\public\templates\public\report\category\foliar_list.html:73
+#, fuzzy
+#| msgid "Manure Categories"
+msgid "Existing categories"
+msgstr "دسته‌بندی‌های کود"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:81
+#: .\apps\public\templates\public\report\category\foliar_list.html:81
+msgid "uses"
+msgstr "مورد استفاده"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:83
+#: .\apps\public\templates\public\report\category\foliar_list.html:83
+#, fuzzy
+#| msgid "Delete this plot?"
+msgid "Delete this category?"
+msgstr "آیا این زمین را حذف می‌کنید؟"
+
+#: .\apps\public\templates\public\report\category\fertilizer_list.html:90
+#: .\apps\public\templates\public\report\category\foliar_list.html:90
+msgid "No categories yet. Add one on the left."
+msgstr "هنوز دسته‌ای وجود ندارد. از سمت چپ اضافه کنید."
+
+#: .\apps\public\templates\public\report\category\foliar_list.html:6
+#: .\apps\public\templates\public\report\category\foliar_list.html:34
+msgid "Solution / Spray Categories"
+msgstr "انواع محلول / سم"
+
+#: .\apps\public\templates\public\report\category\foliar_list.html:39
+#: .\apps\public\templates\public\report\foliar_spray\form.html:6
+#: .\apps\public\templates\public\report\foliar_spray\form.html:27
+#: .\apps\public\templates\public\report\foliar_spray\list.html:39
+#: .\templates\partials\_sidebar.html:54
+msgid "Register Foliar Spray"
+msgstr "ثبت محلول‌پاشی"
+
+#: .\apps\public\templates\public\report\category\foliar_list.html:55
+msgid "Add solution type"
+msgstr "افزودن نوع محلول"
+
+#: .\apps\public\templates\public\report\fertilization\form.html:49
+#, fuzzy
+#| msgid "Manure Categories"
+msgid "Manage fertilizer categories"
+msgstr "دسته‌بندی‌های کود"
+
+#: .\apps\public\templates\public\report\fertilization\list.html:57
+#: .\apps\public\templates\public\report\foliar_spray\list.html:57
+#, fuzzy
+#| msgid "No outlets recorded"
+msgid "Total records"
+msgstr "هیچ خروجی ثبت نشده"
+
+#: .\apps\public\templates\public\report\fertilization\list.html:63
+#: .\apps\public\templates\public\report\foliar_spray\list.html:63
+msgid "Total"
+msgstr "مجموع"
+
+#: .\apps\public\templates\public\report\fertilization\list.html:70
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization list"
+msgstr "گزارش‌های کوددهی"
+
+#: .\apps\public\templates\public\report\fertilization\list.html:82
+#: .\apps\public\templates\public\report\foliar_spray\list.html:82
+msgid "Registered by"
+msgstr "ثبت‌کننده"
+
+#: .\apps\public\templates\public\report\fertilization\list.html:102
+#: .\apps\public\templates\public\report\foliar_spray\list.html:102
+#, fuzzy
+#| msgid "Delete this plot?"
+msgid "Delete this record?"
+msgstr "آیا این زمین را حذف می‌کنید؟"
+
+#: .\apps\public\templates\public\report\foliar_spray\form.html:49
+#, fuzzy
+#| msgid "Manure Categories"
+msgid "Manage solution categories"
+msgstr "دسته‌بندی‌های کود"
+
+#: .\apps\public\templates\public\report\foliar_spray\list.html:38
+#: .\templates\partials\_sidebar.html:56
+#, fuzzy
+#| msgid "Manure Categories"
+msgid "Solution Categories"
+msgstr "دسته‌بندی‌های کود"
+
+#: .\apps\public\templates\public\report\foliar_spray\list.html:70
+msgid "Foliar spray list"
+msgstr "لیست محلول‌پاشی"
+
+#: .\apps\public\views.py:164
+msgid "Unknown"
+msgstr "نامشخص"
+
+#: .\apps\public\views.py:267
 msgid "Code number is empty"
 msgstr "شماره کد خالی است"
 
-#: .\apps\public\views.py:258
+#: .\apps\public\views.py:272
 msgid "Code number is invalid"
 msgstr "شماره کد نامعتبر است"
 
-#: .\apps\public\views.py:273
+#: .\apps\public\views.py:287
 msgid "Code number is wrong"
 msgstr "شماره کد اشتباه است"
 
-#: .\apps\public\views.py:323
+#: .\apps\public\views.py:337
 msgid ""
 "Location (GPS) is required to start irrigation. Please enable location "
 "services."
 msgstr ""
 "برای شروع آبیاری موقعیت (GPS) الزامی است. لطفاً سرویس‌های مکانی را فعال کنید."
 
-#: .\apps\public\views.py:331
+#: .\apps\public\views.py:345
 msgid "The run has started"
 msgstr "آبیاری شروع شد"
 
-#: .\apps\public\views.py:351
+#: .\apps\public\views.py:365
 msgid "The run operation has completed"
 msgstr "عملیات آبیاری تکمیل شد"
 
-#: .\apps\public\views.py:354
+#: .\apps\public\views.py:368
 msgid "The run has stopped"
 msgstr "آبیاری متوقف شد"
 
-#: .\apps\public\views.py:365
+#: .\apps\public\views.py:379
 msgid "The run has already completed"
 msgstr "آبیاری قبلاً تکمیل شده است"
 
-#: .\apps\public\views.py:389
+#: .\apps\public\views.py:403
 msgid "The operation was successfully"
 msgstr "عملیات با موفقیت انجام شد"
 
-#: .\apps\public\views.py:423
+#: .\apps\public\views.py:437
 msgid "Your report status has been submit successfully"
 msgstr "وضعیت گزارش شما با موفقیت ثبت شد"
 
-#: .\apps\public\views.py:581
+#: .\apps\public\views.py:608
 msgid "Report submitted successfully"
 msgstr "گزارش با موفقیت ثبت شد"
 
-#: .\apps\public\views.py:608
-msgid "Manure report submitted successfully"
+#: .\apps\public\views.py:637 .\apps\public\views.py:718
+#, fuzzy
+#| msgid "Irrigation stopped successfully"
+msgid "Fertilization recorded successfully"
+msgstr "آبیاری با موفقیت متوقف شد"
+
+#: .\apps\public\views.py:730
+#, fuzzy
+#| msgid "Fertilization Reports"
+msgid "Fertilization record deleted"
+msgstr "گزارش‌های کوددهی"
+
+#: .\apps\public\views.py:774
+#, fuzzy
+#| msgid "Farm created successfully"
+msgid "Foliar spray recorded successfully"
+msgstr "مزرعه با موفقیت ایجاد شد"
+
+#: .\apps\public\views.py:786
+msgid "Foliar spray record deleted"
+msgstr "ثبت محلول‌پاشی حذف شد"
+
+#: .\apps\public\views.py:806
+#, fuzzy
+#| msgid "Manure report submitted successfully"
+msgid "Foliar spray submitted successfully"
 msgstr "گزارش کوددهی با موفقیت ثبت شد"
 
-#: .\apps\public\views.py:701
+#: .\apps\public\views.py:827
+#, fuzzy
+#| msgid "Fertilization by Category"
+msgid "Fertilizer category created"
+msgstr "کوددهی بر اساس دسته‌بندی"
+
+#: .\apps\public\views.py:838
+#, fuzzy
+#| msgid "Fertilization by Category"
+msgid "Fertilizer category deleted"
+msgstr "کوددهی بر اساس دسته‌بندی"
+
+#: .\apps\public\views.py:859
+msgid "Foliar spray category created"
+msgstr "دسته محلول‌پاشی ایجاد شد"
+
+#: .\apps\public\views.py:870
+msgid "Foliar spray category deleted"
+msgstr "دسته محلول‌پاشی حذف شد"
+
+#: .\apps\public\views.py:915
 msgid "Run deleted successfully"
 msgstr "آبیاری با موفقیت حذف شد"
 
-#: .\apps\public\views.py:711
+#: .\apps\public\views.py:925
 msgid "Run updated successfully"
 msgstr "آبیاری با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:723
+#: .\apps\public\views.py:937
 msgid "Irrigation status updated successfully"
 msgstr "وضعیت آبیاری با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:734
+#: .\apps\public\views.py:948
 msgid "Irrigation status deleted successfully"
 msgstr "وضعیت آبیاری با موفقیت حذف شد"
 
-#: .\apps\public\views.py:794
+#: .\apps\public\views.py:1038
 msgid "Farm created successfully"
 msgstr "مزرعه با موفقیت ایجاد شد"
 
-#: .\apps\public\views.py:810
+#: .\apps\public\views.py:1054
 msgid "Farm updated successfully"
 msgstr "مزرعه با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:827
+#: .\apps\public\views.py:1071
 #, fuzzy
 #| msgid "Farm updated successfully"
 msgid "Discharge rate updated successfully"
 msgstr "مزرعه با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:829
+#: .\apps\public\views.py:1073
 msgid "Invalid discharge rate value"
-msgstr ""
+msgstr "مقدار دبی نامعتبر است"
 
-#: .\apps\public\views.py:839
+#: .\apps\public\views.py:1083
 msgid "Farm deleted successfully"
 msgstr "مزرعه با موفقیت حذف شد"
 
-#: .\apps\public\views.py:880
+#: .\apps\public\views.py:1124
 msgid "Zone created successfully"
 msgstr "منطقه با موفقیت ایجاد شد"
 
-#: .\apps\public\views.py:896
+#: .\apps\public\views.py:1140
 msgid "Zone updated successfully"
 msgstr " منطقه با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:910
+#: .\apps\public\views.py:1154
 msgid "Zone deleted successfully"
 msgstr "منطقه با موفقیت حذف شد"
 
-#: .\apps\public\views.py:969
+#: .\apps\public\views.py:1213
 msgid "Outlet created successfully"
 msgstr "خروجی با موفقیت ایجاد شد"
 
-#: .\apps\public\views.py:985
+#: .\apps\public\views.py:1229
 msgid "Outlet updated successfully"
 msgstr "خروجی با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:999
+#: .\apps\public\views.py:1243
 msgid "Outlet deleted successfully"
 msgstr "خروجی با موفقیت حذف شد"
 
-#: .\apps\public\views.py:1164
+#: .\apps\public\views.py:1441
 msgid "Plot created successfully"
 msgstr "زمین با موفقیت ایجاد شد"
 
-#: .\apps\public\views.py:1193
+#: .\apps\public\views.py:1470
 msgid "Plot updated successfully"
 msgstr "زمین با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:1210
+#: .\apps\public\views.py:1487
 msgid "Plot deleted successfully"
 msgstr "زمین با موفقیت حذف شد"
 
-#: .\apps\public\views.py:1236
+#: .\apps\public\views.py:1513
 msgid "Boundary updated successfully"
 msgstr "مرز با موفقیت بروزرسانی شد"
 
-#: .\apps\public\views.py:1429
+#: .\apps\public\views.py:1706
 msgid "Plot not found"
 msgstr "زمین یافت نشد"
 
-#: .\apps\public\views.py:1442
+#: .\apps\public\views.py:1719
 msgid "Irrigation stopped successfully"
 msgstr "آبیاری با موفقیت متوقف شد"
 
-#: .\apps\public\views.py:1473
+#: .\apps\public\views.py:1750
 msgid "No image provided"
 msgstr "تصویری ارائه نشده"
 
-#: .\apps\public\views.py:1522
+#: .\apps\public\views.py:1799
 msgid "No GPS coordinates set for this plot."
 msgstr "هیچ مختصات GPS برای این زمین تنظیم نشده است."
+
+#: .\apps\public\views.py:1846
+#, fuzzy
+#| msgid "Irrigation stopped successfully"
+msgid "Manual irrigation registered successfully"
+msgstr "آبیاری با موفقیت متوقف شد"
+
+#: .\apps\public\views.py:1858
+#, fuzzy
+#| msgid "No irrigation recorded"
+msgid "Manual irrigation deleted"
+msgstr "هیچ آبیاری ثبت نشده"
 
 #: .\templates\base\base_template.html:94
 msgid "Success"
@@ -2009,9 +2393,9 @@ msgstr "باز کردن جزئیات"
 
 #: .\templates\partials\_header.html:12 .\templates\partials\_sidebar.html:10
 msgid "Aquadar"
-msgstr ""
+msgstr "آکوآدار"
 
-#: .\templates\partials\_header.html:27 .\templates\partials\_sidebar.html:63
+#: .\templates\partials\_header.html:27 .\templates\partials\_sidebar.html:70
 msgid "Logout"
 msgstr "خروج"
 
@@ -2039,19 +2423,28 @@ msgstr "داشبورد مدیریت"
 msgid "Add New"
 msgstr "افزودن منطقه"
 
-#: .\templates\partials\_sidebar.html:45 .\templates\partials\_sidebar.html:56
+#: .\templates\partials\_sidebar.html:45 .\templates\partials\_sidebar.html:63
 msgid "Irrigations list"
 msgstr "لیست آبیاری‌ها"
 
-#: .\templates\partials\_sidebar.html:51
+#: .\templates\partials\_sidebar.html:58
 msgid "Analysis"
 msgstr "تحلیل"
 
-#: .\templates\partials\_sidebar.html:62
+#: .\templates\partials\_sidebar.html:69
 #, fuzzy
 #| msgid "Count"
 msgid "Account"
 msgstr "تعداد"
+
+#~ msgid "Category"
+#~ msgstr "دسته‌بندی"
+
+#~ msgid "Manure Report"
+#~ msgstr "گزارش کوددهی"
+
+#~ msgid "Manure Reports"
+#~ msgstr "گزارش‌های کوددهی"
 
 #~ msgid "Irrigation Issue"
 #~ msgstr "مشکل آبیاری"

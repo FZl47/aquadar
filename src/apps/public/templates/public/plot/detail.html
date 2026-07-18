@@ -441,6 +441,26 @@
                 <div class="stat-label">آب آبیاری دستی (m³)</div>
                 <div class="index-hint">{{ manual_irr_count }} آبیاری — {{ manual_irr_duration_hours }} ساعت</div>
             </div>
+            <div class="stat-card" style="border-top:3px solid #8e44ad;">
+                <div style="color:#8e44ad;font-size:22px;">🧪</div>
+                <div class="stat-value" style="color:#8e44ad;">{{ fertilization_count }}</div>
+                <div class="stat-label">{% trans "Fertilization records" %}</div>
+                <div class="index-hint">
+                    {% if fertilization_totals %}
+                        {% for unit, total in fertilization_totals.items %}{{ total|floatformat:1 }} {{ unit }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                    {% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="stat-card" style="border-top:3px solid #00897b;">
+                <div style="color:#00897b;font-size:22px;">💧</div>
+                <div class="stat-value" style="color:#00897b;">{{ foliar_spray_count }}</div>
+                <div class="stat-label">{% trans "Foliar spray records" %}</div>
+                <div class="index-hint">
+                    {% if foliar_spray_totals %}
+                        {% for unit, total in foliar_spray_totals.items %}{{ total|floatformat:1 }} {{ unit }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                    {% else %}—{% endif %}
+                </div>
+            </div>
             <div class="stat-card" style="border-top:3px solid #e74c3c;">
                 <div style="color:#e74c3c;font-size:22px;">🌡</div>
                 <div class="stat-value" style="color:#e74c3c;">{{ stats.avg_temperature }}°</div>
@@ -460,6 +480,73 @@
                         class="index-hint">{% trans "last 10 / weather API" %}</span></div>
             </div>
         </div>
+
+        <!-- Fertilization + Foliar spray recent records -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div class="info-card" style="margin-bottom:0;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                    <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">🧪 {% trans "Fertilization" %}</div>
+                    <a href="{% url 'public:fertilization_create' %}?plot={{ plot.id }}&next={{ request.path }}"
+                       class="btn btn-sm" style="background:#8e44ad;color:#fff;border-radius:8px;font-size:12px;">+ {% trans "Register" %}</a>
+                </div>
+                {% if fertilization_totals %}
+                <div style="font-size:12px;color:#6a1b9a;margin-bottom:10px;font-weight:600;">
+                    {% trans "Total quantities" %}:
+                    {% for unit, total in fertilization_totals.items %}
+                        {{ total|floatformat:2 }} {{ unit }}{% if not forloop.last %} · {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% for rec in recent_fertilizations %}
+                <div style="background:#faf5fc;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;">
+                    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                        <span style="font-weight:600;">{{ rec.title }}</span>
+                        <span style="color:#6a1b9a;font-weight:700;">{{ rec.quantity_display }}</span>
+                    </div>
+                    <div style="font-size:11px;color:#888;margin-top:4px;">
+                        {% if rec.category %}<span style="background:#f3e5f5;color:#6a1b9a;border-radius:6px;padding:1px 8px;">{{ rec.category.title }}</span> · {% endif %}
+                        {{ rec.created_at|jalali }}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align:center;padding:20px;color:#aaa;font-size:13px;">{% trans "No fertilization records yet." %}</div>
+                {% endfor %}
+            </div>
+            <div class="info-card" style="margin-bottom:0;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                    <div style="font-weight:bold;font-size:16px;color:#1a1a2e;">💧 {% trans "Foliar Spray" %}</div>
+                    <a href="{% url 'public:foliar_spray_create' %}?plot={{ plot.id }}&next={{ request.path }}"
+                       class="btn btn-sm" style="background:#00897b;color:#fff;border-radius:8px;font-size:12px;">+ {% trans "Register" %}</a>
+                </div>
+                {% if foliar_spray_totals %}
+                <div style="font-size:12px;color:#00695c;margin-bottom:10px;font-weight:600;">
+                    {% trans "Total quantities" %}:
+                    {% for unit, total in foliar_spray_totals.items %}
+                        {{ total|floatformat:2 }} {{ unit }}{% if not forloop.last %} · {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% for rec in recent_foliar_sprays %}
+                <div style="background:#f0faf9;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px;">
+                    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                        <span style="font-weight:600;">{{ rec.title }}</span>
+                        <span style="color:#00695c;font-weight:700;">{{ rec.quantity_display }}</span>
+                    </div>
+                    <div style="font-size:11px;color:#888;margin-top:4px;">
+                        {% if rec.category %}<span style="background:#e0f2f1;color:#00695c;border-radius:6px;padding:1px 8px;">{{ rec.category.title }}</span> · {% endif %}
+                        {{ rec.created_at|jalali }}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align:center;padding:20px;color:#aaa;font-size:13px;">{% trans "No foliar spray records yet." %}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <style>
+            @media (max-width: 768px) {
+                div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+            }
+        </style>
 
         <!-- Plot info -->
         <div class="info-card">

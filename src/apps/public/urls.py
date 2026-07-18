@@ -16,7 +16,8 @@ urlpatterns = [
 
     path('reports/activity/', views.UserActivityReportListView.as_view(), name='report_activity__list'),
     path('reports/activity/create/', views.UserActivityReportCreateView.as_view(), name='report_activity__create'),
-    path('plot/<int:plot_id>/manure/create/', views.ReportManureCreateView.as_view(), name='report_manure__create'),
+    path('plot/<int:plot_id>/fertilization/create/', views.WatermanFertilizationCreateView.as_view(), name='fertilization_waterman_create'),
+    path('plot/<int:plot_id>/foliar-spray/create/', views.WatermanFoliarSprayCreateView.as_view(), name='report_foliar_spray__create'),
     path('watermans/', views.WatermanListView.as_view(), name='waterman_list'),
 
     path('runs/', views.RunListView.as_view(), name='run_list'),
@@ -26,7 +27,18 @@ urlpatterns = [
     path('run-status/<int:pk>/update/', views.RunStatusUpdateView.as_view(), name='runstatus_update'),
     path('run-status/<int:pk>/delete/', views.RunStatusDeleteView.as_view(), name='runstatus_delete'),
 
-    path('reports/manure/', views.ManureReportListView.as_view(), name='report_manure__list'),
+    path('reports/fertilization/', views.FertilizationListView.as_view(), name='fertilization_list'),
+    path('reports/fertilization/create/', views.FertilizationCreateView.as_view(), name='fertilization_create'),
+    path('reports/fertilization/<int:pk>/delete/', views.FertilizationDeleteView.as_view(), name='fertilization_delete'),
+    path('reports/foliar-spray/', views.FoliarSprayListView.as_view(), name='foliar_spray_list'),
+    path('reports/foliar-spray/create/', views.FoliarSprayCreateView.as_view(), name='foliar_spray_create'),
+    path('reports/foliar-spray/<int:pk>/delete/', views.FoliarSprayDeleteView.as_view(), name='foliar_spray_delete'),
+    path('categories/fertilizer/', views.FertilizerCategoryListView.as_view(), name='fertilizer_category_list'),
+    path('categories/fertilizer/create/', views.FertilizerCategoryCreateView.as_view(), name='fertilizer_category_create'),
+    path('categories/fertilizer/<int:pk>/delete/', views.FertilizerCategoryDeleteView.as_view(), name='fertilizer_category_delete'),
+    path('categories/foliar-spray/', views.FoliarSprayCategoryListView.as_view(), name='foliar_spray_category_list'),
+    path('categories/foliar-spray/create/', views.FoliarSprayCategoryCreateView.as_view(), name='foliar_spray_category_create'),
+    path('categories/foliar-spray/<int:pk>/delete/', views.FoliarSprayCategoryDeleteView.as_view(), name='foliar_spray_category_delete'),
 
     path('farms/', views.FarmListView.as_view(), name='farm_list'),
     path('farms/create/', views.FarmCreateView.as_view(), name='farm_create'),

@@ -25,9 +25,10 @@ from apps.core.forms.utils import form_validate_err
 
 from . import forms, models
 from .models import (
-    Farm, ManualIrrigation, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
-    PlotVegetationIndex, PlotWeather, Run, RunStatus, Zone,
-    ManureCategory, ReportManure, UserActivityReport,
+    Farm, FertilizationRecord, FertilizerCategory, FoliarSprayCategory,
+    ManualIrrigation, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
+    PlotVegetationIndex, PlotWeather, ReportFoliarSpray, Run, RunStatus,
+    Zone, UserActivityReport,
 )
 User = get_user_model()
 
@@ -54,7 +55,7 @@ def get_general_stats():
         'total_outlets': counts['total_outlets'] or 0,
         'active_runs': Run.objects.filter(status='open').count(),
         'total_reports': UserActivityReport.objects.count(),
-        'total_manure_reports': ReportManure.objects.count(),
+        'total_fertilization_reports': FertilizationRecord.objects.count(),
     }
 
 
@@ -152,15 +153,15 @@ def get_gps_locations():
     ]
 
 
-def get_manure_distribution():
+def get_fertilization_distribution():
     data = (
-        ReportManure.objects
+        FertilizationRecord.objects
         .values('category__title')
         .annotate(total=Count('id'))
         .order_by('-total')
     )
     return {
-        'labels': [item['category__title'] or 'Unknown' for item in data],
+        'labels': [item['category__title'] or str(_('Unknown')) for item in data],
         'data': [item['total'] for item in data],
     }
 
@@ -204,7 +205,8 @@ class Index(TemplateView):
             'system_reports': models.SystemReport.objects.filter(
                 to_users__in=[user]
             ).exclude(systemreportstatus__status='resolved'),
-            'manure_categories': models.ManureCategory.objects.all(),
+            'fertilizer_categories': FertilizerCategory.objects.all(),
+            'foliar_spray_categories': FoliarSprayCategory.objects.all(),
             'run_settings': run_settings,
             'require_gps': run_settings.require_gps if run_settings else True,
             'allow_code_entry': run_settings.allow_code_entry if run_settings else True,
@@ -216,7 +218,7 @@ class Index(TemplateView):
         status_chart = get_run_status_distribution()
         duration_chart = get_avg_duration_per_zone()
         temp_chart = get_temperature_distribution()
-        manure_chart = get_manure_distribution()
+        fert_chart = get_fertilization_distribution()
         gps_locations = get_gps_locations()
         run_settings = models.RunSettings.objects.first()
         _open_run_sq = models.Run.objects.filter(group=OuterRef('pk'), status='open')
@@ -229,6 +231,7 @@ class Index(TemplateView):
         return {
             **stats,
             'total_manual_irrigations': ManualIrrigation.objects.count(),
+            'total_foliar_spray_reports': ReportFoliarSpray.objects.count(),
             'runs_labels': json.dumps(runs_chart['labels']),
             'runs_data': json.dumps(runs_chart['data']),
             'runs_manual_data': json.dumps(runs_chart['manual_data']),
@@ -238,8 +241,8 @@ class Index(TemplateView):
             'duration_data': json.dumps(duration_chart['data']),
             'temp_labels': json.dumps(temp_chart['labels']),
             'temp_data': json.dumps(temp_chart['data']),
-            'manure_labels': json.dumps(manure_chart['labels']),
-            'manure_data': json.dumps(manure_chart['data']),
+            'fertilization_labels': json.dumps(fert_chart['labels']),
+            'fertilization_data': json.dumps(fert_chart['data']),
             'gps_locations': json.dumps(gps_locations),
             'run_settings': run_settings,
             'active_groups': active_groups,
@@ -469,7 +472,7 @@ class ZoneDetail(SuperVisorUserRequiredMixin, DetailView):
         context['runs_count'] = Run.objects.filter(outlet__plot__zone=zone).count()
         context['manual_irrigations_count'] = ManualIrrigation.objects.filter(plot__zone=zone).count()
         context['reports_count'] = models.SystemReport.objects.filter(outlet__plot__zone=zone).count()
-        context['manure_count'] = ReportManure.objects.filter(plot__zone=zone).count()
+        context['fertilization_count'] = FertilizationRecord.objects.filter(plot__zone=zone).count()
         context['chart_labels'] = [x['day'].strftime('%Y-%m-%d') for x in qs]
         context['chart_data'] = [round(x['total_duration'].total_seconds() / 60, 2) for x in qs]
         context['leaf_analyses'] = zone.leaf_analyses.order_by('-created_at')[:6]
@@ -615,21 +618,23 @@ class UserActivityReportListView(SuperVisorUserRequiredMixin, TemplateView):
         return context
 
 
-class ReportManureCreateView(WatermanUserRequiredMixin, View):
+class WatermanFertilizationCreateView(WatermanUserRequiredMixin, View):
     def post(self, request, plot_id):
         user = request.user
         if user.is_superuser:
             plot_obj = get_object_or_404(models.Plot, id=plot_id)
         else:
             plot_obj = get_object_or_404(models.Plot, id=plot_id, zone__farm__user__in=[user])
-        f = forms.ReportManureForm(request.POST)
+        f = forms.FertilizationRecordForm(request.POST)
         if not form_validate_err(request, f):
             return redirect(request.META.get('HTTP_REFERER', reverse_lazy('public:index')))
         report = f.save(commit=False)
         report.created_by = user
         report.plot = plot_obj
+        if not report.applied_at:
+            report.applied_at = timezone.now()
         report.save()
-        messages.success(request, _('Manure report submitted successfully'))
+        messages.success(request, _('Fertilization recorded successfully'))
         return redirect(request.META.get('HTTP_REFERER', reverse_lazy('public:index')))
 
 
@@ -670,15 +675,218 @@ class WatermanListView(SuperVisorUserRequiredMixin, TemplateView):
         return context
 
 
-class ManureReportListView(SuperVisorUserRequiredMixin, TemplateView):
-    template_name = 'public/report/manure/list.html'
+class FertilizationListView(SuperVisorUserRequiredMixin, TemplateView):
+    template_name = 'public/report/fertilization/list.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['reports'] = models.ReportManure.objects.select_related(
+        reports = FertilizationRecord.objects.select_related(
             'created_by', 'category', 'plot__zone__farm'
         ).order_by('-id')
+        context['reports'] = reports
+        totals = {}
+        for r in reports:
+            if r.quantity is None:
+                continue
+            totals[r.unit] = totals.get(r.unit, 0) + float(r.quantity)
+        context['quantity_totals'] = totals
+        context['total_count'] = reports.count()
         return context
+
+
+class FertilizationCreateView(SuperVisorUserRequiredMixin, View):
+    """Supervisor registers a fertilization (soil/granular) record for a plot."""
+    template_name = 'public/report/fertilization/form.html'
+
+    def _context(self, form):
+        return {
+            'form': form,
+            'plots_by_farm': json.dumps(forms._plots_by_farm_map(), ensure_ascii=False),
+        }
+
+    def get(self, request):
+        initial = {}
+        plot_id = request.GET.get('plot')
+        if plot_id and str(plot_id).isdigit():
+            initial['plot'] = int(plot_id)
+            plot = Plot.objects.select_related('zone').filter(pk=plot_id).first()
+            if plot:
+                initial['farm'] = plot.zone.farm_id
+        return render(request, self.template_name, self._context(
+            forms.SupervisorFertilizationForm(initial=initial)
+        ))
+
+    def post(self, request):
+        f = forms.SupervisorFertilizationForm(request.POST)
+        if f.is_valid():
+            rec = f.save(commit=False)
+            rec.created_by = request.user
+            if not rec.applied_at:
+                rec.applied_at = timezone.now()
+            rec.save()
+            messages.success(request, _('Fertilization recorded successfully'))
+            nxt = request.POST.get('next')
+            if nxt and nxt.startswith('/'):
+                return redirect(nxt)
+            return redirect(reverse('public:fertilization_list'))
+        return render(request, self.template_name, self._context(f))
+
+
+class FertilizationDeleteView(SuperVisorUserRequiredMixin, View):
+    def post(self, request, pk):
+        rec = get_object_or_404(FertilizationRecord, pk=pk)
+        rec.delete()
+        messages.success(request, _('Fertilization record deleted'))
+        return _redirect_with_next(request, reverse('public:fertilization_list'))
+
+
+class FoliarSprayListView(SuperVisorUserRequiredMixin, TemplateView):
+    template_name = 'public/report/foliar_spray/list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reports = ReportFoliarSpray.objects.select_related(
+            'created_by', 'category', 'plot__zone__farm'
+        ).order_by('-id')
+        context['reports'] = reports
+        totals = {}
+        for r in reports:
+            if r.quantity is None:
+                continue
+            totals[r.unit] = totals.get(r.unit, 0) + float(r.quantity)
+        context['quantity_totals'] = totals
+        context['total_count'] = reports.count()
+        return context
+
+
+class FoliarSprayCreateView(SuperVisorUserRequiredMixin, View):
+    """Supervisor registers a foliar spray (liquid) record for a plot."""
+    template_name = 'public/report/foliar_spray/form.html'
+
+    def _context(self, form):
+        return {
+            'form': form,
+            'plots_by_farm': json.dumps(forms._plots_by_farm_map(), ensure_ascii=False),
+        }
+
+    def get(self, request):
+        initial = {}
+        plot_id = request.GET.get('plot')
+        if plot_id and str(plot_id).isdigit():
+            initial['plot'] = int(plot_id)
+            plot = Plot.objects.select_related('zone').filter(pk=plot_id).first()
+            if plot:
+                initial['farm'] = plot.zone.farm_id
+        return render(request, self.template_name, self._context(
+            forms.SupervisorFoliarSprayForm(initial=initial)
+        ))
+
+    def post(self, request):
+        f = forms.SupervisorFoliarSprayForm(request.POST)
+        if f.is_valid():
+            rec = f.save(commit=False)
+            rec.created_by = request.user
+            if not rec.applied_at:
+                rec.applied_at = timezone.now()
+            rec.save()
+            messages.success(request, _('Foliar spray recorded successfully'))
+            nxt = request.POST.get('next')
+            if nxt and nxt.startswith('/'):
+                return redirect(nxt)
+            return redirect(reverse('public:foliar_spray_list'))
+        return render(request, self.template_name, self._context(f))
+
+
+class FoliarSprayDeleteView(SuperVisorUserRequiredMixin, View):
+    def post(self, request, pk):
+        rec = get_object_or_404(ReportFoliarSpray, pk=pk)
+        rec.delete()
+        messages.success(request, _('Foliar spray record deleted'))
+        return _redirect_with_next(request, reverse('public:foliar_spray_list'))
+
+
+class WatermanFoliarSprayCreateView(WatermanUserRequiredMixin, View):
+    def post(self, request, plot_id):
+        user = request.user
+        if user.is_superuser:
+            plot_obj = get_object_or_404(models.Plot, id=plot_id)
+        else:
+            plot_obj = get_object_or_404(models.Plot, id=plot_id, zone__farm__user__in=[user])
+        f = forms.ReportFoliarSprayForm(request.POST)
+        if not form_validate_err(request, f):
+            return redirect(request.META.get('HTTP_REFERER', reverse_lazy('public:index')))
+        report = f.save(commit=False)
+        report.created_by = user
+        report.plot = plot_obj
+        if not report.applied_at:
+            report.applied_at = timezone.now()
+        report.save()
+        messages.success(request, _('Foliar spray submitted successfully'))
+        return redirect(request.META.get('HTTP_REFERER', reverse_lazy('public:index')))
+
+
+class FertilizerCategoryListView(SuperVisorUserRequiredMixin, TemplateView):
+    template_name = 'public/report/category/fertilizer_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = FertilizerCategory.objects.annotate(
+            use_count=Count('records')
+        ).order_by('title')
+        context['form'] = forms.FertilizerCategoryForm()
+        return context
+
+
+class FertilizerCategoryCreateView(SuperVisorUserRequiredMixin, View):
+    def post(self, request):
+        f = forms.FertilizerCategoryForm(request.POST)
+        if f.is_valid():
+            f.save()
+            messages.success(request, _('Fertilizer category created'))
+        else:
+            for err in f.errors.values():
+                messages.error(request, err.as_text())
+        return redirect(reverse('public:fertilizer_category_list'))
+
+
+class FertilizerCategoryDeleteView(SuperVisorUserRequiredMixin, View):
+    def post(self, request, pk):
+        cat = get_object_or_404(FertilizerCategory, pk=pk)
+        cat.delete()
+        messages.success(request, _('Fertilizer category deleted'))
+        return redirect(reverse('public:fertilizer_category_list'))
+
+
+class FoliarSprayCategoryListView(SuperVisorUserRequiredMixin, TemplateView):
+    template_name = 'public/report/category/foliar_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = FoliarSprayCategory.objects.annotate(
+            use_count=Count('records')
+        ).order_by('title')
+        context['form'] = forms.FoliarSprayCategoryForm()
+        return context
+
+
+class FoliarSprayCategoryCreateView(SuperVisorUserRequiredMixin, View):
+    def post(self, request):
+        f = forms.FoliarSprayCategoryForm(request.POST)
+        if f.is_valid():
+            f.save()
+            messages.success(request, _('Foliar spray category created'))
+        else:
+            for err in f.errors.values():
+                messages.error(request, err.as_text())
+        return redirect(reverse('public:foliar_spray_category_list'))
+
+
+class FoliarSprayCategoryDeleteView(SuperVisorUserRequiredMixin, View):
+    def post(self, request, pk):
+        cat = get_object_or_404(FoliarSprayCategory, pk=pk)
+        cat.delete()
+        messages.success(request, _('Foliar spray category deleted'))
+        return redirect(reverse('public:foliar_spray_category_list'))
 
 
 class RunListView(SuperVisorUserRequiredMixin, TemplateView):
@@ -1203,6 +1411,32 @@ class PlotDetailView(SuperVisorUserRequiredMixin, DetailView):
         context['task_status_url'] = reverse('public:task_status', args=['TASK_ID'])
         context['weather_fetch_url'] = reverse('public:plot_weather_fetch', args=[plot.id])
         context['plot_weather_history'] = PlotWeather.objects.filter(plot=plot).order_by('-created_at')[:15]
+
+        # Fertilization (granular/soil) — quantities + recent records
+        fert_qs = FertilizationRecord.objects.filter(plot=plot).select_related(
+            'category', 'created_by'
+        ).order_by('-id')
+        fert_totals = {}
+        for r in fert_qs:
+            if r.quantity is None:
+                continue
+            fert_totals[r.unit] = fert_totals.get(r.unit, 0) + float(r.quantity)
+        context['fertilization_count'] = fert_qs.count()
+        context['fertilization_totals'] = fert_totals
+        context['recent_fertilizations'] = list(fert_qs[:10])
+
+        # Foliar spray (liquid) — quantities + recent records
+        spray_qs = ReportFoliarSpray.objects.filter(plot=plot).select_related(
+            'category', 'created_by'
+        ).order_by('-id')
+        spray_totals = {}
+        for r in spray_qs:
+            if r.quantity is None:
+                continue
+            spray_totals[r.unit] = spray_totals.get(r.unit, 0) + float(r.quantity)
+        context['foliar_spray_count'] = spray_qs.count()
+        context['foliar_spray_totals'] = spray_totals
+        context['recent_foliar_sprays'] = list(spray_qs[:10])
         return context
 
 

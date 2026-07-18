@@ -82,10 +82,16 @@ canvas { width: 100%; height: 300px; }
                 <div class="stat-number" style="color:#2980b9;">{{ total_reports }}</div>
             </div>
         </a>
-        <a href="{% url 'public:report_manure__list' %}" style="text-decoration:none;">
+        <a href="{% url 'public:fertilization_list' %}" style="text-decoration:none;">
             <div class="card" style="border-right:4px solid #8e44ad;">
-                <div style="color:#8e44ad;font-size:13px;font-weight:600;">{% trans "Fertilization Reports" %}</div>
-                <div class="stat-number" style="color:#8e44ad;">{{ total_manure_reports }}</div>
+                <div style="color:#8e44ad;font-size:13px;font-weight:600;">{% trans "Fertilization" %}</div>
+                <div class="stat-number" style="color:#8e44ad;">{{ total_fertilization_reports }}</div>
+            </div>
+        </a>
+        <a href="{% url 'public:foliar_spray_list' %}" style="text-decoration:none;">
+            <div class="card" style="border-right:4px solid #00897b;">
+                <div style="color:#00897b;font-size:13px;font-weight:600;">{% trans "Foliar Spray" %}</div>
+                <div class="stat-number" style="color:#00897b;">{{ total_foliar_spray_reports }}</div>
             </div>
         </a>
         <a href="{% url 'public:manual_irrigation_list' %}" style="text-decoration:none;">
@@ -206,7 +212,7 @@ canvas { width: 100%; height: 300px; }
         </div>
         <div class="chart-box">
             <div class="chart-title">{% trans "Fertilization by Category" %}</div>
-            <div style="max-width:400px;text-align:center;margin:auto"><canvas id="manureChart"></canvas></div>
+            <div style="max-width:400px;text-align:center;margin:auto"><canvas id="fertilizationChart"></canvas></div>
         </div>
     </div>
 
@@ -261,8 +267,8 @@ const durationLabels = JSON.parse("{{ duration_labels|escapejs }}");
 const durationData = JSON.parse("{{ duration_data|escapejs }}");
 const tempLabels = JSON.parse("{{ temp_labels|escapejs }}");
 const tempData = JSON.parse("{{ temp_data|escapejs }}");
-const manureLabels = JSON.parse("{{ manure_labels|escapejs }}");
-const manureData = JSON.parse("{{ manure_data|escapejs }}");
+const fertilizationLabels = JSON.parse("{{ fertilization_labels|escapejs }}");
+const fertilizationData = JSON.parse("{{ fertilization_data|escapejs }}");
 
 new Chart(document.getElementById('runsChart'), {
     type: 'line',
@@ -298,10 +304,10 @@ if (tempLabels.length > 0) {
     });
 }
 
-if (manureLabels.length > 0) {
-    new Chart(document.getElementById('manureChart'), {
+if (fertilizationLabels.length > 0) {
+    new Chart(document.getElementById('fertilizationChart'), {
         type: 'doughnut',
-        data: { labels: manureLabels, datasets: [{ data: manureData, backgroundColor: manureLabels.map(function() { return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); }) }] },
+        data: { labels: fertilizationLabels, datasets: [{ data: fertilizationData, backgroundColor: fertilizationLabels.map(function() { return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); }) }] },
         options: { responsive: true }
     });
 }

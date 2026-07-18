@@ -48,7 +48,12 @@
 
             <li class="aq-nav-section"><i class="icon-list-alt"></i> {% trans "Reports" %}</li>
             <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:report_manure__list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization Reports" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:fertilization_list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization" %}</span></a></li>
+            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:fertilization_create' %}"><i class="icon-plus"></i><span>{% trans "Register Fertilization" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_list' %}"><i class="icon-tint"></i><span>{% trans "Foliar Spray" %}</span></a></li>
+            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:foliar_spray_create' %}"><i class="icon-plus"></i><span>{% trans "Register Foliar Spray" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:fertilizer_category_list' %}"><i class="icon-tags"></i><span>{% trans "Fertilizer Categories" %}</span></a></li>
+            <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_category_list' %}"><i class="icon-tags"></i><span>{% trans "Solution Categories" %}</span></a></li>
 
             <li class="aq-nav-section"><i class="icon-bar-chart"></i> {% trans "Analysis" %}</li>
             <li><a class="aq-nav-link" href="{% url 'public:plot_vegetation_map' %}"><i class="icon-leaf"></i><span>{% trans "Vegetation Map" %}</span></a></li>

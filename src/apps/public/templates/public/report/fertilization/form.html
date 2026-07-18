@@ -1,0 +1,97 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}{% trans "Register Fertilization" %}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "کوددهی|public:fertilization_list" "ثبت کوددهی" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #8e44ad, #6c3483);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .form-card { background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); max-width: 640px; }
+    .form-card label { font-weight: 600; font-size: 13px; color: #555; margin-bottom: 4px; }
+    .form-card .form-group { margin-bottom: 16px; }
+    .qty-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .hint { font-size: 12px; color: #888; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:800px;margin:30px auto;">
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">+ {% trans "Register Fertilization" %}</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">کوددهی خاکی / گرانوله برای هر زمین</div>
+    </div>
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>{% trans "Farm" %}</label>
+                {{ form.farm }}
+                <div class="hint">{% trans "Select a farm to filter plots" %}</div>
+            </div>
+
+            <div class="form-group">
+                <label>{% trans "Plot" %} <span class="text-danger">*</span></label>
+                {{ form.plot }}
+                {% if form.plot.errors %}<div class="text-danger small">{{ form.plot.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>{% trans "Fertilizer Type" %}</label>
+                {{ form.category }}
+                <div style="font-size:12px;margin-top:4px;">
+                    <a href="{% url 'public:fertilizer_category_list' %}">{% trans "Manage fertilizer categories" %}</a>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{% trans "Title" %} <span class="text-danger">*</span></label>
+                {{ form.title }}
+                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group qty-row">
+                <div>
+                    <label>{% trans "Quantity" %}</label>
+                    {{ form.quantity }}
+                </div>
+                <div>
+                    <label>{% trans "Unit" %}</label>
+                    {{ form.unit }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>{% trans "Description" %}</label>
+                {{ form.description }}
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="background:#8e44ad;border-color:#8e44ad;border-radius:8px;font-weight:600;">
+                    <i class="icon-ok"></i> {% trans "Save" %}
+                </button>
+                <a href="{% url 'public:fertilization_list' %}" class="btn btn-secondary" style="border-radius:8px;">{% trans "Cancel" %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block Script %}
+<script>
+    window.aqBindFarmPlotFilter('#id_farm', '#id_plot', {{ plots_by_farm|safe }});
+</script>
+{% endblock %}

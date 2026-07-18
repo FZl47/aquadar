@@ -558,33 +558,103 @@ class SystemReportStatus(BaseModel):
         verbose_name_plural = _('System Report Statuses')
 
 
-class ManureCategory(BaseModel):
+class FertilizerCategory(BaseModel):
+    """Fertilizer type category (granular / soil application)."""
     title = models.CharField(max_length=256, verbose_name=_('Title'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     class Meta:
-        verbose_name = _('Manure Category')
-        verbose_name_plural = _('Manure Categories')
+        verbose_name = _('Fertilizer Category')
+        verbose_name_plural = _('Fertilizer Categories')
 
     def __str__(self):
         return self.title
 
 
-class ReportManure(BaseModel):
+class FertilizationRecord(BaseModel):
+    """Fertilization record — granular / soil application on a plot."""
+    UNIT_CHOICES = (
+        ('kg', _('Kilogram (kg)')),
+        ('g', _('Gram (g)')),
+        ('ton', _('Ton')),
+    )
     created_by = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True,
                                    verbose_name=_('Created By'))
-    category = models.ForeignKey('ManureCategory', on_delete=models.SET_NULL, null=True, blank=True,
-                                 verbose_name=_('Category'))
-    plot = models.ForeignKey('Plot', on_delete=models.CASCADE, verbose_name=_('Plot'))
+    category = models.ForeignKey(
+        'FertilizerCategory', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='records', verbose_name=_('Fertilizer Type'))
+    plot = models.ForeignKey('Plot', on_delete=models.CASCADE, related_name='fertilization_records',
+                             verbose_name=_('Plot'))
+    title = models.CharField(max_length=256, verbose_name=_('Title'))
+    description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
+    quantity = models.DecimalField(
+        max_digits=12, decimal_places=3, null=True, blank=True, verbose_name=_('Quantity'))
+    unit = models.CharField(
+        max_length=8, choices=UNIT_CHOICES, default='kg', verbose_name=_('Unit'))
+    applied_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Applied At'))
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = _('Fertilization Record')
+        verbose_name_plural = _('Fertilization Records')
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def quantity_display(self):
+        if self.quantity is None:
+            return '—'
+        return f'{self.quantity} {self.unit}'
+
+
+class FoliarSprayCategory(BaseModel):
+    """Solution / spray type category (liquid foliar application)."""
     title = models.CharField(max_length=256, verbose_name=_('Title'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
 
     class Meta:
-        verbose_name = _('Manure Report')
-        verbose_name_plural = _('Manure Reports')
+        verbose_name = _('Foliar Spray Category')
+        verbose_name_plural = _('Foliar Spray Categories')
 
     def __str__(self):
         return self.title
+
+
+class ReportFoliarSpray(BaseModel):
+    """Foliar spraying record — liquid application on a plot."""
+    UNIT_CHOICES = (
+        ('L', _('Liter (L)')),
+        ('ml', _('Milliliter (ml)')),
+    )
+    created_by = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True,
+                                   verbose_name=_('Created By'))
+    category = models.ForeignKey(
+        'FoliarSprayCategory', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='records', verbose_name=_('Solution Type'))
+    plot = models.ForeignKey('Plot', on_delete=models.CASCADE, related_name='foliar_spray_records',
+                             verbose_name=_('Plot'))
+    title = models.CharField(max_length=256, verbose_name=_('Title'))
+    description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
+    quantity = models.DecimalField(
+        max_digits=12, decimal_places=3, null=True, blank=True, verbose_name=_('Quantity'))
+    unit = models.CharField(
+        max_length=8, choices=UNIT_CHOICES, default='L', verbose_name=_('Unit'))
+    applied_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Applied At'))
+
+    class Meta:
+        ordering = ('-id',)
+        verbose_name = _('Foliar Spray Record')
+        verbose_name_plural = _('Foliar Spray Records')
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def quantity_display(self):
+        if self.quantity is None:
+            return '—'
+        return f'{self.quantity} {self.unit}'
 
 
 class FarmUserGroup(BaseModel):

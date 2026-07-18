@@ -18,7 +18,7 @@ class Command(BaseCommand):
         self._out('[seed] Starting Persian test data...')
         self._create_run_settings()
         farms = self._create_farms()
-        self._create_manure_categories()
+        self._create_fertilizer_categories()
         users = self._create_users(farms)
         self._create_farm_user_groups(farms, users)
         self._out('[seed] Done.')
@@ -191,30 +191,36 @@ class Command(BaseCommand):
         self._out(f'  [ok] {len(created_farms)} farms with zones/plots/outlets created.')
         return created_farms
 
-    def _create_manure_categories(self):
-        from apps.public.models import ManureCategory
+    def _create_fertilizer_categories(self):
+        from apps.public.models import FertilizerCategory, FoliarSprayCategory
 
-        categories = [
-            ('کود ازته',
-             'کودهای حاوی نیتروژن'),
-            ('کود فسفاته',
-             'کودهای حاوی فسفر'),
-            ('کود پتاسه',
-             'کودهای حاوی پتاسیم'),
-            ('کود آلی',
-             'کودهای طبیعی و ارگانیک'),
-            ('کود مرکب',
-             'کودهای ترکیبی NPK'),
+        fertilizer_categories = [
+            ('کود ازته', 'کودهای حاوی نیتروژن'),
+            ('کود فسفاته', 'کودهای حاوی فسفر'),
+            ('کود پتاسه', 'کودهای حاوی پتاسیم'),
+            ('کود آلی', 'کودهای طبیعی و ارگانیک'),
+            ('کود مرکب', 'کودهای ترکیبی NPK'),
         ]
-
         count = 0
-        for title, desc in categories:
-            _, created = ManureCategory.objects.get_or_create(
+        for title, desc in fertilizer_categories:
+            _, created = FertilizerCategory.objects.get_or_create(
                 title=title, defaults={'description': desc})
             if created:
                 count += 1
+        self._out(f'  [ok] {count} fertilizer categories created.')
 
-        self._out(f'  [ok] {count} manure categories created.')
+        spray_categories = [
+            ('محلول ریزمغذی', 'ریزمغذی‌های محلول‌پاشی'),
+            ('قارچ‌کش', 'قارچ‌کش‌های مایع'),
+            ('حشره‌کش', 'حشره‌کش‌های محلول‌پاشی'),
+        ]
+        scount = 0
+        for title, desc in spray_categories:
+            _, created = FoliarSprayCategory.objects.get_or_create(
+                title=title, defaults={'description': desc})
+            if created:
+                scount += 1
+        self._out(f'  [ok] {scount} foliar spray categories created.')
 
     def _create_users(self, farms):
         users = {}

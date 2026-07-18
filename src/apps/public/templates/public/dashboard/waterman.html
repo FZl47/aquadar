@@ -380,8 +380,13 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tab-manure-btn" data-bs-toggle="tab"
-                                    data-bs-target="#submit-manure" type="button" role="tab">ثبت کود دهی
+                            <button class="nav-link" id="tab-fertilization-btn" data-bs-toggle="tab"
+                                    data-bs-target="#submit-fertilization" type="button" role="tab">ثبت کوددهی
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-foliar-btn" data-bs-toggle="tab"
+                                    data-bs-target="#submit-foliar" type="button" role="tab">محلول‌پاشی
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -494,19 +499,19 @@
                             </table>
                         </div>
 
-                        <!-- TAB: manure -->
-                        <div class="tab-pane fade" id="submit-manure" role="tabpanel">
+                        <!-- TAB: fertilization -->
+                        <div class="tab-pane fade" id="submit-fertilization" role="tabpanel">
                             <div class="form-tab-section">
                                 <h4 style="margin-bottom:20px;border-right:3px solid #28a745;padding-right:10px;">ثبت
-                                    کود دهی</h4>
+                                    کوددهی</h4>
                                 <form method="post"
-                                      action="{% url 'public:report_manure__create' plot_id=plot_obj.id %}">
+                                      action="{% url 'public:fertilization_waterman_create' plot_id=plot_obj.id %}">
                                     {% csrf_token %}
                                     <div class="form-group">
                                         <label>نوع کود</label>
                                         <select name="category" class="form-control">
                                             <option value="">-- انتخاب کنید --</option>
-                                            {% for cat in manure_categories %}
+                                            {% for cat in fertilizer_categories %}
                                                 <option value="{{ cat.id }}">{{ cat.title }}</option>
                                             {% endfor %}
                                         </select>
@@ -516,6 +521,21 @@
                                         <input type="text" name="title" class="form-control" required
                                                placeholder="عنوان کوددهی را وارد کنید">
                                     </div>
+                                    <div class="form-group" style="display:flex;gap:10px;">
+                                        <div style="flex:2;">
+                                            <label>مقدار</label>
+                                            <input type="number" name="quantity" class="form-control" step="0.001" min="0"
+                                                   placeholder="مثلاً 25">
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label>واحد</label>
+                                            <select name="unit" class="form-control">
+                                                <option value="kg">کیلوگرم (kg)</option>
+                                                <option value="g">گرم (g)</option>
+                                                <option value="ton">تن</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="form-group">
                                         <label>توضیحات</label>
                                         <textarea name="description" class="form-control" rows="3"
@@ -523,6 +543,54 @@
                                     </div>
                                     <button type="submit" class="btn btn-success">
                                         <i class="icon-ok"></i> ثبت کوددهی
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- TAB: foliar spray -->
+                        <div class="tab-pane fade" id="submit-foliar" role="tabpanel">
+                            <div class="form-tab-section">
+                                <h4 style="margin-bottom:20px;border-right:3px solid #00897b;padding-right:10px;">ثبت
+                                    محلول‌پاشی</h4>
+                                <form method="post"
+                                      action="{% url 'public:report_foliar_spray__create' plot_id=plot_obj.id %}">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label>نوع محلول</label>
+                                        <select name="category" class="form-control">
+                                            <option value="">-- انتخاب کنید --</option>
+                                            {% for cat in foliar_spray_categories %}
+                                                <option value="{{ cat.id }}">{{ cat.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>عنوان <span class="text-danger">*</span></label>
+                                        <input type="text" name="title" class="form-control" required
+                                               placeholder="عنوان محلول‌پاشی را وارد کنید">
+                                    </div>
+                                    <div class="form-group" style="display:flex;gap:10px;">
+                                        <div style="flex:2;">
+                                            <label>مقدار</label>
+                                            <input type="number" name="quantity" class="form-control" step="0.001" min="0"
+                                                   placeholder="مثلاً 10">
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label>واحد</label>
+                                            <select name="unit" class="form-control">
+                                                <option value="L">لیتر (L)</option>
+                                                <option value="ml">میلی‌لیتر (ml)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>توضیحات</label>
+                                        <textarea name="description" class="form-control" rows="3"
+                                                  placeholder="توضیحات..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success" style="background:#00897b;border-color:#00897b;">
+                                        <i class="icon-ok"></i> ثبت محلول‌پاشی
                                     </button>
                                 </form>
                             </div>

@@ -301,15 +301,26 @@ class UserActivityReportAdmin(admin.ModelAdmin):
 
 admin.site.register(models.UserActivityReportAttachFile)
 
-@admin.register(models.ReportManure)
-class ReportManureAdmin(admin.ModelAdmin):
-    list_display = ('title', 'created_by', 'category', 'plot', 'created_at')
-    list_filter = ('category',)
+@admin.register(models.FertilizationRecord)
+class FertilizationRecordAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'created_at')
+    list_filter = ('category', 'unit')
 
 
-@admin.register(models.ManureCategory)
-class ManureCategoryAdmin(admin.ModelAdmin):
+@admin.register(models.FertilizerCategory)
+class FertilizerCategoryAdmin(admin.ModelAdmin):
     list_display = ('title',)
+
+
+@admin.register(models.FoliarSprayCategory)
+class FoliarSprayCategoryAdmin(admin.ModelAdmin):
+    list_display = ('title',)
+
+
+@admin.register(models.ReportFoliarSpray)
+class ReportFoliarSprayAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'created_at')
+    list_filter = ('category', 'unit')
 
 
 @admin.register(models.FarmUserGroup)

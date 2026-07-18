@@ -1,0 +1,122 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block Title %}{% trans "Fertilization Records" %}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "کوددهی" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #8e44ad, #6c3483);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
+    .stat-value { font-size: 22px; font-weight: bold; margin: 6px 0 3px; }
+    .stat-label { font-size: 11px; color: #888; }
+    .table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
+    .table-card thead th { background: #f0f4fa; font-weight: 700; font-size: 13px; color: #555; border: none; padding: 10px 12px; }
+    .table-card tbody td { padding: 10px 12px; vertical-align: middle; font-size: 13px; }
+    .category-badge { display: inline-block; background: #f3e5f5; color: #6a1b9a; border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1200px;margin:30px auto;">
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;"><i class="icon-beaker"></i> {% trans "Fertilization Records" %}</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">کوددهی خاکی / گرانوله</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 {% trans "Dashboard" %}</a>
+                <a href="{% url 'public:fertilizer_category_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏷 {% trans "Fertilizer Categories" %}</a>
+                <a href="{% url 'public:fertilization_create' %}" class="btn btn-sm" style="background:#fff;color:#8e44ad;border-radius:8px;font-weight:600;">+ {% trans "Register Fertilization" %}</a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="stat-cards">
+        <div class="stat-card" style="border-top:3px solid #8e44ad;">
+            <div style="color:#8e44ad;font-size:20px;">📋</div>
+            <div class="stat-value" style="color:#8e44ad;">{{ total_count }}</div>
+            <div class="stat-label">{% trans "Total records" %}</div>
+        </div>
+        {% for unit, total in quantity_totals.items %}
+        <div class="stat-card" style="border-top:3px solid #9b59b6;">
+            <div style="color:#9b59b6;font-size:20px;">⚖</div>
+            <div class="stat-value" style="color:#9b59b6;">{{ total|floatformat:2 }}</div>
+            <div class="stat-label">{% trans "Total" %} ({{ unit }})</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="table-card">
+        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;">
+            {% trans "Fertilization list" %}
+        </div>
+        {% if reports %}
+        <div class="table-responsive">
+        <table class="table table-hover" style="margin:0;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{% trans "Title" %}</th>
+                    <th>{% trans "Fertilizer Type" %}</th>
+                    <th>{% trans "Plot" %}</th>
+                    <th>{% trans "Quantity" %}</th>
+                    <th>{% trans "Registered by" %}</th>
+                    <th>{% trans "Date" %}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td style="font-weight:600;">{{ report.title }}</td>
+                    <td>{% if report.category %}<span class="category-badge">{{ report.category.title }}</span>{% else %}—{% endif %}</td>
+                    <td>
+                        <a href="{% url 'public:plot_detail' report.plot_id %}">{{ report.plot.name }}</a>
+                        <div style="font-size:11px;color:#888;">{{ report.plot.zone.farm.name }} / {{ report.plot.zone.name }}</div>
+                    </td>
+                    <td style="font-weight:600;color:#6a1b9a;">{{ report.quantity_display }}</td>
+                    <td>{% if report.created_by %}{{ report.created_by.get_full_name|default:report.created_by.username }}{% else %}—{% endif %}</td>
+                    <td style="white-space:nowrap;">{{ report.created_at|jalali }}</td>
+                    <td>
+                        <form method="post" action="{% url 'public:fertilization_delete' report.pk %}" style="display:inline;"
+                              onsubmit="return confirm('{% trans "Delete this record?" %}');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:6px;">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+                {% if report.description %}
+                <tr>
+                    <td colspan="8" style="padding-top:0;font-size:12px;color:#666;border-top:none;">{{ report.description }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">{% trans "No fertilization records yet." %}</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
