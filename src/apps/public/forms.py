@@ -23,11 +23,31 @@ class UserActivityReportForm(forms.ModelForm):
         }
 
 
+def _parse_jalali_date(value):
+    """Parse Jalali date string YYYY/MM/DD → Gregorian date, or None if empty."""
+    if value in (None, ''):
+        return None
+    try:
+        return jdatetime.datetime.strptime(str(value).strip(), '%Y/%m/%d').togregorian().date()
+    except (ValueError, AttributeError):
+        raise forms.ValidationError(_('Invalid date. Use format: 1404/04/20'))
+
+
 class FertilizationRecordForm(forms.ModelForm):
     """Waterman / compact form to register fertilization on a known plot."""
+    due_date = forms.CharField(
+        required=False,
+        label=_('Due Date'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20',
+            'dir': 'ltr',
+        }),
+    )
+
     class Meta:
         model = models.FertilizationRecord
-        fields = ['category', 'title', 'quantity', 'unit', 'description']
+        fields = ['category', 'title', 'quantity', 'unit', 'due_date', 'description']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -35,6 +55,9 @@ class FertilizationRecordForm(forms.ModelForm):
             'unit': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def clean_due_date(self):
+        return _parse_jalali_date(self.cleaned_data.get('due_date'))
 
 
 def _plots_by_farm_map():
@@ -116,9 +139,19 @@ class FarmPlotFilterFormMixin:
 
 class SupervisorFertilizationForm(FarmPlotFilterFormMixin, forms.ModelForm):
     """Supervisor form to register fertilization for any plot."""
+    due_date = forms.CharField(
+        required=False,
+        label=_('Due Date'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20',
+            'dir': 'ltr',
+        }),
+    )
+
     class Meta:
         model = models.FertilizationRecord
-        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'description']
+        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'due_date', 'description']
         widgets = {
             'plot': forms.Select(attrs={'class': 'form-control', 'id': 'id_plot'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
@@ -133,6 +166,14 @@ class SupervisorFertilizationForm(FarmPlotFilterFormMixin, forms.ModelForm):
         self._setup_farm_plot_fields()
         self.fields['category'].queryset = models.FertilizerCategory.objects.all()
         self.fields['category'].required = False
+        # Show existing due_date as Jalali when editing.
+        if self.instance and self.instance.pk and self.instance.due_date and not self.data:
+            self.initial['due_date'] = jdatetime.date.fromgregorian(
+                date=self.instance.due_date
+            ).strftime('%Y/%m/%d')
+
+    def clean_due_date(self):
+        return _parse_jalali_date(self.cleaned_data.get('due_date'))
 
 
 class FertilizerCategoryForm(forms.ModelForm):
@@ -156,9 +197,19 @@ class FoliarSprayCategoryForm(forms.ModelForm):
 
 
 class ReportFoliarSprayForm(forms.ModelForm):
+    due_date = forms.CharField(
+        required=False,
+        label=_('Due Date'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20',
+            'dir': 'ltr',
+        }),
+    )
+
     class Meta:
         model = models.ReportFoliarSpray
-        fields = ['category', 'title', 'quantity', 'unit', 'description']
+        fields = ['category', 'title', 'quantity', 'unit', 'due_date', 'description']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -167,12 +218,25 @@ class ReportFoliarSprayForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def clean_due_date(self):
+        return _parse_jalali_date(self.cleaned_data.get('due_date'))
+
 
 class SupervisorFoliarSprayForm(FarmPlotFilterFormMixin, forms.ModelForm):
     """Supervisor form to register foliar spray for any plot."""
+    due_date = forms.CharField(
+        required=False,
+        label=_('Due Date'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20',
+            'dir': 'ltr',
+        }),
+    )
+
     class Meta:
         model = models.ReportFoliarSpray
-        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'description']
+        fields = ['plot', 'category', 'title', 'quantity', 'unit', 'due_date', 'description']
         widgets = {
             'plot': forms.Select(attrs={'class': 'form-control', 'id': 'id_plot'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
@@ -187,6 +251,13 @@ class SupervisorFoliarSprayForm(FarmPlotFilterFormMixin, forms.ModelForm):
         self._setup_farm_plot_fields()
         self.fields['category'].queryset = models.FoliarSprayCategory.objects.all()
         self.fields['category'].required = False
+        if self.instance and self.instance.pk and self.instance.due_date and not self.data:
+            self.initial['due_date'] = jdatetime.date.fromgregorian(
+                date=self.instance.due_date
+            ).strftime('%Y/%m/%d')
+
+    def clean_due_date(self):
+        return _parse_jalali_date(self.cleaned_data.get('due_date'))
 
 
 class FarmForm(forms.ModelForm):
@@ -308,11 +379,11 @@ class ManualIrrigationForm(forms.Form):
         label=_('Plot'),
         widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_mi_plot'}),
     )
-    outlet = forms.ModelChoiceField(
+    outlets = forms.ModelMultipleChoiceField(
         queryset=models.Outlet.objects.none(),
         required=False,
-        label=_('Outlet'),
-        widget=forms.Select(attrs={'class': 'form-control', 'id': 'id_mi_outlet'}),
+        label=_('Outlets'),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'mi-outlet-check', 'id': 'id_mi_outlets'}),
     )
     reporter = forms.ModelChoiceField(
         queryset=None,
@@ -362,7 +433,9 @@ class ManualIrrigationForm(forms.Form):
         User = get_user_model()
         super().__init__(*args, **kwargs)
         self.fields['plot'].queryset = models.Plot.objects.select_related('zone__farm').all()
-        self.fields['outlet'].queryset = models.Outlet.objects.select_related('plot__zone__farm').all()
+        self.fields['outlets'].queryset = models.Outlet.objects.select_related('plot__zone__farm').order_by(
+            'plot_id', 'number'
+        )
         self.fields['reporter'].queryset = User.objects.all()
 
     def _parse_jalali(self, value):
@@ -383,4 +456,10 @@ class ManualIrrigationForm(forms.Form):
         end = cleaned.get('end_jalali')
         if start and end and end <= start:
             raise forms.ValidationError(_('End date must be after start date.'))
+        plot = cleaned.get('plot')
+        outlets = cleaned.get('outlets')
+        if plot and outlets:
+            invalid = [o for o in outlets if o.plot_id != plot.pk]
+            if invalid:
+                raise forms.ValidationError(_('Selected outlets must belong to the chosen plot.'))
         return cleaned

@@ -276,7 +276,14 @@ class RunGroupAdmin(admin.ModelAdmin):
 
 @admin.register(models.RunSettings)
 class RunSettingsAdmin(admin.ModelAdmin):
-    list_display = ('expiration_run_time', 'avg_tolerance_run_duration', 'create_report_to_supervisor_if_has_problem', 'require_gps', 'allow_code_entry')
+    list_display = (
+        'expiration_run_time',
+        'avg_tolerance_run_duration',
+        'min_health_score',
+        'create_report_to_supervisor_if_has_problem',
+        'require_gps',
+        'allow_code_entry',
+    )
 
 
 @admin.register(models.SystemReport)
@@ -303,8 +310,8 @@ admin.site.register(models.UserActivityReportAttachFile)
 
 @admin.register(models.FertilizationRecord)
 class FertilizationRecordAdmin(admin.ModelAdmin):
-    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'created_at')
-    list_filter = ('category', 'unit')
+    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'due_date', 'created_at')
+    list_filter = ('category', 'unit', 'due_date')
 
 
 @admin.register(models.FertilizerCategory)
@@ -319,8 +326,8 @@ class FoliarSprayCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(models.ReportFoliarSpray)
 class ReportFoliarSprayAdmin(admin.ModelAdmin):
-    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'created_at')
-    list_filter = ('category', 'unit')
+    list_display = ('title', 'created_by', 'category', 'plot', 'quantity', 'unit', 'due_date', 'created_at')
+    list_filter = ('category', 'unit', 'due_date')
 
 
 @admin.register(models.FarmUserGroup)

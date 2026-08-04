@@ -75,6 +75,13 @@
             </div>
 
             <div class="form-group">
+                <label>{% trans "Due Date" %}</label>
+                {{ form.due_date }}
+                <div class="hint">{% trans "Jalali date, e.g. 1404/04/20" %}</div>
+                {% if form.due_date.errors %}<div class="text-danger small">{{ form.due_date.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
                 <label>{% trans "Description" %}</label>
                 {{ form.description }}
             </div>

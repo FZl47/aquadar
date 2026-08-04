@@ -187,9 +187,12 @@ Q_CLUSTER = {
 }
 
 NOTIFICATION_SMS_PROVIDER_CONFIG = {
-    'API_KEY': os.environ.get('SMS_API_KEY'),
-    'API_URL': 'https://api.panelchi.com/sms/pattern',
-    'LINE_NUMBER': os.environ.get('SMS_LINE_NUMBER'),
+    # Support both env names; SMS provider accepts either API_TOKEN or API_KEY.
+    'API_TOKEN': os.environ.get('SMS_API_TOKEN') or os.environ.get('SMS_API_KEY') or '',
+    'API_KEY': os.environ.get('SMS_API_KEY') or os.environ.get('SMS_API_TOKEN') or '',
+    'API_URL': os.environ.get('SMS_API_URL', 'https://api.panelchi.com/sms/pattern'),
+    'PATTERN_API_URL': os.environ.get('SMS_PATTERN_API_URL', 'https://api.panelchi.com/sms/pattern'),
+    'LINE_NUMBER': os.environ.get('SMS_LINE_NUMBER') or '',
 }
 
 NOTIFICATION_CONFIG = {

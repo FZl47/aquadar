@@ -42,6 +42,13 @@
             <a href="{% url 'public:run_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">← لیست آبیاری‌ها</a>
             <a href="{% url 'public:outlet_detail' run.outlet.pk %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده کیز</a>
             <a href="{{ run.outlet.plot.get_absolute_url }}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">مشاهده زمین</a>
+            {% if run.status == 'open' and run.group_id and run.group.status == 'running' %}
+            <form method="post" action="{% url 'public:stop_irrigation' run.group_id %}" style="display:inline;" onsubmit="return confirm('{% trans "Stop this irrigation?" %}');">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn btn-sm" style="background:#e53935;color:#fff;border-radius:8px;font-weight:600;">⏹ {% trans "Stop" %}</button>
+            </form>
+            {% endif %}
             <button type="button" class="btn btn-sm" style="background:#ffc107;color:#000;border-radius:8px;" onclick="new bootstrap.Modal(document.getElementById('editRunModal')).show()">✏️ ویرایش</button>
             <form method="post" action="{% url 'public:run_delete' run.id %}" style="display:inline;" onsubmit="return confirm('این آبیاری حذف شود؟');">
                 {% csrf_token %}

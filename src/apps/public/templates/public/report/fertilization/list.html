@@ -79,6 +79,7 @@
                     <th>{% trans "Fertilizer Type" %}</th>
                     <th>{% trans "Plot" %}</th>
                     <th>{% trans "Quantity" %}</th>
+                    <th>{% trans "Due Date" %}</th>
                     <th>{% trans "Registered by" %}</th>
                     <th>{% trans "Date" %}</th>
                     <th></th>
@@ -95,6 +96,7 @@
                         <div style="font-size:11px;color:#888;">{{ report.plot.zone.farm.name }} / {{ report.plot.zone.name }}</div>
                     </td>
                     <td style="font-weight:600;color:#6a1b9a;">{{ report.quantity_display }}</td>
+                    <td style="white-space:nowrap;">{% if report.due_date %}{{ report.due_date|jalali_date }}{% else %}—{% endif %}</td>
                     <td>{% if report.created_by %}{{ report.created_by.get_full_name|default:report.created_by.username }}{% else %}—{% endif %}</td>
                     <td style="white-space:nowrap;">{{ report.created_at|jalali }}</td>
                     <td>
@@ -107,7 +109,7 @@
                 </tr>
                 {% if report.description %}
                 <tr>
-                    <td colspan="8" style="padding-top:0;font-size:12px;color:#666;border-top:none;">{{ report.description }}</td>
+                    <td colspan="9" style="padding-top:0;font-size:12px;color:#666;border-top:none;">{{ report.description }}</td>
                 </tr>
                 {% endif %}
                 {% endfor %}

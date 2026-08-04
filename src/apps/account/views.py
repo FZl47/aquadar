@@ -8,10 +8,28 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from apps.core.forms.utils import form_validate_err
 from apps.core.utils import get_client_ip
+from apps.notification.utils import create_user_notif
 
 from . import forms, models
 
 User = get_user_model()
+
+
+def _notify_admins_auth_event(user, notif_type, title, description, **extra_kwargs):
+    """login/logout event."""
+    kwargs_notif = {
+        'user': user.get_full_name() or user.username,
+        'username': user.username,
+        **extra_kwargs,
+    }
+    for admin in User.objects.filter(is_superuser=True):
+        create_user_notif(
+            to_user=admin,
+            type_notif=notif_type,
+            title=title,
+            description=description,
+            kwargs_notif=dict(kwargs_notif),
+        )
 
 
 class Login(TemplateView):
@@ -33,9 +51,26 @@ class Login(TemplateView):
 
         login(request, user)
 
+        ip = get_client_ip(request)
+        agent = request.META.get('HTTP_USER_AGENT', '')
+
         # Create login activity
         models.UserLoginActivity.objects.create(
-            user=user, ip=get_client_ip(request), agent=request.META['HTTP_USER_AGENT']
+            user=user, ip=ip, agent=agent
+        )
+
+        display_name = user.get_full_name() or user.username
+        _notify_admins_auth_event(
+            user,
+            'logged_in',
+            _('User logged in'),
+            _('User %(user)s (%(username)s) logged in from IP %(ip)s') % {
+                'user': display_name,
+                'username': user.username,
+                'ip': ip,
+            },
+            ip=ip,
+            agent=agent,
         )
 
         messages.success(request, _('Welcome'))
@@ -45,6 +80,23 @@ class Login(TemplateView):
 class Logout(View):
 
     def get(self, request):
+        user = request.user
+        if user.is_authenticated:
+            ip = get_client_ip(request)
+            agent = request.META.get('HTTP_USER_AGENT', '')
+            display_name = user.get_full_name() or user.username
+            _notify_admins_auth_event(
+                user,
+                'logged_out',
+                _('User logged out'),
+                _('User %(user)s (%(username)s) logged out from IP %(ip)s') % {
+                    'user': display_name,
+                    'username': user.username,
+                    'ip': ip,
+                },
+                ip=ip,
+                agent=agent,
+            )
         logout(request)
         return redirect('account:login')
 

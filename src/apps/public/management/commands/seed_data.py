@@ -29,6 +29,7 @@ class Command(BaseCommand):
             self._out('  [skip] RunSettings already exists.')
             return
         RunSettings.objects.create(
+            min_health_score=50,
             wind_speed_more_t=30,
             wind_speed_less_t=2,
             temp_value_more_t=40,

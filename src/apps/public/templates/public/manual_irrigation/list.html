@@ -54,7 +54,7 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
     <div class="stat-cards">
         <div class="stat-card" style="border-top:3px solid #0288d1;">
             <div style="color:#0288d1;font-size:20px;">📋</div>
-            <div class="stat-value" style="color:#0288d1;">{{ irrigations.count }}</div>
+            <div class="stat-value" style="color:#0288d1;">{{ total_count }}</div>
             <div class="stat-label">تعداد کل</div>
         </div>
     </div>
@@ -63,7 +63,7 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
         <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
             <span>لیست آبیاری‌های دستی</span>
         </div>
-        {% if irrigations %}
+        {% if page_obj %}
         <div class="table-responsive">
         <table class="table table-hover" style="margin:0;">
             <thead>
@@ -82,9 +82,9 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
                 </tr>
             </thead>
             <tbody>
-            {% for irr in irrigations %}
+            {% for irr in page_obj %}
             <tr>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
                 <td>
                     <a href="{{ irr.plot.get_absolute_url }}" style="color:#0288d1;font-weight:600;text-decoration:none;">
                         {{ irr.plot.name }}
@@ -110,6 +110,25 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
             </tbody>
         </table>
         </div>
+        {% if page_obj.has_other_pages %}
+        <nav style="margin:16px 0;padding:0 12px;">
+            <ul class="pagination justify-content-center" style="margin:0;">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
         {% else %}
         <div style="text-align:center;padding:60px 20px;color:#aaa;">
             <div style="font-size:40px;margin-bottom:12px;">💧</div>

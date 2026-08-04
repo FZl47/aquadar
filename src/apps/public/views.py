@@ -1735,7 +1735,7 @@ class SupervisorStopIrrigationView(SuperVisorUserRequiredMixin, View):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': True})
         messages.success(request, _('Irrigation stopped successfully'))
-        return redirect(reverse('public:index'))
+        return _redirect_with_next(request, reverse('public:index'))
 
 
 LEAF_ENTITY_MODELS = {
@@ -1812,7 +1812,8 @@ class PlotWeatherFetchView(SuperVisorUserRequiredMixin, View):
 
     def post(self, request, pk):
         plot = get_object_or_404(Plot, pk=pk)
-        if not plot.gps_lat or not plot.gps_lng:
+        lat, lng = plot.resolve_gps()
+        if lat is None or lng is None:
             return JsonResponse(
                 {'success': False, 'error': str(_('No GPS coordinates set for this plot.'))},
                 status=400,
@@ -1823,12 +1824,18 @@ class PlotWeatherFetchView(SuperVisorUserRequiredMixin, View):
 
 class ManualIrrigationListView(SuperVisorUserRequiredMixin, TemplateView):
     template_name = 'public/manual_irrigation/list.html'
+    PER_PAGE = 20
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['irrigations'] = ManualIrrigation.objects.select_related(
+        qs = ManualIrrigation.objects.select_related(
             'plot__zone__farm', 'outlet', 'registered_by', 'reporter'
-        ).all()
+        ).order_by('-id')
+        # Total count for summary card (all records, not just current page).
+        context['total_count'] = qs.count()
+        paginator = Paginator(qs, self.PER_PAGE)
+        page_num = self.request.GET.get('page', 1)
+        context['page_obj'] = paginator.get_page(page_num)
         return context
 
 
@@ -1837,36 +1844,84 @@ class ManualIrrigationCreateView(SuperVisorUserRequiredMixin, View):
 
     def _get_outlets_json(self):
         data = {}
-        for outlet in models.Outlet.objects.select_related('plot').all():
-            data.setdefault(outlet.plot_id, []).append({'id': outlet.pk, 'number': outlet.number})
+        for outlet in models.Outlet.objects.select_related('plot').order_by('plot_id', 'number'):
+            data.setdefault(str(outlet.plot_id), []).append({
+                'id': outlet.pk,
+                'number': outlet.number,
+            })
         return json.dumps(data)
 
-    def get(self, request):
-        return render(request, self.template_name, {
-            'form': forms.ManualIrrigationForm(),
+    def _get_plots_gps_json(self):
+        """Plot GPS points for auto-fill on the manual-irrigation map."""
+        data = {}
+        for plot in models.Plot.objects.only('id', 'gps_lat', 'gps_lng', 'boundary'):
+            lat = float(plot.gps_lat) if plot.gps_lat is not None else None
+            lng = float(plot.gps_lng) if plot.gps_lng is not None else None
+            if lat is None and lng is None and plot.boundary:
+                try:
+                    pts = [(float(p[0]), float(p[1])) for p in plot.boundary if len(p) == 2]
+                    if pts:
+                        lat = sum(p[0] for p in pts) / len(pts)
+                        lng = sum(p[1] for p in pts) / len(pts)
+                except (TypeError, ValueError, IndexError):
+                    pass
+            data[str(plot.pk)] = {
+                'lat': lat,
+                'lng': lng,
+                'boundary': plot.boundary or [],
+            }
+        return json.dumps(data)
+
+    def _form_context(self, form):
+        selected = []
+        if form.is_bound:
+            selected = [str(v) for v in form.data.getlist('outlets') if v]
+        return {
+            'form': form,
             'outlets_by_plot': self._get_outlets_json(),
-        })
+            'plots_gps': self._get_plots_gps_json(),
+            'selected_outlet_ids': json.dumps(selected),
+        }
+
+    def get(self, request):
+        return render(request, self.template_name, self._form_context(forms.ManualIrrigationForm()))
 
     def post(self, request):
         f = forms.ManualIrrigationForm(request.POST)
         if f.is_valid():
-            ManualIrrigation.objects.create(
+            start = f.cleaned_data['start_jalali']
+            end = f.cleaned_data['end_jalali']
+            total_seconds = max(0, int((end - start).total_seconds()))
+            outlets = list(f.cleaned_data.get('outlets') or [])
+            # Divide total irrigation time (and thus water) equally across selected keys.
+            n_keys = len(outlets) if outlets else 1
+            per_key_seconds = total_seconds // n_keys
+
+            common = dict(
                 plot=f.cleaned_data['plot'],
-                outlet=f.cleaned_data.get('outlet'),
                 registered_by=request.user,
                 reporter=f.cleaned_data.get('reporter'),
-                start_datetime=f.cleaned_data['start_jalali'],
-                end_datetime=f.cleaned_data['end_jalali'],
+                start_datetime=start,
+                end_datetime=end,
+                duration_seconds=per_key_seconds,
                 gps_lat=f.cleaned_data.get('gps_lat'),
                 gps_lng=f.cleaned_data.get('gps_lng'),
                 description=f.cleaned_data.get('description'),
             )
-            messages.success(request, _('Manual irrigation registered successfully'))
+            if outlets:
+                for outlet in outlets:
+                    ManualIrrigation.objects.create(outlet=outlet, **common)
+                messages.success(
+                    request,
+                    _('Manual irrigation registered successfully for %(count)s outlet(s)') % {
+                        'count': len(outlets),
+                    },
+                )
+            else:
+                ManualIrrigation.objects.create(outlet=None, **common)
+                messages.success(request, _('Manual irrigation registered successfully'))
             return redirect(reverse('public:manual_irrigation_list'))
-        return render(request, self.template_name, {
-            'form': f,
-            'outlets_by_plot': self._get_outlets_json(),
-        })
+        return render(request, self.template_name, self._form_context(f))
 
 
 class ManualIrrigationDeleteView(SuperVisorUserRequiredMixin, View):

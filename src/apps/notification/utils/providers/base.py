@@ -62,7 +62,12 @@ class BaseProvider(abc.ABC):
         Handle exceptions raised during notification sending.
         Can be overridden if needed.
         """
-        pass
+        import logging
+        logging.getLogger(__name__).error(
+            'Notification provider %s failed for notif_id=%s: %s',
+            type(self).__name__, getattr(notification, 'pk', None), exc,
+            exc_info=True,
+        )
 
 
 def _run_provider_send(provider_class_path: str, notification_id: int) -> None:
