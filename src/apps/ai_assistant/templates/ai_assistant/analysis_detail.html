@@ -1,0 +1,169 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}تحلیل {{ analysis.experiment.name }}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آزمایشات|public:experiment_list" "تحلیل‌ها|ai_assistant:analysis_list" analysis.experiment.name %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #5e35b1, #311b92);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; border-right: 4px solid #5e35b1; padding-right: 10px; }
+    .sub-title { font-size: 13px; font-weight: 700; color: #555; margin: 10px 0 4px; }
+    .info-card ul { margin: 0 0 6px; padding-right: 20px; font-size: 14px; line-height: 1.9; }
+    .advice-table { width: 100%; font-size: 13px; }
+    .advice-table th { background: #f0f4fa; padding: 8px 10px; font-weight: 700; }
+    .advice-table td { padding: 8px 10px; border-top: 1px solid #eee; vertical-align: top; }
+    .urgency { display: inline-block; border-radius: 8px; padding: 2px 12px; font-size: 12px; font-weight: 700; }
+    .urgency-low { background: #e8f5e9; color: #2e7d32; }
+    .urgency-medium { background: #fff8e1; color: #f9a825; }
+    .urgency-high { background: #fff3e0; color: #e65100; }
+    .urgency-critical { background: #ffebee; color: #c62828; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1000px;margin:30px auto;">
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">تحلیل آزمایش: {{ analysis.experiment.name }}</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">
+                    {{ analysis.get_provider_display }}{% if analysis.model_name %} / {{ analysis.model_name }}{% endif %}
+                    — {{ analysis.created_at|jalali }}
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'ai_assistant:analysis_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">لیست تحلیل‌ها</a>
+                {% if perms.public.view_experiment %}
+                <a href="{% url 'public:experiment_detail' analysis.experiment.pk %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">آزمایش</a>
+                {% endif %}
+                {% if perms.ai_assistant.add_experimentanalysis %}
+                <a href="{% url 'ai_assistant:analyze' %}?experiment={{ analysis.experiment.pk }}" class="btn btn-sm" style="background:#fff;color:#5e35b1;border-radius:8px;font-weight:600;">تحلیل مجدد</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if analysis.status == 'pending' or analysis.status == 'analyzing' %}
+    <div class="info-card text-center" id="pendingBox">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div style="margin-top:12px;font-weight:600;">در حال تحلیل آزمایش توسط هوش مصنوعی...</div>
+        <div class="text-muted" style="font-size:12px;margin-top:4px;">این صفحه به صورت خودکار به‌روزرسانی می‌شود. (برای پردازش، سرویس صف Django-Q باید فعال باشد)</div>
+    </div>
+    {% elif analysis.status == 'error' %}
+    <div class="alert alert-danger">
+        <strong>تحلیل با خطا مواجه شد.</strong>
+        <div style="margin-top:6px;direction:ltr;text-align:left;font-size:12px;">{{ analysis.error_message }}</div>
+    </div>
+    {% else %}
+    <div class="info-card">
+        <div class="section-title">خلاصه</div>
+        {% if analysis.urgency %}<p><span class="urgency urgency-{{ analysis.urgency }}">اولویت: {{ analysis.get_urgency_display }}</span></p>{% endif %}
+        <p style="line-height:2;">{{ analysis.summary|linebreaksbr }}</p>
+    </div>
+
+    {% include 'ai_assistant/_section.html' with title='وضعیت خاک' section=analysis.result.soil %}
+    {% include 'ai_assistant/_section.html' with title='وضعیت برگ' section=analysis.result.leaf %}
+    {% include 'ai_assistant/_section.html' with title='کیفیت آب' section=analysis.result.water %}
+
+    {% if analysis.result.irrigation %}
+    <div class="info-card">
+        <div class="section-title">توصیه‌های آبیاری</div>
+        <ul>{% for item in analysis.result.irrigation %}<li>{{ item }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if analysis.result.fertilization %}
+    <div class="info-card">
+        <div class="section-title">توصیه‌های کوددهی</div>
+        <div class="table-responsive">
+        <table class="advice-table">
+            <thead><tr><th>کود</th><th>هدف</th><th>مقدار</th><th>زمان</th><th>روش</th></tr></thead>
+            <tbody>
+                {% for item in analysis.result.fertilization %}
+                <tr><td style="font-weight:600;">{{ item.name }}</td><td>{{ item.purpose }}</td><td>{{ item.dose }}</td><td>{{ item.timing }}</td><td>{{ item.method }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if analysis.result.spraying %}
+    <div class="info-card">
+        <div class="section-title">توصیه‌های سم‌پاشی و محلول‌پاشی</div>
+        <div class="table-responsive">
+        <table class="advice-table">
+            <thead><tr><th>نام</th><th>نوع</th><th>هدف</th><th>غلظت/مقدار</th><th>زمان</th></tr></thead>
+            <tbody>
+                {% for item in analysis.result.spraying %}
+                <tr><td style="font-weight:600;">{{ item.name }}</td><td>{{ item.type }}</td><td>{{ item.target }}</td><td>{{ item.dose }}</td><td>{{ item.timing }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if analysis.result.amendments %}
+    <div class="info-card">
+        <div class="section-title">اصلاح‌کننده‌ها</div>
+        <ul>{% for item in analysis.result.amendments %}<li>{{ item }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if analysis.result.warnings %}
+    <div class="info-card" style="border-right:4px solid #c62828;">
+        <div class="section-title" style="border-color:#c62828;">هشدارها</div>
+        <ul>{% for item in analysis.result.warnings %}<li>{{ item }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if analysis.result.follow_up %}
+    <div class="info-card">
+        <div class="section-title">اقدامات پیگیری</div>
+        <ul>{% for item in analysis.result.follow_up %}<li>{{ item }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <div class="text-muted" style="font-size:12px;">این توصیه‌ها توسط هوش مصنوعی تولید شده و پیش از اعمال باید توسط کارشناس کشاورزی بررسی شود.</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block Script %}
+{% if analysis.status == 'pending' or analysis.status == 'analyzing' %}
+<script>
+    (function () {
+        var statusUrl = "{% url 'ai_assistant:analysis_status' analysis.pk %}";
+        var timer = setInterval(function () {
+            fetch(statusUrl, {credentials: 'same-origin'})
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.finished) {
+                        clearInterval(timer);
+                        window.location.reload();
+                    }
+                })
+                .catch(function () {});
+        }, 3000);
+    })();
+</script>
+{% endif %}
+{% endblock %}

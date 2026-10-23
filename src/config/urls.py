@@ -14,6 +14,7 @@ urlpatterns = [
     # path('', include('pwa.urls')),
 
     path('a/', include('apps.account.urls', namespace='account')),
+    path('ai/', include('apps.ai_assistant.urls', namespace='ai_assistant')),
     path('', include('apps.public.urls', namespace='public')),
 ]
 

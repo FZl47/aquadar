@@ -1,0 +1,14 @@
+{% if section %}
+<div class="info-card">
+    <div class="section-title">{{ title }}</div>
+    {% if section.status %}<p style="font-weight:600;">{{ section.status }}</p>{% endif %}
+    {% if section.findings %}
+    <div class="sub-title">یافته‌ها</div>
+    <ul>{% for item in section.findings %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if section.issues %}
+    <div class="sub-title" style="color:#c62828;">مشکلات و کمبودها</div>
+    <ul>{% for item in section.issues %}<li>{{ item }}</li>{% endfor %}</ul>
+    {% endif %}
+</div>
+{% endif %}

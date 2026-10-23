@@ -86,4 +86,10 @@ urlpatterns = [
     path('manual-irrigation/', views.ManualIrrigationListView.as_view(), name='manual_irrigation_list'),
     path('manual-irrigation/create/', views.ManualIrrigationCreateView.as_view(), name='manual_irrigation_create'),
     path('manual-irrigation/<int:pk>/delete/', views.ManualIrrigationDeleteView.as_view(), name='manual_irrigation_delete'),
+
+    path('experiments/', views.ExperimentListView.as_view(), name='experiment_list'),
+    path('experiments/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
+    path('experiments/<int:pk>/', views.ExperimentDetailView.as_view(), name='experiment_detail'),
+    path('experiments/<int:pk>/update/', views.ExperimentUpdateView.as_view(), name='experiment_update'),
+    path('experiments/<int:pk>/delete/', views.ExperimentDeleteView.as_view(), name='experiment_delete'),
 ]

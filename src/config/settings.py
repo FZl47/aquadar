@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.account',
     'apps.public',
     'apps.notification',
+    'apps.ai_assistant',
 ]
 
 MIDDLEWARE = [
@@ -208,6 +209,43 @@ SHORTIN_CONFIG = {
 }
 
 GEMINI_API_KEY = ''
+
+AI_ASSISTANT_CONFIG = {
+    'DEFAULT_PROVIDER': os.environ.get('AI_DEFAULT_PROVIDER', 'gemini'),
+    'TIMEOUT': int(os.environ.get('AI_REQUEST_TIMEOUT', '120')),
+    'PROVIDERS': {
+        'chatgpt': {
+            'API_KEY': os.environ.get('OPENAI_API_KEY', ''),
+            'MODEL': os.environ.get('OPENAI_MODEL', 'gpt-4o'),
+            'BASE_URL': os.environ.get('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        },
+        'gapgpt': {
+            'API_KEY': os.environ.get('GAPGPT_API_KEY', ''),
+            'MODEL': os.environ.get('GAPGPT_MODEL', 'gpt-4o'),
+            'BASE_URL': os.environ.get('GAPGPT_BASE_URL', 'https://api.gapgpt.app/v1'),
+        },
+        'grok': {
+            'API_KEY': os.environ.get('GROK_API_KEY', ''),
+            'MODEL': os.environ.get('GROK_MODEL', 'grok-4'),
+            'BASE_URL': os.environ.get('GROK_BASE_URL', 'https://api.x.ai/v1'),
+        },
+        'claude': {
+            'API_KEY': os.environ.get('ANTHROPIC_API_KEY', ''),
+            'MODEL': os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-6'),
+            'BASE_URL': os.environ.get('ANTHROPIC_BASE_URL', 'https://api.anthropic.com/v1'),
+        },
+        'gemini': {
+            'API_KEY': os.environ.get('GEMINI_API_KEY') or GEMINI_API_KEY,
+            'MODEL': os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash'),
+            'BASE_URL': os.environ.get('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+        },
+        'deepseek': {
+            'API_KEY': os.environ.get('DEEPSEEK_API_KEY', ''),
+            'MODEL': os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat'),
+            'BASE_URL': os.environ.get('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
+        },
+    },
+}
 
 # django-pwa config
 PWA_APP_NAME = 'آکوآدار'

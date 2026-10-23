@@ -66,6 +66,25 @@
             <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
             {% endif %}
 
+            {% if perms.public.view_experiment or perms.ai_assistant.view_experimentanalysis or perms.ai_assistant.add_experimentanalysis %}
+            <li class="aq-nav-section"><i class="icon-beaker"></i> آزمایشات</li>
+            {% if perms.public.view_experiment %}
+            <li><a class="aq-nav-link" href="{% url 'public:experiment_list' %}"><i class="icon-beaker"></i><span>لیست آزمایشات</span></a></li>
+            {% endif %}
+            {% if perms.public.add_experiment %}
+            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:experiment_create' %}"><i class="icon-plus"></i><span>ثبت آزمایش</span></a></li>
+            {% endif %}
+            {% if perms.ai_assistant.add_experimentanalysis %}
+            <li><a class="aq-nav-link aq-nav-add" href="{% url 'ai_assistant:analyze' %}"><i class="icon-magic"></i><span>تحلیل آزمایش</span></a></li>
+            {% endif %}
+            {% if perms.ai_assistant.view_experimentanalysis %}
+            <li><a class="aq-nav-link" href="{% url 'ai_assistant:analysis_list' %}"><i class="icon-list-alt"></i><span>تحلیل‌های هوش مصنوعی</span></a></li>
+            {% endif %}
+            {% if perms.ai_assistant.change_aisettings %}
+            <li><a class="aq-nav-link" href="{% url 'ai_assistant:settings' %}"><i class="icon-cog"></i><span>تنظیمات هوش مصنوعی</span></a></li>
+            {% endif %}
+            {% endif %}
+
             <li class="aq-nav-section"><i class="icon-user"></i> {% trans "Account" %}</li>
             <li><a class="aq-nav-link aq-nav-danger" href="{% url 'account:logout' %}"><i class="icon-signout"></i><span>{% trans "Logout" %}</span></a></li>
         </ul>

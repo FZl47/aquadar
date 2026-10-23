@@ -1,0 +1,107 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}آزمایشات{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آزمایشات" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #00897b, #00574b);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
+    .table-card thead th { background: #f0f4fa; font-weight: 700; font-size: 13px; color: #555; border: none; padding: 10px 12px; }
+    .table-card tbody td { padding: 10px 12px; vertical-align: middle; font-size: 13px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1200px;margin:30px auto;">
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;"><i class="icon-beaker"></i> آزمایشات</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">آزمایش‌های خاک، برگ و آب</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">داشبورد</a>
+                {% if perms.ai_assistant.view_experimentanalysis %}
+                <a href="{% url 'ai_assistant:analysis_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">تحلیل‌های هوش مصنوعی</a>
+                {% endif %}
+                {% if perms.public.add_experiment %}
+                <a href="{% url 'public:experiment_create' %}" class="btn btn-sm" style="background:#fff;color:#00897b;border-radius:8px;font-weight:600;">+ ثبت آزمایش</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="table-card">
+        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;">لیست آزمایشات</div>
+        {% if experiments %}
+        <div class="table-responsive">
+        <table class="table table-hover" style="margin:0;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نام آزمایش</th>
+                    <th>تاریخ آزمایش</th>
+                    <th>ثبت‌کننده</th>
+                    <th>تاریخ ثبت</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for experiment in experiments %}
+                <tr>
+                    <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+                    <td style="font-weight:600;"><a href="{% url 'public:experiment_detail' experiment.pk %}">{{ experiment.name }}</a></td>
+                    <td style="white-space:nowrap;">{{ experiment.date|jalali_date }}</td>
+                    <td>{% if experiment.created_by %}{{ experiment.created_by.get_full_name|default:experiment.created_by.username }}{% else %}—{% endif %}</td>
+                    <td style="white-space:nowrap;">{{ experiment.created_at|jalali }}</td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'public:experiment_detail' experiment.pk %}" class="btn btn-sm btn-outline-primary" style="border-radius:6px;">جزئیات</a>
+                        {% if perms.ai_assistant.add_experimentanalysis %}
+                        <a href="{% url 'ai_assistant:analyze' %}?experiment={{ experiment.pk }}" class="btn btn-sm btn-outline-success" style="border-radius:6px;">تحلیل</a>
+                        {% endif %}
+                        {% if perms.public.change_experiment %}
+                        <a href="{% url 'public:experiment_update' experiment.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:6px;">ویرایش</a>
+                        {% endif %}
+                        {% if perms.public.delete_experiment %}
+                        <form method="post" action="{% url 'public:experiment_delete' experiment.pk %}" style="display:inline;"
+                              onsubmit="return confirm('این آزمایش حذف شود؟');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:6px;">حذف</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% if is_paginated %}
+        <div style="padding:12px 18px;display:flex;gap:8px;justify-content:center;">
+            {% if page_obj.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?page={{ page_obj.previous_page_number }}">قبلی</a>{% endif %}
+            <span style="font-size:13px;align-self:center;">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?page={{ page_obj.next_page_number }}">بعدی</a>{% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center text-muted py-5">هنوز آزمایشی ثبت نشده است.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

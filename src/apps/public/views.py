@@ -17,15 +17,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, TemplateView, View
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 from django_q.tasks import async_task
 
-from apps.core.auth.mixins import SuperVisorUserRequiredMixin, WatermanUserRequiredMixin
+from apps.core.auth.mixins import PermissionMixin, SuperVisorUserRequiredMixin, WatermanUserRequiredMixin
 from apps.core.forms.utils import form_validate_err
 
 from . import forms, models
 from .models import (
-    Farm, FertilizationRecord, FertilizerCategory, FoliarSprayCategory,
+    Experiment, Farm, FertilizationRecord, FertilizerCategory, FoliarSprayCategory,
     ManualIrrigation, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
     PlotVegetationIndex, PlotWeather, ReportFoliarSpray, Run, RunStatus,
     Zone, UserActivityReport,
@@ -1932,5 +1932,83 @@ class ManualIrrigationDeleteView(SuperVisorUserRequiredMixin, View):
         return redirect(reverse('public:manual_irrigation_list'))
 
 
+class ExperimentListView(PermissionMixin, ListView):
+    permissions = ('public.view_experiment',)
+    model = Experiment
+    template_name = 'public/experiment/list.html'
+    context_object_name = 'experiments'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Experiment.objects.select_related('created_by').order_by('-date', '-id')
 
 
+class ExperimentDetailView(PermissionMixin, DetailView):
+    permissions = ('public.view_experiment',)
+    model = Experiment
+    template_name = 'public/experiment/detail.html'
+    context_object_name = 'experiment'
+
+    def get_queryset(self):
+        return Experiment.objects.select_related('created_by')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['analyses'] = self.object.analyses.select_related('requested_by').order_by('-id')[:10]
+        context['experiment_files'] = [
+            {
+                'label': label,
+                'file': stored,
+                'is_image': stored.name.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')),
+            }
+            for label, stored in (
+                ('آزمایش خاک', self.object.soil_file),
+                ('آزمایش برگ', self.object.leaf_file),
+                ('آزمایش آب', self.object.water_file),
+            )
+        ]
+        return context
+
+
+class ExperimentCreateView(PermissionMixin, CreateView):
+    permissions = ('public.add_experiment',)
+    model = Experiment
+    form_class = forms.ExperimentForm
+    template_name = 'public/experiment/form.html'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        messages.success(self.request, 'آزمایش با موفقیت ثبت شد')
+        return response
+
+    def get_success_url(self):
+        return reverse('public:experiment_detail', args=[self.object.pk])
+
+
+class ExperimentUpdateView(PermissionMixin, UpdateView):
+    permissions = ('public.change_experiment',)
+    model = Experiment
+    form_class = forms.ExperimentForm
+    template_name = 'public/experiment/form.html'
+    context_object_name = 'experiment'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'آزمایش با موفقیت ویرایش شد')
+        return response
+
+    def get_success_url(self):
+        return reverse('public:experiment_detail', args=[self.object.pk])
+
+
+class ExperimentDeleteView(PermissionMixin, DeleteView):
+    permissions = ('public.delete_experiment',)
+    model = Experiment
+    http_method_names = ['post']
+    success_url = reverse_lazy('public:experiment_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'آزمایش حذف شد')
+        return response

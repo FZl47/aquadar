@@ -431,3 +431,11 @@ class PlotVegetationSoilReportAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('plot__zone__farm')
+
+
+@admin.register(models.Experiment)
+class ExperimentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'date', 'created_by', 'created_at')
+    list_filter = ('date',)
+    search_fields = ('name', 'description')
+    raw_id_fields = ('created_by',)

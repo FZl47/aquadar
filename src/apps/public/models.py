@@ -1,5 +1,7 @@
 import datetime
+import os
 import statistics
+import uuid
 
 from django.utils.translation import gettext_lazy as _
 from django.db import models
@@ -934,3 +936,51 @@ class PlotWeather(BaseModel):
 
     def __str__(self):
         return f"Weather {self.plot.name} | {self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else '—'}"
+
+
+def _experiment_upload_path(folder, filename):
+    extension = os.path.splitext(filename)[1].lower()
+    return f'experiments/{folder}/{uuid.uuid4().hex}{extension}'
+
+
+def experiment_soil_path(instance, filename):
+    return _experiment_upload_path('soil', filename)
+
+
+def experiment_leaf_path(instance, filename):
+    return _experiment_upload_path('leaf', filename)
+
+
+def experiment_water_path(instance, filename):
+    return _experiment_upload_path('water', filename)
+
+
+class Experiment(BaseModel):
+    FILE_FIELDS = ('soil_file', 'leaf_file', 'water_file')
+
+    name = models.CharField(max_length=256, verbose_name='نام آزمایش')
+    date = models.DateField(verbose_name='تاریخ آزمایش')
+    description = models.TextField(null=True, blank=True, verbose_name='توضیحات')
+    soil_file = models.FileField(upload_to=experiment_soil_path, verbose_name='آزمایش خاک')
+    leaf_file = models.FileField(upload_to=experiment_leaf_path, verbose_name='آزمایش برگ')
+    water_file = models.FileField(upload_to=experiment_water_path, verbose_name='آزمایش آب')
+    created_by = models.ForeignKey(
+        'account.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='experiments', verbose_name='ثبت‌کننده')
+
+    class Meta:
+        ordering = ('-date', '-id')
+        verbose_name = 'آزمایش'
+        verbose_name_plural = 'آزمایشات'
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        previous = Experiment.objects.filter(pk=self.pk).first() if self.pk else None
+        super().save(*args, **kwargs)
+        if previous:
+            for field in self.FILE_FIELDS:
+                old_file = getattr(previous, field)
+                if old_file and old_file.name != getattr(self, field).name:
+                    old_file.delete(save=False)

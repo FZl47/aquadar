@@ -1,0 +1,70 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}تحلیل آزمایش{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آزمایشات|public:experiment_list" "تحلیل آزمایش" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #5e35b1, #311b92);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .form-card { background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); max-width: 680px; }
+    .form-card label { font-weight: 600; font-size: 13px; color: #555; margin-bottom: 4px; }
+    .form-card .form-group { margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #888; margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:800px;margin:30px auto;">
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">تحلیل آزمایش با هوش مصنوعی</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">آزمایش خاک، برگ و آب به هوش مصنوعی داده می‌شود و توصیه‌های آبیاری، کوددهی و سم‌پاشی دریافت می‌کنید</div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>آزمایش <span class="text-danger">*</span></label>
+                {{ form.experiment }}
+                {% if form.experiment.errors %}<div class="text-danger small">{{ form.experiment.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>ارائه‌دهنده هوش مصنوعی</label>
+                {{ form.provider }}
+                <div class="hint">
+                    ارائه‌دهنده اصلی فعلی:
+                    {% for provider in providers %}{% if provider.name == main_provider_name %}{{ provider.label }}{% endif %}{% endfor %}
+                    {% if perms.ai_assistant.change_aisettings %} — <a href="{% url 'ai_assistant:settings' %}">تغییر در تنظیمات</a>{% endif %}
+                </div>
+                {% if form.provider.errors %}<div class="text-danger small">{{ form.provider.errors }}</div>{% endif %}
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="background:#5e35b1;border-color:#5e35b1;border-radius:8px;font-weight:600;">شروع تحلیل</button>
+                <a href="{% url 'public:experiment_list' %}" class="btn btn-secondary" style="border-radius:8px;">انصراف</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

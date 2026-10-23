@@ -1,0 +1,87 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}{% if experiment %}ویرایش آزمایش{% else %}ثبت آزمایش{% endif %}{% endblock %}
+
+{% block Breadcrumbs %}{% if experiment %}{% aq_breadcrumb "آزمایشات|public:experiment_list" "ویرایش آزمایش" %}{% else %}{% aq_breadcrumb "آزمایشات|public:experiment_list" "ثبت آزمایش" %}{% endif %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #00897b, #00574b);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .form-card { background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); max-width: 680px; }
+    .form-card label { font-weight: 600; font-size: 13px; color: #555; margin-bottom: 4px; }
+    .form-card .form-group { margin-bottom: 16px; }
+    .hint { font-size: 12px; color: #888; margin-top: 4px; }
+    .file-current { font-size: 12px; margin-bottom: 6px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:800px;margin:30px auto;">
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">{% if experiment %}ویرایش آزمایش{% else %}+ ثبت آزمایش{% endif %}</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">ثبت فایل آزمایش خاک، برگ و آب</div>
+    </div>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>نام آزمایش <span class="text-danger">*</span></label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>تاریخ آزمایش <span class="text-danger">*</span></label>
+                {{ form.date }}
+                <div class="hint">تاریخ شمسی، مثال: 1404/04/20</div>
+                {% if form.date.errors %}<div class="text-danger small">{{ form.date.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>توضیحات</label>
+                {{ form.description }}
+            </div>
+
+            <div class="form-group">
+                <label>آزمایش خاک <span class="text-danger">*</span></label>
+                {% if experiment.soil_file %}<div class="file-current">فایل فعلی: <a href="{{ experiment.soil_file.url }}" target="_blank">مشاهده</a> (برای حفظ فایل فعلی، فایل جدیدی انتخاب نکنید)</div>{% endif %}
+                <input type="file" name="soil_file" id="id_soil_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.xls,.xlsx,.doc,.docx">
+                <div class="hint">عکس، PDF یا فایل (حداکثر ۱۰ مگابایت)</div>
+                {% if form.soil_file.errors %}<div class="text-danger small">{{ form.soil_file.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>آزمایش برگ <span class="text-danger">*</span></label>
+                {% if experiment.leaf_file %}<div class="file-current">فایل فعلی: <a href="{{ experiment.leaf_file.url }}" target="_blank">مشاهده</a> (برای حفظ فایل فعلی، فایل جدیدی انتخاب نکنید)</div>{% endif %}
+                <input type="file" name="leaf_file" id="id_leaf_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.xls,.xlsx,.doc,.docx">
+                <div class="hint">عکس، PDF یا فایل (حداکثر ۱۰ مگابایت)</div>
+                {% if form.leaf_file.errors %}<div class="text-danger small">{{ form.leaf_file.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>آزمایش آب <span class="text-danger">*</span></label>
+                {% if experiment.water_file %}<div class="file-current">فایل فعلی: <a href="{{ experiment.water_file.url }}" target="_blank">مشاهده</a> (برای حفظ فایل فعلی، فایل جدیدی انتخاب نکنید)</div>{% endif %}
+                <input type="file" name="water_file" id="id_water_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.xls,.xlsx,.doc,.docx">
+                <div class="hint">عکس، PDF یا فایل (حداکثر ۱۰ مگابایت)</div>
+                {% if form.water_file.errors %}<div class="text-danger small">{{ form.water_file.errors }}</div>{% endif %}
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button type="submit" class="btn btn-primary" style="background:#00897b;border-color:#00897b;border-radius:8px;font-weight:600;">ذخیره</button>
+                <a href="{% url 'public:experiment_list' %}" class="btn btn-secondary" style="border-radius:8px;">انصراف</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

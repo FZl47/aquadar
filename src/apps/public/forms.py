@@ -1,3 +1,5 @@
+import os
+
 import jdatetime
 
 from django import forms
@@ -463,3 +465,57 @@ class ManualIrrigationForm(forms.Form):
             if invalid:
                 raise forms.ValidationError(_('Selected outlets must belong to the chosen plot.'))
         return cleaned
+
+
+EXPERIMENT_ALLOWED_EXTENSIONS = (
+    '.pdf', '.jpg', '.jpeg', '.png', '.webp', '.txt', '.csv', '.xls', '.xlsx', '.doc', '.docx',
+)
+EXPERIMENT_MAX_FILE_SIZE = 10 * 1024 * 1024
+
+
+class ExperimentForm(forms.ModelForm):
+    date = forms.CharField(
+        label='تاریخ آزمایش',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '1404/04/20',
+            'dir': 'ltr',
+        }),
+    )
+
+    class Meta:
+        model = models.Experiment
+        fields = ['name', 'date', 'description', 'soil_file', 'leaf_file', 'water_file']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.date:
+            self.initial['date'] = jdatetime.date.fromgregorian(date=self.instance.date).strftime('%Y/%m/%d')
+
+    def clean_date(self):
+        return _parse_jalali_date(self.cleaned_data.get('date'))
+
+    def _clean_experiment_file(self, field_name):
+        uploaded = self.cleaned_data.get(field_name)
+        if uploaded and hasattr(uploaded, 'size') and not getattr(uploaded, '_committed', False):
+            extension = os.path.splitext(uploaded.name)[1].lower()
+            if extension not in EXPERIMENT_ALLOWED_EXTENSIONS:
+                raise forms.ValidationError(
+                    'فرمت فایل مجاز نیست. فرمت‌های مجاز: ' + ' '.join(EXPERIMENT_ALLOWED_EXTENSIONS)
+                )
+            if uploaded.size > EXPERIMENT_MAX_FILE_SIZE:
+                raise forms.ValidationError('حجم فایل نباید بیشتر از ۱۰ مگابایت باشد.')
+        return uploaded
+
+    def clean_soil_file(self):
+        return self._clean_experiment_file('soil_file')
+
+    def clean_leaf_file(self):
+        return self._clean_experiment_file('leaf_file')
+
+    def clean_water_file(self):
+        return self._clean_experiment_file('water_file')

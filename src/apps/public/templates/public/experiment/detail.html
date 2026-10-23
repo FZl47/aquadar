@@ -1,0 +1,109 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}{{ experiment.name }}{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "آزمایشات|public:experiment_list" experiment.name %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    .page-header {
+        background: linear-gradient(135deg, #00897b, #00574b);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .info-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+    .info-row { display: flex; gap: 8px; padding: 6px 0; font-size: 14px; }
+    .info-row .k { color: #888; min-width: 110px; }
+    .file-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .file-box { border: 1px solid #e6eaf2; border-radius: 10px; padding: 14px; background: #fafbff; }
+    .file-box img { max-width: 100%; max-height: 220px; border-radius: 8px; display: block; margin: 8px auto; }
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; border-right: 4px solid #00897b; padding-right: 10px; }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1000px;margin:30px auto;">
+    <div class="page-header">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">{{ experiment.name }}</div>
+                <div style="opacity:.8;font-size:13px;margin-top:4px;">تاریخ آزمایش: {{ experiment.date|jalali_date }}</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="{% url 'public:experiment_list' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">بازگشت</a>
+                {% if perms.ai_assistant.add_experimentanalysis %}
+                <a href="{% url 'ai_assistant:analyze' %}?experiment={{ experiment.pk }}" class="btn btn-sm" style="background:#fff;color:#00897b;border-radius:8px;font-weight:600;">تحلیل با هوش مصنوعی</a>
+                {% endif %}
+                {% if perms.public.change_experiment %}
+                <a href="{% url 'public:experiment_update' experiment.pk %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">ویرایش</a>
+                {% endif %}
+                {% if perms.public.delete_experiment %}
+                <form method="post" action="{% url 'public:experiment_delete' experiment.pk %}" style="display:inline;"
+                      onsubmit="return confirm('این آزمایش حذف شود؟');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger" style="border-radius:8px;">حذف</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="info-card">
+        <div class="section-title">اطلاعات آزمایش</div>
+        <div class="info-row"><span class="k">نام</span><span>{{ experiment.name }}</span></div>
+        <div class="info-row"><span class="k">تاریخ</span><span>{{ experiment.date|jalali_date }}</span></div>
+        <div class="info-row"><span class="k">ثبت‌کننده</span><span>{% if experiment.created_by %}{{ experiment.created_by.get_full_name|default:experiment.created_by.username }}{% else %}—{% endif %}</span></div>
+        <div class="info-row"><span class="k">تاریخ ثبت</span><span>{{ experiment.created_at|jalali }}</span></div>
+        <div class="info-row"><span class="k">توضیحات</span><span>{{ experiment.description|default:"—"|linebreaksbr }}</span></div>
+    </div>
+
+    <div class="info-card">
+        <div class="section-title">فایل‌های آزمایش</div>
+        <div class="file-grid">
+            {% for item in experiment_files %}
+            <div class="file-box">
+                <div style="font-weight:700;">{{ item.label }}</div>
+                {% if item.is_image %}
+                <a href="{{ item.file.url }}" target="_blank"><img src="{{ item.file.url }}" alt="{{ item.label }}"></a>
+                {% endif %}
+                <a href="{{ item.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:6px;">مشاهده / دانلود فایل</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if perms.ai_assistant.view_experimentanalysis %}
+    <div class="info-card">
+        <div class="section-title">تحلیل‌های هوش مصنوعی</div>
+        {% if analyses %}
+        <table class="table table-sm" style="font-size:13px;">
+            <thead><tr><th>تاریخ</th><th>ارائه‌دهنده</th><th>وضعیت</th><th></th></tr></thead>
+            <tbody>
+                {% for analysis in analyses %}
+                <tr>
+                    <td>{{ analysis.created_at|jalali }}</td>
+                    <td>{{ analysis.get_provider_display }}</td>
+                    <td>{{ analysis.get_status_display }}</td>
+                    <td><a href="{% url 'ai_assistant:analysis_detail' analysis.pk %}">مشاهده</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-muted" style="font-size:13px;">هنوز تحلیلی برای این آزمایش انجام نشده است.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,13 +1,21 @@
 import logging
 
 from django.db import transaction
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django_q.tasks import async_task
 
 from . import models
 
 logger = logging.getLogger(__name__)
+
+
+@receiver(post_delete, sender=models.Experiment)
+def experiment_delete_files(sender, instance, **kwargs):
+    for field in instance.FILE_FIELDS:
+        stored = getattr(instance, field)
+        if stored:
+            stored.delete(save=False)
 
 
 @receiver(post_save, sender=models.RunStatus)
