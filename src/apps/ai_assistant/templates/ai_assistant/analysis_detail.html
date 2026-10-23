@@ -8,7 +8,7 @@
 
 {% block Style %}
 <style>
-    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
     .page-header {
         background: linear-gradient(135deg, #5e35b1, #311b92);
         border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
@@ -35,7 +35,7 @@
             <div>
                 <div style="font-size:22px;font-weight:bold;">تحلیل آزمایش: {{ analysis.experiment.name }}</div>
                 <div style="opacity:.8;font-size:13px;margin-top:4px;">
-                    {{ analysis.get_provider_display }}{% if analysis.model_name %} / {{ analysis.model_name }}{% endif %}
+                    {{ analysis.provider_label }}{% if analysis.model_name %} / {{ analysis.model_name }}{% endif %}
                     — {{ analysis.created_at|jalali }}
                 </div>
             </div>

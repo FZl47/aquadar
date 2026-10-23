@@ -14,7 +14,7 @@
 {% block Style %}
     <style>
         body {
-            font-family: 'YekanBakhFaNum', monospace;
+            font-family: 'Vazir', sans-serif;
             background: #f4f6f9;
             padding: 20px;
         }
@@ -919,7 +919,7 @@
                     {% trans "Leaf Analysis (AI)" %}
                 </div>
                 <div id="leaf-upload-area"
-                     data-upload-url="{% url 'public:plot_leaf_upload' plot.id %}"
+                     data-upload-url="{% url 'ai_assistant:plot_leaf_upload' plot.id %}"
                      style="border:2px dashed #ccc;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:border-color .2s;"
                      ondragover="event.preventDefault();"
                      ondrop="handleLeafDrop(event);"
@@ -933,7 +933,7 @@
                      style="display:none;text-align:center;padding:20px;color:#888;">{% trans "Analyzing image... please wait" %}</div>
                 <div id="leaf-result" style="display:none;margin-top:16px;"></div>
                 <div style="margin-top:12px;">
-                    <a href="{% url 'public:plot_leaf_list' plot.id %}"
+                    <a href="{% url 'ai_assistant:plot_leaf_list' plot.id %}"
                        style="font-size:13px;color:#1a73e8;">{% trans "View analysis history" %} ›</a>
                 </div>
             </div>
@@ -953,29 +953,7 @@
             }
             const center = initial.length ? [initial[0][0], initial[0][1]] : [35.6892, 51.3890];
             const map = L.map('boundary-map').setView(center, initial.length ? 16 : 6);
-            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            });
-            const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                attribution: '© Esri'
-            });
-            const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '© Google',
-                subdomains: ['0', '1', '2', '3']
-            });
-            const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-                maxZoom: 20,
-                attribution: '© CartoDB'
-            });
-            streetLayer.addTo(map);
-            labelsLayer.addTo(map);
-            L.control.layers(
-                {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
-                {'نام شهرها و مناطق': labelsLayer}
-            ).addTo(map);
+            AqMap.addBaseLayers(map);
 
             const overlayUrls = {};
             try {

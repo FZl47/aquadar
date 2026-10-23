@@ -1,6 +1,8 @@
 import pytz
 from datetime import datetime
 
+from django.conf import settings
+
 from apps.notification import models
 
 from .mixins import NotificationModelMixin
@@ -26,3 +28,11 @@ def create_user_notif(to_user, type_notif, title, description=None, image=None, 
         send_notify=send_notify,
         **kwargs
     )
+
+
+def absolute_url(path):
+    path = str(path or '')
+    if not path or path.startswith(('http://', 'https://')):
+        return path
+    return f"{settings.SITE_BASE_URL.rstrip('/')}/{path.lstrip('/')}"
+

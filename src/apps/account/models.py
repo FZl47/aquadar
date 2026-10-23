@@ -57,6 +57,7 @@ class User(BaseModel, AbstractUser, PermissionsMixin):
     last_name = models.CharField(_("last name"), max_length=150, blank=True, default='')
     phonenumber = models.CharField(_("Phonenumber"), null=True, blank=True, max_length=20,
                                    validators=[PhonenumberValidator()])
+    rubika_id = models.CharField(_("Rubika ID"), null=True, blank=True, max_length=64)
 
     role = models.CharField(max_length=15, choices=ROLE_TYPES, default='waterman', verbose_name=_('Role'))
     farms = models.ManyToManyField('public.Farm', verbose_name=_('Farms'))

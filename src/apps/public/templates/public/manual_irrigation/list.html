@@ -13,31 +13,58 @@
 
 {% block Style %}
 <style>
-body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
-.page-header { background: linear-gradient(135deg, #0288d1, #01579b); border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff; }
-.table-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
-.table-card thead th { background: #f0f4fa; font-weight: 700; font-size: 13px; color: #555; border: none; padding: 10px 12px; }
-.table-card tbody td { padding: 10px 12px; vertical-align: middle; font-size: 13px; }
-.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.stat-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; }
-.stat-value { font-size: 24px; font-weight: bold; margin: 6px 0 3px; }
-.stat-label { font-size: 11px; color: #888; }
+body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
+.mi-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 22px 26px; margin-bottom: 20px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #0369a1, #0284c7); }
+.mi-head h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.mi-head .sub { opacity: .85; font-size: 13px; margin-top: 4px; }
+.mi-btn { display: inline-block; padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.18); color: #fff; }
+.mi-btn:hover { background: rgba(255,255,255,.3); color: #fff; text-decoration: none; }
+.mi-btn.primary { background: #fff; color: #0369a1; }
+.mi-btn.primary:hover { background: #e0f2fe; color: #0369a1; }
+.mi-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.mi-stat { --c: #0284c7; background: #fff; border: 1px solid #e8ecf1; border-top: 3px solid var(--c); border-radius: 12px; padding: 14px 16px; }
+.mi-stat .v { font-size: 26px; font-weight: 800; color: var(--c); line-height: 1.2; }
+.mi-stat .v small { font-size: 12px; font-weight: 600; color: #94a3b8; margin-inline-start: 4px; }
+.mi-stat .l { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 2px; }
+.mi-stat.time { --c: #7c3aed; }
+.mi-stat.water { --c: #0d9488; }
+.mi-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; overflow: hidden; }
+.mi-card table { margin: 0; font-size: 13px; width: 100%; }
+.mi-card thead th { background: #f8fafc; font-weight: 700; color: #475569; border: none; border-bottom: 1px solid #e8ecf1; padding: 12px; white-space: nowrap; }
+.mi-card tbody td { padding: 12px; vertical-align: middle; border-bottom: 1px solid #f1f4f8; border-top: none; }
+.mi-card tbody tr:last-child td { border-bottom: none; }
+.mi-card tbody tr:hover { background: #f8fafc; }
+.mi-plot a { font-weight: 700; color: #0369a1; text-decoration: none; }
+.mi-plot .path { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+.mi-key { display: inline-block; min-width: 34px; text-align: center; padding: 3px 10px; border-radius: 6px; background: #f3e8ff; color: #6b21a8; font-weight: 800; }
+.mi-pill { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; white-space: nowrap; }
+.mi-pill.dur { background: #f1f5f9; color: #334155; }
+.mi-pill.water { background: #ccfbf1; color: #0f766e; }
+.mi-date { color: #475569; white-space: nowrap; direction: ltr; unicode-bidi: plaintext; }
+.mi-sub { font-size: 11.5px; color: #94a3b8; white-space: nowrap; }
+.mi-none { color: #cbd5e1; }
+.mi-del { background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; padding: 4px 12px; }
+.mi-del:hover { background: #b91c1c; color: #fff; }
+.mi-empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+.mi-empty i { font-size: 38px; display: block; margin-bottom: 12px; color: #cbd5e1; }
+.mi-pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; }
+.mi-pager a, .mi-pager span { padding: 7px 16px; border-radius: 8px; background: #fff; border: 1px solid #e8ecf1; color: #334155; font-size: 13px; font-weight: 600; text-decoration: none; }
+.mi-pager a:hover { background: #0284c7; border-color: #0284c7; color: #fff; }
+.mi-pager span { background: #f8fafc; color: #64748b; }
 </style>
 {% endblock %}
 
 {% block Content %}
-<div class="container" style="max-width:1200px;margin:30px auto;">
+<div class="container" style="max-width:1280px;margin:28px auto;">
 
-    <div class="page-header">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <div>
-                <div style="font-size:22px;font-weight:bold;">آبیاری‌های دستی</div>
-                <div style="opacity:.8;font-size:13px;margin-top:4px;">ثبت‌شده توسط ادمین</div>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <a href="{% url 'public:index' %}" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;">🏠 داشبورد</a>
-                <a href="{% url 'public:manual_irrigation_create' %}" class="btn btn-sm" style="background:#fff;color:#0288d1;border-radius:8px;font-weight:600;">+ ثبت آبیاری دستی</a>
-            </div>
+    <div class="mi-head">
+        <div>
+            <h1>آبیاری‌های دستی</h1>
+            <div class="sub">ثبت‌شده توسط ادمین</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="{% url 'public:index' %}" class="mi-btn">داشبورد</a>
+            <a href="{% url 'public:manual_irrigation_create' %}" class="mi-btn primary">+ ثبت آبیاری دستی</a>
         </div>
     </div>
 
@@ -50,34 +77,27 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
     {% endfor %}
     {% endif %}
 
-    <!-- Summary stats -->
-    <div class="stat-cards">
-        <div class="stat-card" style="border-top:3px solid #0288d1;">
-            <div style="color:#0288d1;font-size:20px;">📋</div>
-            <div class="stat-value" style="color:#0288d1;">{{ total_count }}</div>
-            <div class="stat-label">تعداد کل</div>
-        </div>
+    <div class="mi-stats">
+        <div class="mi-stat"><div class="v">{{ total_count }}</div><div class="l">تعداد کل آبیاری</div></div>
+        <div class="mi-stat time"><div class="v">{{ manual_total_hours }}<small>ساعت</small></div><div class="l">مجموع مدت آبیاری</div></div>
+        <div class="mi-stat water"><div class="v">{{ manual_total_m3 }}<small>m³</small></div><div class="l">مجموع آب مصرفی</div></div>
     </div>
 
-    <div class="table-card">
-        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;">
-            <span>لیست آبیاری‌های دستی</span>
-        </div>
+    <div class="mi-card">
         {% if page_obj %}
         <div class="table-responsive">
-        <table class="table table-hover" style="margin:0;">
+        <table class="table">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>زمین</th>
                     <th>کیز</th>
-                    <th>شروع (شمسی)</th>
-                    <th>پایان (شمسی)</th>
-                    <th>مدت (دقیقه)</th>
-                    <th>آب مصرفی (m³)</th>
+                    <th>شروع</th>
+                    <th>پایان</th>
+                    <th>مدت</th>
+                    <th>آب مصرفی</th>
                     <th>آبیار</th>
                     <th>ثبت‌کننده</th>
-                    <th>تاریخ ثبت</th>
                     <th></th>
                 </tr>
             </thead>
@@ -85,24 +105,24 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
             {% for irr in page_obj %}
             <tr>
                 <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                <td>
-                    <a href="{{ irr.plot.get_absolute_url }}" style="color:#0288d1;font-weight:600;text-decoration:none;">
-                        {{ irr.plot.name }}
-                    </a>
-                    <div style="font-size:11px;color:#aaa;">{{ irr.plot.zone.farm.name }} / {{ irr.plot.zone.name }}</div>
+                <td class="mi-plot">
+                    <a href="{{ irr.plot.get_absolute_url }}">{{ irr.plot.name }}</a>
+                    <div class="path">{{ irr.plot.zone.farm.name }} / {{ irr.plot.zone.name }}</div>
                 </td>
-                <td>{% if irr.outlet %}کیز {{ irr.outlet.number }}{% else %}<span style="color:#ccc;">—</span>{% endif %}</td>
-                <td style="direction:ltr;text-align:right;">{{ irr.start_datetime|jalali }}</td>
-                <td style="direction:ltr;text-align:right;">{{ irr.end_datetime|jalali }}</td>
-                <td><strong>{{ irr.duration_minutes }}</strong></td>
-                <td><strong style="color:#0288d1;">{{ irr.water_m3 }}</strong></td>
-                <td>{% if irr.reporter %}{{ irr.reporter.get_full_name }}{% else %}<span style="color:#ccc;">—</span>{% endif %}</td>
-                <td style="font-size:12px;color:#888;">{% if irr.registered_by %}{{ irr.registered_by.get_full_name }}{% else %}—{% endif %}</td>
-                <td style="font-size:11px;color:#aaa;white-space:nowrap;">{{ irr.created_at|jalali }}</td>
+                <td>{% if irr.outlet %}<span class="mi-key">{{ irr.outlet.number }}</span>{% else %}<span class="mi-none">—</span>{% endif %}</td>
+                <td class="mi-date">{{ irr.start_datetime|jalali }}</td>
+                <td class="mi-date">{{ irr.end_datetime|jalali }}</td>
+                <td><span class="mi-pill dur">{{ irr.duration_minutes }} دقیقه</span></td>
+                <td><span class="mi-pill water">{{ irr.water_m3 }} m³</span></td>
+                <td>{% if irr.reporter %}{{ irr.reporter.get_full_name }}{% else %}<span class="mi-none">—</span>{% endif %}</td>
+                <td>
+                    {% if irr.registered_by %}{{ irr.registered_by.get_full_name }}{% else %}<span class="mi-none">—</span>{% endif %}
+                    <div class="mi-sub">{{ irr.created_at|jalali }}</div>
+                </td>
                 <td>
                     <form method="post" action="{% url 'public:manual_irrigation_delete' irr.pk %}" style="display:inline;" onsubmit="return confirm('این آبیاری حذف شود؟');">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-sm" style="background:#fce4ec;color:#b71c1c;border:none;border-radius:6px;font-size:12px;padding:3px 8px;">حذف</button>
+                        <button type="submit" class="mi-del">حذف</button>
                     </form>
                 </td>
             </tr>
@@ -110,33 +130,22 @@ body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
             </tbody>
         </table>
         </div>
-        {% if page_obj.has_other_pages %}
-        <nav style="margin:16px 0;padding:0 12px;">
-            <ul class="pagination justify-content-center" style="margin:0;">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
-                </li>
-                {% endif %}
-                <li class="page-item disabled">
-                    <span class="page-link">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
-                </li>
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
         {% else %}
-        <div style="text-align:center;padding:60px 20px;color:#aaa;">
-            <div style="font-size:40px;margin-bottom:12px;">💧</div>
+        <div class="mi-empty">
+            <i class="icon-tint"></i>
             <div>هیچ آبیاری دستی ثبت نشده است</div>
             <a href="{% url 'public:manual_irrigation_create' %}" class="btn btn-primary" style="margin-top:16px;">+ ثبت اولین آبیاری</a>
         </div>
         {% endif %}
     </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="mi-pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">قبلی</a>{% endif %}
+        <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">بعدی</a>{% endif %}
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

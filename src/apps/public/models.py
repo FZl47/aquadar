@@ -436,40 +436,58 @@ class Run(BaseModel):
                 'actual_liters': actual_liters, 'expected_liters': expected_liters,
             }
 
+        from .reports import create_system_report, make_section
+
+        is_low = run_duration_min < lower_bound
+        sections = [
+            make_section('findings', [
+                f'مدت واقعی آبیاری: {run_duration_min} دقیقه (حدود {actual_liters} لیتر)',
+                f'مدت مورد انتظار: {avg_duration_min} دقیقه (حدود {expected_liters} لیتر)',
+                f'بازه مجاز: {lower_bound} تا {upper_bound} دقیقه (تلورانس {tolerance_min} دقیقه)',
+                f'انحراف از میانگین: {deviation} دقیقه',
+            ]),
+            make_section('warnings', [
+                'دبی آب کمتر از حد مجاز بوده است.' if is_low else 'دبی آب بیشتر از حد مجاز بوده است.',
+            ]),
+            make_section('recommendations', [
+                'وضعیت لوله‌ها، شیرها و فشار آب این ردیف را بررسی کنید.' if is_low
+                else 'بسته بودن کامل شیر پس از آبیاری و نشتی احتمالی مسیر را بررسی کنید.',
+                'در صورت تکرار مشکل، آبیار مربوطه را برای بررسی میدانی هماهنگ کنید.',
+            ]),
+            make_section('prevention', [
+                'بازدید دوره‌ای از تجهیزات آبیاری و ثبت دقیق زمان شروع و پایان هر نوبت آبیاری.',
+            ]),
+        ]
         plot_detail_url = str(plot.get_absolute_url())
-        sr = SystemReport.objects.create(
-            waterman=self.created_by,
-            outlet=outlet,
-            title=title,
-            description=description,
+        return create_system_report(
+            category='irrigation',
+            title=str(title),
+            summary=str(description),
+            sections=sections,
             priority='high',
+            recipients=supervisors,
+            subject=f'{farm.name} / {zone.name} / {plot.name} / ردیف {outlet.number}',
+            plot=plot,
+            outlet=outlet,
+            waterman=self.created_by,
+            link=plot_detail_url,
+            notif_type='irrigation_issue_report',
+            notif_extra={
+                'waterman': self.created_by.get_full_name() if self.created_by else '',
+                'zone': zone.name,
+                'outlet': str(outlet.number),
+                'time': timezone.now().strftime('%Y-%m-%d %H:%M'),
+                'actual_duration_min': run_duration_min,
+                'expected_min': lower_bound,
+                'expected_max': upper_bound,
+                'avg_duration_min': avg_duration_min,
+                'tolerance_min': tolerance_min,
+                'deviation_min': deviation,
+                'actual_liters': actual_liters,
+                'expected_liters': expected_liters,
+                'field_detail_url': plot_detail_url,
+            },
         )
-        sr.to_users.set(supervisors)
-        for user in supervisors:
-            user.create_notif(
-                user=user,
-                title=title,
-                type='irrigation_issue_report',
-                notif_kw={
-                    'waterman': self.created_by.get_full_name() if self.created_by else '',
-                    'farm': farm.name,
-                    'zone': zone.name,
-                    'plot': plot.name,
-                    'outlet': str(outlet.number),
-                    'time': timezone.now().strftime('%Y-%m-%d %H:%M'),
-                    'actual_duration_min': run_duration_min,
-                    'expected_min': lower_bound,
-                    'expected_max': upper_bound,
-                    'avg_duration_min': avg_duration_min,
-                    'tolerance_min': tolerance_min,
-                    'deviation_min': deviation,
-                    'actual_liters': actual_liters,
-                    'expected_liters': expected_liters,
-                    'detail_url': plot_detail_url,
-                    'field_detail_url': plot_detail_url,
-                },
-            )
-        return sr
 
 
 class RunStatus(BaseModel):
@@ -539,10 +557,25 @@ class SystemReport(BaseModel):
     )
     waterman = models.ForeignKey('account.User', on_delete=models.SET_NULL, null=True,
                                  related_name='system_report_watermans', verbose_name=_('Waterman'))
+    CATEGORY_TYPES = (
+        ('irrigation', 'آبیاری'),
+        ('plot_analysis', 'تحلیل زمین'),
+        ('leaf_analysis', 'تحلیل برگ'),
+        ('experiment_analysis', 'تحلیل آزمایش'),
+        ('fertilization', 'کوددهی'),
+        ('foliar_spray', 'سم‌پاشی و محلول‌پاشی'),
+        ('general', 'عمومی'),
+    )
     to_users = models.ManyToManyField('account.User', verbose_name=_('Recipients'))
     title = models.CharField(max_length=256, verbose_name=_('Title'))
     description = models.TextField(null=True, blank=True, verbose_name=_('Description'))
-    outlet = models.ForeignKey('Outlet', on_delete=models.CASCADE, verbose_name=_('Outlet'))
+    outlet = models.ForeignKey('Outlet', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('Outlet'))
+    plot = models.ForeignKey('Plot', on_delete=models.CASCADE, null=True, blank=True,
+                             related_name='system_reports', verbose_name='زمین')
+    category = models.CharField(max_length=24, choices=CATEGORY_TYPES, default='irrigation', verbose_name='دسته‌بندی')
+    final_report = models.TextField(blank=True, default='', verbose_name='گزارش نهایی')
+    sections = models.JSONField(default=list, blank=True, verbose_name='بخش‌های گزارش')
+    link = models.CharField(max_length=300, blank=True, default='', verbose_name='پیوند مرتبط')
     priority = models.CharField(max_length=8, choices=PRIORITY_TYPES, default='high', verbose_name=_('Priority'))
 
     class Meta:
@@ -554,6 +587,8 @@ class SystemReport(BaseModel):
 
     def save(self, *args, **kwargs):
         is_created = self.pk is None
+        if self.plot_id is None and self.outlet_id:
+            self.plot_id = self.outlet.plot_id
         super().save(*args, **kwargs)
 
         if is_created:
@@ -576,6 +611,10 @@ class SystemReport(BaseModel):
 
     def get_statuses(self):
         return self.systemreportstatus_set.all()
+
+    @property
+    def farm(self):
+        return self.plot.zone.farm if self.plot_id else None
 
 
 class SystemReportStatus(BaseModel):
@@ -761,6 +800,7 @@ class PlotLeafAnalysis(BaseModel):
     urgency = models.CharField(max_length=50, blank=True)
     treatment_time = models.CharField(max_length=100, blank=True)
     summary = models.TextField(blank=True)
+    final_report = models.TextField(blank=True, default='')
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='pending')
     analyzed_at = models.DateTimeField(null=True, blank=True)
 
@@ -800,6 +840,7 @@ class PlotAIReport(BaseModel):
     risks = models.JSONField(default=list)
     data_sources = models.JSONField(default=dict)
     raw_response = models.TextField(blank=True)
+    final_report = models.TextField(blank=True, default='')
 
     class Meta:
         verbose_name = _('Plot AI Report')

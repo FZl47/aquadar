@@ -7,28 +7,25 @@ Website: http://www.20script.ir
 
 
 @font-face {
-    font-family: 'yekan';
-    src: url('../fonts/Yekan-modified.eot');
-    src: url('../fonts/Yekan-modified.eot#iefix') format('embedded-opentype'),
-         url('../fonts/Yekan-modified.woff') format('woff'),
-         url('../fonts/Yekan-modified.ttf') format('truetype'),
-         url('../fonts/Yekan-modified.svg#CartoGothicStdBook') format('svg');
-    font-weight: normal;
+    font-family: 'Vazir';
+    src: url('../fonts/Vazirmatn.woff2') format('woff2');
+    font-weight: 100 900;
     font-style: normal;
+    font-display: swap;
 }
 
 *{
-    font-family: yekan,'Open Sans', sans-serif;
+    font-family: Vazir,'Open Sans', sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6{
-    font-family: yekan,'Open Sans', sans-serif;
+    font-family: Vazir,'Open Sans', sans-serif;
 }
 
 body {
     color: #797979;
     background: #f1f2f7;
-    font-family: yekan,'Open Sans', sans-serif;
+    font-family: Vazir,'Open Sans', sans-serif;
     padding: 0px !important;
     margin: 0px !important;
 }

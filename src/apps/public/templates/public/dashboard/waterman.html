@@ -36,7 +36,7 @@
         }
 
         #plot-select-cnt.invisible {
-            height: 0;
+            display: none;
         }
 
         form[is-valid="false"] button[type="submit"] {
@@ -57,12 +57,6 @@
 
         select {
             font-size: 15px !important;
-        }
-
-        span.customSelect {
-            font-size: 14px !important;
-            padding: 13px !important;
-            height: 50px !important;
         }
 
         .cnt-select-plot {
@@ -327,7 +321,7 @@
                 <form id="form-submit-water" method="get" is-valid="false">
                     <div>
                         <label>منطقه:</label>
-                        <select name="zone" class="styled form-control">
+                        <select name="zone" class="form-control">
                             <option value="">انتخاب کنید</option>
                             {% for zone in zones %}
                                 <option value="{{ zone.id }}">{{ zone }}</option>
@@ -337,7 +331,7 @@
                     <br>
                     <div id="plot-select-cnt" class="invisible">
                         <label>زمین:</label>
-                        <select name="plot" class="styled form-control">
+                        <select name="plot" class="form-control">
                             {% for plot in plots %}
                                 <option value="{{ plot.id }}" zone="{{ plot.zone.id }}">{{ plot }}</option>
                             {% endfor %}
@@ -852,38 +846,44 @@
             });
         });
 
-        requestGps();
-
         function initialPlotSelection() {
-            let plot_input = document.querySelector('select[name="plot"]')
             let form_submit_water = document.querySelector('#form-submit-water')
-
-            document.querySelector('select[name="zone"]').addEventListener('change', function (el) {
-                let zone_id = this.value
-                if (!zone_id) {
-                    document.querySelector('#plot-select-cnt').classList.add('invisible')
-                    form_submit_water.setAttribute('is-valid', 'false')
-                } else {
-                    document.querySelector('#plot-select-cnt').classList.remove('invisible')
-                }
-
-                function hideAndDeactivateAllPlot() {
-                    plot_input.value = null
-                    document.querySelectorAll(`select[name="plot"] option`).forEach(function (el) {
-                        el.classList.add('d-none')
-                        el.removeAttribute('selected')
-                    })
-                }
-
-                hideAndDeactivateAllPlot()
-
-                document.querySelectorAll(`select[name="plot"] option[zone="${zone_id}"]`).forEach(function (el) {
-                    el.classList.remove('d-none')
-                })
+            if (!form_submit_water) {
+                return
+            }
+            let zone_input = form_submit_water.querySelector('select[name="zone"]')
+            let plot_input = form_submit_water.querySelector('select[name="plot"]')
+            let plot_cnt = document.querySelector('#plot-select-cnt')
+            let all_plots = Array.from(plot_input.options).map(function (opt) {
+                return {value: opt.value, text: opt.text, zone: opt.getAttribute('zone')}
             })
 
-            plot_input.addEventListener('change', function (el) {
-                form_submit_water.setAttribute('is-valid', 'true')
+            plot_input.innerHTML = ''
+
+            $(zone_input).on('change', function () {
+                let zone_id = this.value
+                form_submit_water.setAttribute('is-valid', 'false')
+                plot_input.innerHTML = ''
+
+                if (!zone_id) {
+                    plot_cnt.classList.add('invisible')
+                    return
+                }
+
+                let placeholder = new Option('انتخاب کنید', '')
+                plot_input.add(placeholder)
+                all_plots.filter(function (plot) {
+                    return plot.zone === zone_id
+                }).forEach(function (plot) {
+                    plot_input.add(new Option(plot.text, plot.value))
+                })
+                plot_input.value = ''
+                plot_cnt.classList.remove('invisible')
+                $(plot_input).trigger('change.select2')
+            })
+
+            $(plot_input).on('change', function () {
+                form_submit_water.setAttribute('is-valid', this.value ? 'true' : 'false')
             })
 
             form_submit_water.addEventListener('submit', function (el) {
@@ -893,9 +893,7 @@
             })
         }
 
-        try {
-            initialPlotSelection()
-        } catch (e) {
-        }
+        initialPlotSelection()
+        requestGps()
     </script>
 {% endblock %}

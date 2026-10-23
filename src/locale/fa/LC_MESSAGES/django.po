@@ -175,6 +175,14 @@ msgstr "عملیات با موفقیت انجام شد."
 msgid "Send SMS Notification"
 msgstr "ارسال اعلان پیامکی"
 
+#: apps/notification/models.py:18
+msgid "Send Rubika Notification"
+msgstr "ارسال اعلان روبیکا"
+
+#: apps/account/models.py:60
+msgid "Rubika ID"
+msgstr "شناسه روبیکا"
+
 #: apps/notification/models.py:17
 msgid "Send Email Notification"
 msgstr "ارسال اعلان ایمیلی"
@@ -709,6 +717,21 @@ msgstr "وضعیت زمین ضعیف است و نیاز به توجه فوری �
 msgid "Max wind speed"
 msgstr "حداکثر سرعت باد"
 
+msgid "Min health score must be between 0 and 100"
+msgstr "حداقل امتیاز سلامت باید بین ۰ تا ۱۰۰ باشد"
+
+msgid "Expiration run time must be at least 1 hour"
+msgstr "مدت انقضای آبیاری باید حداقل ۱ ساعت باشد"
+
+msgid "Tolerance cannot be negative"
+msgstr "مقدار تلورانس نمی‌تواند منفی باشد"
+
+msgid "Min wind speed cannot exceed max wind speed"
+msgstr "حداقل سرعت باد نمی‌تواند بیشتر از حداکثر آن باشد"
+
+msgid "Min temperature cannot exceed max temperature"
+msgstr "حداقل دما نمی‌تواند بیشتر از حداکثر آن باشد"
+
 #: apps/public/models.py:16
 msgid "Min wind speed"
 msgstr "حداقل سرعت باد"
@@ -761,7 +784,7 @@ msgstr "GPS الزامی"
 
 #: apps/public/models.py:32
 msgid "Allow waterman to register irrigation by outlet code"
-msgstr "اجازه ثبت آبیاری توسط آبیار از طریق کد خروجی"
+msgstr "اجازه ثبت آبیاری توسط آبیار از طریق کد کیز"
 
 #: apps/public/models.py:33
 msgid "Allow code entry"
@@ -846,7 +869,7 @@ msgstr "زمین‌ها"
 #: apps/public/templates/public/dashboard/supervisor.html:320
 #: apps/public/templates/public/plot/detail.html:647
 msgid "Outlet"
-msgstr "خروجی"
+msgstr "کیز"
 
 #: apps/public/models.py:232 apps/public/models.py:274 apps/public/views.py:315
 msgid "Not Started"
@@ -1418,7 +1441,7 @@ msgstr "افزودن زمین"
 #: apps/public/templates/public/dashboard/supervisor.html:42
 #: templates/partials/_crud_modals.html:42 templates/partials/_sidebar.html:42
 msgid "Add Outlet"
-msgstr "افزودن خروجی"
+msgstr "افزودن کیز"
 
 #: apps/public/templates/public/dashboard/supervisor.html:75
 #: apps/public/templates/public/dashboard/supervisor.html:108
@@ -1756,7 +1779,7 @@ msgstr "جزئیات"
 
 #: apps/public/templates/public/plot/detail.html:658
 msgid "No outlets recorded"
-msgstr "هیچ خروجی ثبت نشده"
+msgstr "هیچ کیز ثبت نشده"
 
 #: apps/public/templates/public/plot/detail.html:664
 msgid "Land Analysis"
@@ -2326,15 +2349,15 @@ msgstr "منطقه با موفقیت حذف شد"
 
 #: apps/public/views.py:1231
 msgid "Outlet created successfully"
-msgstr "خروجی با موفقیت ایجاد شد"
+msgstr "کیز با موفقیت ایجاد شد"
 
 #: apps/public/views.py:1247
 msgid "Outlet updated successfully"
-msgstr "خروجی با موفقیت بروزرسانی شد"
+msgstr "کیز با موفقیت بروزرسانی شد"
 
 #: apps/public/views.py:1261
 msgid "Outlet deleted successfully"
-msgstr "خروجی با موفقیت حذف شد"
+msgstr "کیز با موفقیت حذف شد"
 
 #: apps/public/views.py:1459
 msgid "Plot created successfully"
@@ -2448,7 +2471,7 @@ msgstr "حساب کاربری"
 #~ "plot %(plot)s, and outlet %(outlet)s. Please check and resolve it as soon "
 #~ "as possible."
 #~ msgstr ""
-#~ "مشکلی در آبیاری مزرعه %(farm)s،  منطقه %(zone)s، زمین %(plot)s و خروجی "
+#~ "مشکلی در آبیاری مزرعه %(farm)s،  منطقه %(zone)s، زمین %(plot)s و کیز "
 #~ "%(outlet)s شناسایی شد. لطفاً هرچه زودتر بررسی و رفع نمایید."
 
 #~ msgid "Edit Farm"
@@ -2458,7 +2481,7 @@ msgstr "حساب کاربری"
 #~ msgstr "ویرایش منطقه"
 
 #~ msgid "Edit Outlet"
-#~ msgstr "ویرایش خروجی"
+#~ msgstr "ویرایش کیز"
 
 #~ msgid "Queuing..."
 #~ msgstr "در حال انجام..."

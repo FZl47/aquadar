@@ -29,12 +29,14 @@ class UserAdmin(BaseUserAdmin):
         'is_active',
         'is_staff',
         'is_superuser',
+        'farm_names',
         'profile_is_completed',
         'created_at',
     )
 
     list_filter = (
         'role',
+        'farms',
         'is_active',
         'is_staff',
         'is_superuser',
@@ -61,6 +63,12 @@ class UserAdmin(BaseUserAdmin):
                 'first_name',
                 'last_name',
                 'phonenumber',
+                'rubika_id',
+            )
+        }),
+        (_('Farms'), {
+            'fields': (
+                'farms',
             )
         }),
         (_('Role & Permissions'), {
@@ -105,9 +113,17 @@ class UserAdmin(BaseUserAdmin):
     )
 
     filter_horizontal = (
+        'farms',
         'groups',
         'user_permissions',
     )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('farms')
+
+    @admin.display(description=_('Farms'))
+    def farm_names(self, obj):
+        return ', '.join(farm.name for farm in obj.farms.all())
 
 
 @admin.register(models.UserHostRestrict)

@@ -8,7 +8,7 @@
 
 {% block Style %}
 <style>
-    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
     .page-header {
         background: linear-gradient(135deg, #5e35b1, #311b92);
         border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
@@ -68,7 +68,7 @@
                 <tr>
                     <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                     <td style="font-weight:600;"><a href="{% url 'ai_assistant:analysis_detail' analysis.pk %}">{{ analysis.experiment.name }}</a></td>
-                    <td>{{ analysis.get_provider_display }}</td>
+                    <td>{{ analysis.provider_label }}</td>
                     <td>{{ analysis.get_status_display }}</td>
                     <td>{{ analysis.get_urgency_display|default:"—" }}</td>
                     <td>{% if analysis.requested_by %}{{ analysis.requested_by.get_full_name|default:analysis.requested_by.username }}{% else %}—{% endif %}</td>

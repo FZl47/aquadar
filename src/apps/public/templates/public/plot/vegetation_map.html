@@ -15,7 +15,7 @@
 {% block Style %}
     <style>
         body {
-            font-family: 'YekanBakhFaNum', monospace;
+            font-family: 'Vazir', sans-serif;
             background: #f4f6f9;
             padding: 20px;
         }
@@ -157,29 +157,7 @@
         (function () {
             const plots = {{ plots_json|safe }};
             const map = L.map('veg-map').setView([32.5, 53.5], 8);
-            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap'
-            });
-            const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                attribution: '© Esri'
-            });
-            const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '© Google',
-                subdomains: ['0', '1', '2', '3']
-            });
-            const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-                maxZoom: 20,
-                attribution: '© CartoDB'
-            });
-            streetLayer.addTo(map);
-            labelsLayer.addTo(map);
-            L.control.layers(
-                {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
-                {'نام شهرها و مناطق': labelsLayer}
-            ).addTo(map);
+            AqMap.addBaseLayers(map);
 
             const NDVI_RANGES = {{ ndvi_ranges_json|safe }};
             const PCT = {{ pct_constants_json|safe }};

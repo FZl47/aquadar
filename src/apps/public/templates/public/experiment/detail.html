@@ -8,7 +8,7 @@
 
 {% block Style %}
 <style>
-    body { background: #f4f6f9; font-family: 'YekanBakhFaNum', monospace; }
+    body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
     .page-header {
         background: linear-gradient(135deg, #00897b, #00574b);
         border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
@@ -93,7 +93,7 @@
                 {% for analysis in analyses %}
                 <tr>
                     <td>{{ analysis.created_at|jalali }}</td>
-                    <td>{{ analysis.get_provider_display }}</td>
+                    <td>{{ analysis.provider_label }}</td>
                     <td>{{ analysis.get_status_display }}</td>
                     <td><a href="{% url 'ai_assistant:analysis_detail' analysis.pk %}">مشاهده</a></td>
                 </tr>

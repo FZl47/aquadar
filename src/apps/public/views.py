@@ -1,14 +1,14 @@
 import json
-import uuid
 from decimal import Decimal
 from datetime import timedelta
 
+from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 from django.db.models import (
-    Avg, Case, Count, DurationField, Exists, ExpressionWrapper,
+    Avg, Case, Count, DecimalField, DurationField, Exists, ExpressionWrapper,
     F, OuterRef, Prefetch, Q, Subquery, Sum, Value, When,
 )
 from django.db.models.functions import TruncDate
@@ -18,15 +18,23 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
-from django_q.tasks import async_task
 
 from apps.core.auth.mixins import PermissionMixin, SuperVisorUserRequiredMixin, WatermanUserRequiredMixin
+from apps.ai_assistant import forms as ai_forms
+from apps.ai_assistant.models import AIProviderConfig, AISettings
+from apps.ai_assistant.providers.registry import list_providers
+from apps.ai_assistant.services import get_main_provider_name
 from apps.core.forms.utils import form_validate_err
+from apps.notification import forms as notification_forms
+from apps.notification.models import NotificationConfig
+from apps.notification.utils import absolute_url, create_user_notif
 
 from . import forms, models
+from .reports import jalali_now, operation_recipients, user_display_name
+from .tasks import analyze_all_plots, analyze_plot, fetch_weather_for_plot
 from .models import (
     Experiment, Farm, FertilizationRecord, FertilizerCategory, FoliarSprayCategory,
-    ManualIrrigation, Outlet, Plot, PlotAIReport, PlotLeafAnalysis,
+    ManualIrrigation, Outlet, Plot, PlotAIReport,
     PlotVegetationIndex, PlotWeather, ReportFoliarSpray, Run, RunStatus,
     Zone, UserActivityReport,
 )
@@ -87,13 +95,14 @@ def get_runs_last_30_days():
 
 
 def get_run_status_distribution():
-    counts = {
-        item['group__status']: item['count']
-        for item in Run.objects.values('group__status').annotate(count=Count('id'))
-    }
+    counts = Run.objects.aggregate(
+        running=Count('id', filter=Q(status='open')),
+        canceled=Count('id', filter=Q(status='closed', group__status='canceled')),
+        completed=Count('id', filter=Q(status='closed') & ~Q(group__status='canceled')),
+    )
     return {
         'labels': [str(_('Running')), str(_('Completed')), str(_('Canceled'))],
-        'data': [counts.get('running', 0), counts.get('completed', 0), counts.get('canceled', 0)],
+        'data': [counts['running'], counts['completed'], counts['canceled']],
     }
 
 
@@ -197,10 +206,15 @@ class Index(TemplateView):
             else:
                 plot_obj = get_object_or_404(models.Plot, id=plot_id, zone__farm__user__in=[user])
         run_settings = models.RunSettings.objects.first()
+        zones = models.Zone.objects.all()
+        plots = models.Plot.objects.select_related('zone')
+        if not user.is_superuser:
+            zones = zones.filter(farm__user__in=[user])
+            plots = plots.filter(zone__farm__user__in=[user])
         return {
             'plot_obj': plot_obj,
-            'zones': models.Zone.objects.all(),
-            'plots': models.Plot.objects.select_related('zone'),
+            'zones': zones,
+            'plots': plots,
             'active_runnings': models.Run.objects.filter(created_by=user, status='open'),
             'system_reports': models.SystemReport.objects.filter(
                 to_users__in=[user]
@@ -228,6 +242,12 @@ class Index(TemplateView):
             .prefetch_related('run_set__outlet')
             [:20]
         )
+        unresolved_reports = models.SystemReport.objects.exclude(systemreportstatus__status='resolved')
+        priority_order = Case(
+            When(priority='high', then=Value(0)),
+            When(priority='medium', then=Value(1)),
+            default=Value(2),
+        )
         return {
             **stats,
             'total_manual_irrigations': ManualIrrigation.objects.count(),
@@ -250,9 +270,11 @@ class Index(TemplateView):
             'zones': Zone.objects.select_related('farm').all(),
             'plots': Plot.objects.select_related('zone__farm').all(),
             'outlets': Outlet.objects.select_related('plot__zone__farm').all(),
-            'unresolved_system_reports': models.SystemReport.objects.select_related(
-                'outlet__plot__zone__farm'
-            ).exclude(systemreportstatus__status='resolved'),
+            'unresolved_system_reports': unresolved_reports.select_related(
+                'plot__zone__farm', 'outlet'
+            ).order_by(priority_order, '-id')[:8],
+            'unresolved_reports_total': unresolved_reports.count(),
+            'unresolved_reports_high': unresolved_reports.filter(priority='high').count(),
         }
 
 
@@ -471,13 +493,13 @@ class ZoneDetail(SuperVisorUserRequiredMixin, DetailView):
         context['outlets_count'] = outlets.count()
         context['runs_count'] = Run.objects.filter(outlet__plot__zone=zone).count()
         context['manual_irrigations_count'] = ManualIrrigation.objects.filter(plot__zone=zone).count()
-        context['reports_count'] = models.SystemReport.objects.filter(outlet__plot__zone=zone).count()
+        context['reports_count'] = models.SystemReport.objects.filter(plot__zone=zone).count()
         context['fertilization_count'] = FertilizationRecord.objects.filter(plot__zone=zone).count()
         context['chart_labels'] = [x['day'].strftime('%Y-%m-%d') for x in qs]
         context['chart_data'] = [round(x['total_duration'].total_seconds() / 60, 2) for x in qs]
         context['leaf_analyses'] = zone.leaf_analyses.order_by('-created_at')[:6]
-        context['leaf_upload_url'] = reverse('public:zone_leaf_upload', args=[zone.pk])
-        context['leaf_list_url'] = reverse('public:zone_leaf_list', args=[zone.pk])
+        context['leaf_upload_url'] = reverse('ai_assistant:zone_leaf_upload', args=[zone.pk])
+        context['leaf_list_url'] = reverse('ai_assistant:zone_leaf_list', args=[zone.pk])
         return context
 
 
@@ -904,6 +926,13 @@ class RunListView(SuperVisorUserRequiredMixin, TemplateView):
         )
         paginator = Paginator(qs, self.PER_PAGE)
         context['page_obj'] = paginator.get_page(page_num)
+        context['run_stats'] = models.Run.objects.aggregate(
+            total=Count('id'),
+            running=Count('id', filter=Q(status='open')),
+            canceled=Count('id', filter=Q(status='closed', group__status='canceled')),
+            completed=Count('id', filter=Q(status='closed') & ~Q(group__status='canceled')),
+            anomalous=Count('id', filter=Q(is_anomalous_short=True) | Q(is_anomalous_long=True)),
+        )
         return context
 
 
@@ -1041,8 +1070,8 @@ class FarmDetailView(SuperVisorUserRequiredMixin, DetailView):
         }
 
         context['leaf_analyses'] = farm.leaf_analyses.order_by('-created_at')[:6]
-        context['leaf_upload_url'] = reverse('public:farm_leaf_upload', args=[farm.pk])
-        context['leaf_list_url'] = reverse('public:farm_leaf_list', args=[farm.pk])
+        context['leaf_upload_url'] = reverse('ai_assistant:farm_leaf_upload', args=[farm.pk])
+        context['leaf_list_url'] = reverse('ai_assistant:farm_leaf_list', args=[farm.pk])
         return context
 
 
@@ -1216,8 +1245,8 @@ class OutletDetailView(SuperVisorUserRequiredMixin, DetailView):
         )
         context['plots'] = Plot.objects.select_related('zone__farm').all()
         context['leaf_analyses'] = self.object.leaf_analyses.order_by('-created_at')[:6]
-        context['leaf_upload_url'] = reverse('public:outlet_leaf_upload', args=[self.object.pk])
-        context['leaf_list_url'] = reverse('public:outlet_leaf_list', args=[self.object.pk])
+        context['leaf_upload_url'] = reverse('ai_assistant:outlet_leaf_upload', args=[self.object.pk])
+        context['leaf_list_url'] = reverse('ai_assistant:outlet_leaf_list', args=[self.object.pk])
         return context
 
 
@@ -1716,13 +1745,12 @@ class PlotMoistureMapView(SuperVisorUserRequiredMixin, TemplateView):
 
 class PlotAnalyzeView(SuperVisorUserRequiredMixin, View):
     def post(self, request):
-        from .tasks import analyze_all_plots
         plot_id = request.POST.get('plot', '').strip()
         farm_id = request.POST.get('farm', '').strip()
         if plot_id.isdigit():
             if not Plot.objects.filter(id=plot_id).exists():
                 return JsonResponse({'success': False, 'error': str(_('Plot not found'))}, status=404)
-            async_task('apps.public.tasks.analyze_plot', int(plot_id))
+            analyze_plot.delay(int(plot_id))
             return JsonResponse({'success': True, 'queued': 1})
         queued = analyze_all_plots(farm_id=int(farm_id) if farm_id.isdigit() else None)
         return JsonResponse({'success': True, 'queued': queued})
@@ -1738,72 +1766,25 @@ class SupervisorStopIrrigationView(SuperVisorUserRequiredMixin, View):
         return _redirect_with_next(request, reverse('public:index'))
 
 
-LEAF_ENTITY_MODELS = {
-    'farm': Farm,
-    'zone': Zone,
-    'plot': Plot,
-    'outlet': Outlet,
-}
-LEAF_DETAIL_URLS = {
-    'farm': 'public:farm_detail',
-    'zone': 'public:zone__detail',
-    'plot': 'public:plot_detail',
-    'outlet': 'public:outlet_detail',
-}
-
-
-def _get_leaf_entity(entity, pk):
-    model = LEAF_ENTITY_MODELS.get(entity)
-    if model is None:
-        raise Http404('Unknown leaf entity')
-    return get_object_or_404(model, pk=pk)
-
-
-def leaf_upload(request, pk, entity='plot'):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
-    obj = _get_leaf_entity(entity, pk)
-    image = request.FILES.get('image')
-    if not image:
-        return JsonResponse({'success': False, 'error': str(_('No image provided'))})
-    analysis = PlotLeafAnalysis.objects.create(image=image, status='analyzing', **{entity: obj})
-    async_task('apps.public.tasks.analyze_leaf', analysis.pk)
-    return JsonResponse({'success': True, 'queued': True, 'id': analysis.pk})
-
-
-def leaf_list(request, pk, entity='plot'):
-    obj = _get_leaf_entity(entity, pk)
-    analyses = PlotLeafAnalysis.objects.filter(**{entity: obj}).order_by('-created_at')[:20]
-    return render(request, 'public/plot/leaf_list.html', {
-        'target': obj,
-        'target_name': str(obj),
-        'entity': entity,
-        'analyses': analyses,
-        'back_url': reverse(LEAF_DETAIL_URLS[entity], args=[obj.pk]),
-    })
-
-
 def plot_condition_analyze(request, pk):
-    """Queue a rule-based plot analysis on django-q and return its task id for polling."""
+    """Queue a rule-based plot analysis on Celery and return its task id for polling."""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
     plot = get_object_or_404(Plot, pk=pk)
-    task_name = f'plot_analysis_{uuid.uuid4().hex[:12]}'
-    task_id = async_task('apps.public.tasks.analyze_plot', plot.pk, task_name=task_name)
-    return JsonResponse({'success': True, 'task_id': task_id, 'task_name': task_name})
+    result = analyze_plot.delay(plot.pk)
+    return JsonResponse({'success': True, 'task_id': result.id})
 
 
 def task_status(request, task_id):
-    """Poll a django-q task; returns pending until the worker stores a result."""
-    from django_q.tasks import fetch
-    task = fetch(task_id)
-    if task is None:
+    """Poll a Celery task; returns pending until the worker stores a result."""
+    result = AsyncResult(task_id)
+    if not result.ready():
         return JsonResponse({'status': 'pending'})
-    result = task.result if isinstance(task.result, dict) else None
+    payload = result.result if result.successful() and isinstance(result.result, dict) else None
     return JsonResponse({
         'status': 'done',
-        'success': bool(task.success),
-        'result': result,
+        'success': result.successful(),
+        'result': payload,
     })
 
 
@@ -1818,8 +1799,8 @@ class PlotWeatherFetchView(SuperVisorUserRequiredMixin, View):
                 {'success': False, 'error': str(_('No GPS coordinates set for this plot.'))},
                 status=400,
             )
-        task_id = async_task('apps.public.tasks.fetch_weather_for_plot', plot.pk, 'manual')
-        return JsonResponse({'success': True, 'queued': True, 'task_id': task_id})
+        result = fetch_weather_for_plot.delay(plot.pk, 'manual')
+        return JsonResponse({'success': True, 'queued': True, 'task_id': result.id})
 
 
 class ManualIrrigationListView(SuperVisorUserRequiredMixin, TemplateView):
@@ -1831,8 +1812,17 @@ class ManualIrrigationListView(SuperVisorUserRequiredMixin, TemplateView):
         qs = ManualIrrigation.objects.select_related(
             'plot__zone__farm', 'outlet', 'registered_by', 'reporter'
         ).order_by('-id')
-        # Total count for summary card (all records, not just current page).
         context['total_count'] = qs.count()
+        context['manual_stats'] = ManualIrrigation.objects.aggregate(
+            total_seconds=Sum('duration_seconds'),
+            total_liters=Sum(ExpressionWrapper(
+                F('duration_seconds') * F('plot__zone__farm__discharge_rate'),
+                output_field=DecimalField(max_digits=20, decimal_places=2),
+            )),
+        )
+        stats = context['manual_stats']
+        context['manual_total_hours'] = round((stats['total_seconds'] or 0) / 3600, 1)
+        context['manual_total_m3'] = round(float(stats['total_liters'] or 0) / 1000, 1)
         paginator = Paginator(qs, self.PER_PAGE)
         page_num = self.request.GET.get('page', 1)
         context['page_obj'] = paginator.get_page(page_num)
@@ -1920,6 +1910,29 @@ class ManualIrrigationCreateView(SuperVisorUserRequiredMixin, View):
             else:
                 ManualIrrigation.objects.create(outlet=None, **common)
                 messages.success(request, _('Manual irrigation registered successfully'))
+            plot = common['plot']
+            farm = plot.zone.farm
+            lines = [
+                f'ثبت‌کننده: {user_display_name(request.user)}',
+                f'تعداد ردیف: {len(outlets)}' if outlets else '',
+                f'مدت کل: {round(total_seconds / 60, 1)} دقیقه',
+            ]
+            lines = [line for line in lines if line]
+            title = f'ثبت آبیاری دستی: {farm.name} / {plot.name}'
+            for user in operation_recipients(farm, request.user):
+                create_user_notif(
+                    user, 'operation_event', title, '\n'.join([title, *lines]),
+                    kwargs_notif={
+                        'event': 'manual_irrigation_registered',
+                        'event_label': 'ثبت آبیاری دستی',
+                        'user': user_display_name(request.user),
+                        'farm': farm.name,
+                        'plot': plot.name,
+                        'details': '، '.join(lines),
+                        'time': jalali_now(),
+                        'link': absolute_url(plot.get_absolute_url()),
+                    },
+                )
             return redirect(reverse('public:manual_irrigation_list'))
         return render(request, self.template_name, self._form_context(f))
 
@@ -2012,3 +2025,76 @@ class ExperimentDeleteView(PermissionMixin, DeleteView):
         response = super().form_valid(form)
         messages.success(self.request, 'آزمایش حذف شد')
         return response
+
+
+class SettingsView(PermissionMixin, TemplateView):
+    permissions = (
+        'ai_assistant.change_aisettings',
+        'public.change_runsettings',
+        'notification.change_notificationconfig',
+    )
+    template_name = 'public/settings/index.html'
+
+    def _perm_check(self, request):
+        user = request.user
+        if not user.is_authenticated:
+            return False
+        return any(user.has_perm(perm) for perm in self.permissions)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        providers = list_providers()
+        context.update({
+            'main_provider_form': ai_forms.AISettingsForm(instance=AISettings.get_solo()),
+            'providers': providers,
+            'inactive_providers': AIProviderConfig.objects.filter(is_active=False),
+            'effective_provider': get_main_provider_name(),
+            'run_settings_form': forms.RunSettingsForm(
+                instance=models.RunSettings.objects.first() or models.RunSettings()
+            ),
+            'notification_config_form': notification_forms.NotificationConfigForm(
+                instance=NotificationConfig.objects.first() or NotificationConfig()
+            ),
+        })
+        return context
+
+
+class SettingsSectionUpdateView(PermissionMixin, UpdateView):
+    permissions = ('public.change_runsettings',)
+    http_method_names = ['post']
+    section = ''
+    success_message = ''
+
+    def get_success_url(self):
+        return '%s#%s' % (reverse('public:settings'), self.section)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, self.success_message)
+        return response
+
+    def form_invalid(self, form):
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(self.request, error)
+        return redirect(self.get_success_url())
+
+
+class RunSettingsUpdateView(SettingsSectionUpdateView):
+    permissions = ('public.change_runsettings',)
+    form_class = forms.RunSettingsForm
+    section = 'irrigation'
+    success_message = 'تنظیمات آبیاری ذخیره شد'
+
+    def get_object(self, queryset=None):
+        return models.RunSettings.objects.first() or models.RunSettings()
+
+
+class NotificationConfigUpdateView(SettingsSectionUpdateView):
+    permissions = ('notification.change_notificationconfig',)
+    form_class = notification_forms.NotificationConfigForm
+    section = 'notifications'
+    success_message = 'تنظیمات اعلان‌ها ذخیره شد'
+
+    def get_object(self, queryset=None):
+        return NotificationConfig.objects.first() or NotificationConfig()

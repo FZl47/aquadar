@@ -14,7 +14,7 @@
 
 {% block Style %}
 <style>
-body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 20px; }
+body { font-family: 'Vazir', sans-serif; background: #f4f6f9; padding: 20px; }
 .container { max-width: 1100px; margin: 30px auto; }
 .page-header { background: linear-gradient(135deg, #27ae60, #1a7a45); border-radius: 14px; padding: 22px 28px; margin-bottom: 22px; color: #fff; }
 .card { background: #fff; border-radius: 12px; padding: 22px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
@@ -109,26 +109,7 @@ body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; padding: 2
         : [35.6892, 51.3890];
 
     const map = L.map('plot-map').setView(center, initial.length ? 16 : 6);
-    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap',
-    });
-    const satelliteEsriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: '© Esri',
-    });
-    const satelliteGoogleLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        attribution: '© Google',
-        subdomains: ['0', '1', '2', '3'],
-    });
-    const labelsLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 20, attribution: '© CartoDB' });
-    streetLayer.addTo(map);
-    labelsLayer.addTo(map);
-    L.control.layers(
-        {'نقشه': streetLayer, 'ماهواره (Esri)': satelliteEsriLayer, 'ماهواره (Google)': satelliteGoogleLayer},
-        {'نام شهرها و مناطق': labelsLayer}
-    ).addTo(map);
+    AqMap.addBaseLayers(map);
 
     let points = initial.slice();
     const markers = [];

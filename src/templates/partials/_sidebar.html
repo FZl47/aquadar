@@ -24,68 +24,96 @@
         </div>
         {% endif %}
 
-        <ul class="aq-nav">
+        <ul class="aq-nav" id="aqNav">
             <li><a class="aq-nav-link" href="{% url 'public:index' %}"><i class="icon-home"></i><span>{% trans "Dashboard" %}</span></a></li>
 
             {% if user.role == 'supervisor' or user.is_superuser %}
-            <li class="aq-nav-section"><i class="icon-sitemap"></i> {% trans "Management" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:farm_list' %}"><i class="icon-th-large"></i><span>{% trans "Farms" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:zone_list' %}"><i class="icon-map-marker"></i><span>{% trans "Zones" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:plot_list' %}"><i class="icon-leaf"></i><span>{% trans "Plots" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:outlet_list' %}"><i class="icon-tint"></i><span>{% trans "Outlets" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:waterman_list' %}"><i class="icon-group"></i><span>{% trans "Irrigators" %}</span></a></li>
+            <li class="aq-group" data-group="management">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-sitemap"></i><span>{% trans "Management" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:farm_list' %}"><i class="icon-th-large"></i><span>{% trans "Farms" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:zone_list' %}"><i class="icon-map-marker"></i><span>{% trans "Zones" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:plot_list' %}"><i class="icon-leaf"></i><span>{% trans "Plots" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:outlet_list' %}"><i class="icon-tint"></i><span>{% trans "Outlets" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:waterman_list' %}"><i class="icon-group"></i><span>{% trans "Irrigators" %}</span></a></li>
+                    <li class="aq-sub-label">{% trans "Add New" %}</li>
+                    <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editFarmModal" href="#" onclick="aqOpenCrudModal('editFarmForm','{% url 'public:farm_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Farm" %}</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editZoneModal" href="#" onclick="aqOpenCrudModal('editZoneForm','{% url 'public:zone_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Zone" %}</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:plot_create' %}"><i class="icon-plus"></i><span>{% trans "Add Plot" %}</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editOutletModal" href="#" onclick="aqOpenCrudModal('editOutletForm','{% url 'public:outlet_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Outlet" %}</span></a></li>
+                </ul>
+            </li>
 
-            <li class="aq-nav-section"><i class="icon-plus-sign"></i> {% trans "Add New" %}</li>
-            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editFarmModal" href="#" onclick="aqOpenCrudModal('editFarmForm','{% url 'public:farm_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Farm" %}</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editZoneModal" href="#" onclick="aqOpenCrudModal('editZoneForm','{% url 'public:zone_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Zone" %}</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:plot_create' %}"><i class="icon-plus"></i><span>{% trans "Add Plot" %}</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" data-bs-toggle="modal" data-bs-target="#editOutletModal" href="#" onclick="aqOpenCrudModal('editOutletForm','{% url 'public:outlet_create' %}');return false;"><i class="icon-plus"></i><span>{% trans "Add Outlet" %}</span></a></li>
+            <li class="aq-group" data-group="irrigations">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:manual_irrigation_list' %}"><i class="icon-pencil"></i><span>آبیاری دستی</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:manual_irrigation_create' %}"><i class="icon-plus"></i><span>ثبت آبیاری دستی</span></a></li>
+                </ul>
+            </li>
 
-            <li class="aq-nav-section"><i class="icon-play-circle"></i> {% trans "Irrigations" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:manual_irrigation_list' %}"><i class="icon-pencil"></i><span>آبیاری دستی</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:manual_irrigation_create' %}"><i class="icon-plus"></i><span>ثبت آبیاری دستی</span></a></li>
+            <li class="aq-group" data-group="reports">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-list-alt"></i><span>{% trans "Reports" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:fertilization_list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization" %}</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:fertilization_create' %}"><i class="icon-plus"></i><span>{% trans "Register Fertilization" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_list' %}"><i class="icon-tint"></i><span>{% trans "Foliar Spray" %}</span></a></li>
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:foliar_spray_create' %}"><i class="icon-plus"></i><span>{% trans "Register Foliar Spray" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:fertilizer_category_list' %}"><i class="icon-tags"></i><span>{% trans "Fertilizer Categories" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_category_list' %}"><i class="icon-tags"></i><span>{% trans "Solution Categories" %}</span></a></li>
+                </ul>
+            </li>
 
-            <li class="aq-nav-section"><i class="icon-list-alt"></i> {% trans "Reports" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:fertilization_list' %}"><i class="icon-beaker"></i><span>{% trans "Fertilization" %}</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:fertilization_create' %}"><i class="icon-plus"></i><span>{% trans "Register Fertilization" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_list' %}"><i class="icon-tint"></i><span>{% trans "Foliar Spray" %}</span></a></li>
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:foliar_spray_create' %}"><i class="icon-plus"></i><span>{% trans "Register Foliar Spray" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:fertilizer_category_list' %}"><i class="icon-tags"></i><span>{% trans "Fertilizer Categories" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:foliar_spray_category_list' %}"><i class="icon-tags"></i><span>{% trans "Solution Categories" %}</span></a></li>
-
-            <li class="aq-nav-section"><i class="icon-bar-chart"></i> {% trans "Analysis" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:plot_vegetation_map' %}"><i class="icon-leaf"></i><span>{% trans "Vegetation Map" %}</span></a></li>
-            <li><a class="aq-nav-link" href="{% url 'public:plot_moisture_map' %}"><i class="icon-tint"></i><span>{% trans "Moisture Map" %}</span></a></li>
+            <li class="aq-group" data-group="analysis">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-bar-chart"></i><span>{% trans "Analysis" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:plot_vegetation_map' %}"><i class="icon-leaf"></i><span>{% trans "Vegetation Map" %}</span></a></li>
+                    <li><a class="aq-nav-link" href="{% url 'public:plot_moisture_map' %}"><i class="icon-tint"></i><span>{% trans "Moisture Map" %}</span></a></li>
+                </ul>
+            </li>
             {% else %}
-            <li class="aq-nav-section"><i class="icon-play-circle"></i> {% trans "Irrigations" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
+            <li class="aq-group" data-group="irrigations">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-play-circle"></i><span>{% trans "Irrigations" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:run_list' %}"><i class="icon-play-circle"></i><span>{% trans "Irrigations list" %}</span></a></li>
+                </ul>
+            </li>
 
-            <li class="aq-nav-section"><i class="icon-list-alt"></i> {% trans "Reports" %}</li>
-            <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
+            <li class="aq-group" data-group="reports">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-list-alt"></i><span>{% trans "Reports" %}</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    <li><a class="aq-nav-link" href="{% url 'public:report_activity__list' %}"><i class="icon-list-alt"></i><span>{% trans "Activity Reports" %}</span></a></li>
+                </ul>
+            </li>
             {% endif %}
 
             {% if perms.public.view_experiment or perms.ai_assistant.view_experimentanalysis or perms.ai_assistant.add_experimentanalysis %}
-            <li class="aq-nav-section"><i class="icon-beaker"></i> آزمایشات</li>
-            {% if perms.public.view_experiment %}
-            <li><a class="aq-nav-link" href="{% url 'public:experiment_list' %}"><i class="icon-beaker"></i><span>لیست آزمایشات</span></a></li>
-            {% endif %}
-            {% if perms.public.add_experiment %}
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:experiment_create' %}"><i class="icon-plus"></i><span>ثبت آزمایش</span></a></li>
-            {% endif %}
-            {% if perms.ai_assistant.add_experimentanalysis %}
-            <li><a class="aq-nav-link aq-nav-add" href="{% url 'ai_assistant:analyze' %}"><i class="icon-magic"></i><span>تحلیل آزمایش</span></a></li>
-            {% endif %}
-            {% if perms.ai_assistant.view_experimentanalysis %}
-            <li><a class="aq-nav-link" href="{% url 'ai_assistant:analysis_list' %}"><i class="icon-list-alt"></i><span>تحلیل‌های هوش مصنوعی</span></a></li>
-            {% endif %}
-            {% if perms.ai_assistant.change_aisettings %}
-            <li><a class="aq-nav-link" href="{% url 'ai_assistant:settings' %}"><i class="icon-cog"></i><span>تنظیمات هوش مصنوعی</span></a></li>
-            {% endif %}
+            <li class="aq-group" data-group="experiments">
+                <a class="aq-group-toggle" href="#" role="button" aria-expanded="false"><i class="icon-beaker"></i><span>آزمایشات</span><i class="icon-angle-down aq-chevron"></i></a>
+                <ul class="aq-sub">
+                    {% if perms.public.view_experiment %}
+                    <li><a class="aq-nav-link" href="{% url 'public:experiment_list' %}"><i class="icon-beaker"></i><span>لیست آزمایشات</span></a></li>
+                    {% endif %}
+                    {% if perms.public.add_experiment %}
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'public:experiment_create' %}"><i class="icon-plus"></i><span>ثبت آزمایش</span></a></li>
+                    {% endif %}
+                    {% if perms.ai_assistant.add_experimentanalysis %}
+                    <li><a class="aq-nav-link aq-nav-add" href="{% url 'ai_assistant:analyze' %}"><i class="icon-magic"></i><span>تحلیل آزمایش</span></a></li>
+                    {% endif %}
+                    {% if perms.ai_assistant.view_experimentanalysis %}
+                    <li><a class="aq-nav-link" href="{% url 'ai_assistant:analysis_list' %}"><i class="icon-list-alt"></i><span>تحلیل‌های هوش مصنوعی</span></a></li>
+                    {% endif %}
+                </ul>
+            </li>
             {% endif %}
 
-            <li class="aq-nav-section"><i class="icon-user"></i> {% trans "Account" %}</li>
+            {% if perms.ai_assistant.change_aisettings or perms.public.change_runsettings or perms.notification.change_notificationconfig %}
+            <li><a class="aq-nav-link" href="{% url 'public:settings' %}"><i class="icon-cog"></i><span>تنظیمات</span></a></li>
+            {% endif %}
+
+            <li class="aq-nav-divider"></li>
             <li><a class="aq-nav-link aq-nav-danger" href="{% url 'account:logout' %}"><i class="icon-signout"></i><span>{% trans "Logout" %}</span></a></li>
         </ul>
     </div>
@@ -115,14 +143,29 @@ body.aq-sidebar-open .aq-sidebar { transform: translateX(0); }
 .aq-sidebar-body { flex: 1; overflow-y: auto; }
 .aq-sidebar-user { padding: 14px 18px; border-bottom: 1px solid #eef1f7; }
 .aq-nav { list-style: none; margin: 0; padding: 8px 0; }
-.aq-nav-link {
+.aq-nav-link, .aq-group-toggle {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 18px; color: #2c3e50; text-decoration: none;
+    padding: 11px 20px; color: #2c3e50; text-decoration: none;
     font-size: 14px; transition: background .15s, color .15s;
 }
-.aq-nav-link:hover { background: #eef4ff; color: #1a73e8; }
-.aq-nav-link i { width: 20px; text-align: center; color: #5a6c84; font-size: 15px; }
-.aq-nav-link:hover i { color: #1a73e8; }
+.aq-nav-link:hover, .aq-group-toggle:hover { background: #eef4ff; color: #1a73e8; text-decoration: none; }
+.aq-nav-link i, .aq-group-toggle > i:first-child { width: 20px; text-align: center; color: #5a6c84; font-size: 15px; }
+.aq-nav-link:hover i, .aq-group-toggle:hover > i:first-child { color: #1a73e8; }
+.aq-nav-link.active { background: #e8f0fe; color: #1a73e8; font-weight: 700; }
+.aq-nav-link.active i { color: #1a73e8; }
+.aq-group { margin: 8px 12px; border-radius: 12px; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+.aq-group.open { background: #fff; border-color: #e3e9f5; box-shadow: 0 1px 4px rgba(26,115,232,.06); }
+.aq-group-toggle { font-weight: 700; cursor: pointer; padding: 14px 16px; font-size: 15px; border-radius: 12px; }
+.aq-group-toggle > i:first-child { font-size: 17px; width: 24px; }
+.aq-group-toggle .aq-chevron { margin-inline-start: auto; width: auto; font-size: 14px; transition: transform .2s ease; }
+.aq-group.open > .aq-group-toggle { color: #1a73e8; }
+.aq-group.open > .aq-group-toggle > i:first-child { color: #1a73e8; }
+.aq-group.open > .aq-group-toggle .aq-chevron { transform: rotate(180deg); }
+.aq-sub { list-style: none; margin: 0; padding: 4px 0 8px; display: none; border-top: 1px solid #eef1f7; }
+.aq-group.open > .aq-sub { display: block; }
+.aq-sub .aq-nav-link { padding: 9px 16px; padding-inline-start: 38px; font-size: 13.5px; }
+.aq-sub-label { padding: 10px 18px 4px; padding-inline-start: 34px; font-size: 11px; font-weight: 700; color: #98a4b8; }
+.aq-nav-divider { height: 1px; margin: 8px 18px; background: #eef1f7; }
 .aq-nav-add { color: #00796b; }
 .aq-nav-add i { color: #00796b; }
 .aq-nav-add:hover { background: #e0f7fa; color: #00796b; }
@@ -130,12 +173,6 @@ body.aq-sidebar-open .aq-sidebar { transform: translateX(0); }
 .aq-nav-danger { color: #c62828; }
 .aq-nav-danger:hover { background: #ffeaea; color: #c62828; }
 .aq-nav-danger i { color: #c62828; }
-.aq-nav-section {
-    padding: 14px 18px 6px; font-size: 11px; font-weight: 700;
-    color: #98a4b8; text-transform: uppercase; letter-spacing: .5px;
-    display: flex; align-items: center; gap: 8px;
-}
-.aq-nav-section i { color: #98a4b8; font-size: 12px; }
 
 @media (min-width: 992px) {
     .aq-sidebar { transform: translateX(0); box-shadow: none; }
@@ -158,4 +195,47 @@ function aqOpenCrudModal(formId, actionUrl) {
     aqCloseSidebar();
 }
 document.body.classList.add('aq-has-sidebar');
+
+(function () {
+    var STORE_KEY = 'aqNavOpenGroups';
+    var nav = document.getElementById('aqNav');
+    if (!nav) return;
+
+    var opened = [];
+    try { opened = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { opened = []; }
+
+    function setOpen(group, open) {
+        group.classList.toggle('open', open);
+        group.querySelector('.aq-group-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function persist() {
+        var keys = [];
+        nav.querySelectorAll('.aq-group.open').forEach(function (g) { keys.push(g.dataset.group); });
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(keys)); } catch (e) {}
+    }
+
+    var path = window.location.pathname;
+    var best = null;
+    var bestLen = -1;
+    nav.querySelectorAll('a.aq-nav-link[href]').forEach(function (link) {
+        if (link.dataset.bsToggle) return;
+        var href = link.getAttribute('href');
+        if (!href || href.charAt(0) === '#' || link.classList.contains('aq-nav-danger')) return;
+        var hrefPath = href.split('?')[0];
+        var matches = hrefPath === path || (hrefPath.length > 1 && hrefPath.slice(-1) === '/' && path.indexOf(hrefPath) === 0);
+        if (matches && hrefPath.length > bestLen) { best = link; bestLen = hrefPath.length; }
+    });
+    if (best) best.classList.add('active');
+
+    nav.querySelectorAll('.aq-group').forEach(function (group) {
+        var hasActive = !!group.querySelector('.aq-nav-link.active');
+        setOpen(group, hasActive || opened.indexOf(group.dataset.group) !== -1);
+        group.querySelector('.aq-group-toggle').addEventListener('click', function (e) {
+            e.preventDefault();
+            setOpen(group, !group.classList.contains('open'));
+            persist();
+        });
+    });
+})();
 </script>

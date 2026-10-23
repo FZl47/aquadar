@@ -120,7 +120,7 @@ class SMSProvider(BaseProvider):
             return None
 
         if not result:
-            logger.warning('SMS payload empty for type=%s notif_id=%s', notification.type, notification.pk)
+            logger.debug('SMS payload empty for type=%s notif_id=%s', notification.type, notification.pk)
             return None
 
         pattern_code, variables = result
@@ -152,15 +152,30 @@ class SMSProvider(BaseProvider):
             'outlet': kwargs.get('outlet', ''),
         })
 
-    def _payload_plot_health_alert(self):
-        """SMS for plot health score falling below RunSettings.min_health_score."""
+    def _payload_system_report(self):
         kwargs = self.notification.kwargs or {}
-        return ('irg_alert', {
-            'waterman': kwargs.get('health_score', kwargs.get('score', '')),
+        return ('aq_report', {
+            'title': self.notification.title,
+            'category': kwargs.get('category_label', ''),
+            'priority': kwargs.get('priority_label', ''),
             'farm': kwargs.get('farm', ''),
-            'zone': kwargs.get('zone', ''),
             'plot': kwargs.get('plot', ''),
-            'outlet': kwargs.get('summary', kwargs.get('health_score', ''))[:40],
+            'link': kwargs.get('detail_url', ''),
+        })
+
+    def _payload_operation_event(self):
+        kwargs = self.notification.kwargs or {}
+        if kwargs.get('event') not in (
+            'manual_irrigation_registered', 'fertilization_registered', 'foliar_spray_registered',
+            'experiment_created',
+        ):
+            return None
+        return ('aq_event', {
+            'event': kwargs.get('event_label', ''),
+            'user': kwargs.get('user', ''),
+            'farm': kwargs.get('farm', ''),
+            'plot': kwargs.get('plot', ''),
+            'time': kwargs.get('time', ''),
         })
 
     def _payload_logged_in(self):

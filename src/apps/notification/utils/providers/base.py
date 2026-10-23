@@ -1,8 +1,12 @@
 import abc
+import logging
 
-from django_q.tasks import async_task
+from django.db import transaction
 
 from apps.notification.models import NotificationUser
+from apps.notification.tasks import send_notification_via_provider
+
+logger = logging.getLogger(__name__)
 
 
 class BaseProvider(abc.ABC):
@@ -16,7 +20,7 @@ class BaseProvider(abc.ABC):
     Each provider is responsible for delivering notifications
     through a specific communication channel.
 
-    The public `send` method always runs as a django-q background task.
+    The public `send` method always runs as a Celery background task.
     Subclasses must implement `_send` only.
     """
 
@@ -28,15 +32,12 @@ class BaseProvider(abc.ABC):
         """
         Public method used to send a notification.
 
-        This method queues the actual sending logic on django-q.
+        This method queues the actual sending logic on Celery.
         Subclasses MUST NOT override this method.
         """
         provider_path = f'{type(self).__module__}.{type(self).__qualname__}'
-        async_task(
-            'apps.notification.utils.providers.base._run_provider_send',
-            provider_path,
-            self.notification.pk,
-        )
+        notification_id = self.notification.pk
+        transaction.on_commit(lambda: send_notification_via_provider.delay(provider_path, notification_id))
 
     @abc.abstractmethod
     def _send(self, notification: NotificationUser) -> None:
@@ -62,23 +63,9 @@ class BaseProvider(abc.ABC):
         Handle exceptions raised during notification sending.
         Can be overridden if needed.
         """
-        import logging
-        logging.getLogger(__name__).error(
+        logger.error(
             'Notification provider %s failed for notif_id=%s: %s',
             type(self).__name__, getattr(notification, 'pk', None), exc,
             exc_info=True,
         )
 
-
-def _run_provider_send(provider_class_path: str, notification_id: int) -> None:
-    """django-q entry point: re-fetch the notification and dispatch `_send`."""
-    from django.utils.module_loading import import_string
-
-    try:
-        notification = NotificationUser.objects.get(pk=notification_id)
-    except NotificationUser.DoesNotExist:
-        return
-
-    provider_class = import_string(provider_class_path)
-    provider = provider_class(notification)
-    provider._send_wrapper(notification)

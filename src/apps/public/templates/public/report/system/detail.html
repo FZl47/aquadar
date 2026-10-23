@@ -2,159 +2,187 @@
 {% load custom_tags %}
 
 {% block Title %}
-    جزئیات گزارش سیستمی- {{ report.title }}
+    گزارش سیستمی - {{ report.title }}
 {% endblock %}
 
 {% block Breadcrumbs %}{% aq_breadcrumb "گزارش سیستمی" report.title %}{% endblock %}
 
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
+    .rp-wrap { max-width: 980px; margin: 24px auto; padding: 0 12px; }
+    .rp-head {
+        background: #263238; color: #fff; border-radius: 14px 14px 0 0; padding: 22px 26px;
+        border-top: 6px solid #78909c; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .rp-head.prio-high { border-top-color: #c62828; }
+    .rp-head.prio-medium { border-top-color: #f9a825; }
+    .rp-head.prio-low { border-top-color: #2e7d32; }
+    .rp-kicker { font-size: 12px; letter-spacing: .5px; opacity: .7; margin-bottom: 6px; }
+    .rp-title { font-size: 21px; font-weight: 700; line-height: 1.6; margin: 0; }
+    .rp-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .rp-badge { display: inline-block; padding: 4px 14px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+    .rp-badge.prio-high { background: #c62828; color: #fff; }
+    .rp-badge.prio-medium { background: #f9a825; color: #3e2723; }
+    .rp-badge.prio-low { background: #2e7d32; color: #fff; }
+    .rp-badge.state-ok { background: #e8f5e9; color: #1b5e20; }
+    .rp-badge.state-open { background: #ffebee; color: #b71c1c; }
+    .rp-body { background: #fff; border-radius: 0 0 14px 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 24px 26px; }
+    .rp-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .rp-meta-item { background: #f5f7f8; border-right: 3px solid #90a4ae; border-radius: 6px; padding: 10px 14px; }
+    .rp-meta-item .k { font-size: 11px; color: #78909c; margin-bottom: 2px; }
+    .rp-meta-item .v { font-size: 14px; font-weight: 600; color: #263238; }
+    .rp-summary { background: #eceff1; border-radius: 8px; padding: 16px 18px; margin-bottom: 22px; line-height: 2; font-size: 14.5px; color: #263238; white-space: pre-line; }
+    .rp-section-label { font-size: 12px; font-weight: 700; color: #546e7a; margin-bottom: 8px; letter-spacing: .3px; }
+    .rp-sec { border: 1px solid #e0e0e0; border-right: 5px solid #78909c; border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .rp-sec-title { background: #fafafa; padding: 10px 16px; font-weight: 700; font-size: 14.5px; color: #37474f; border-bottom: 1px solid #eee; }
+    .rp-sec ol { margin: 0; padding: 12px 36px 12px 16px; }
+    .rp-sec li { padding: 5px 0; line-height: 1.9; font-size: 14px; color: #37474f; }
+    .rp-sec.sec-warnings { border-right-color: #c62828; }
+    .rp-sec.sec-warnings .rp-sec-title { background: #ffebee; color: #b71c1c; }
+    .rp-sec.sec-recommendations { border-right-color: #2e7d32; }
+    .rp-sec.sec-recommendations .rp-sec-title { background: #e8f5e9; color: #1b5e20; }
+    .rp-sec.sec-prevention { border-right-color: #1565c0; }
+    .rp-sec.sec-prevention .rp-sec-title { background: #e3f2fd; color: #0d47a1; }
+    .rp-sec.sec-status .rp-sec-title, .rp-sec.sec-findings .rp-sec-title { background: #eceff1; }
+    .rp-plain { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px 18px; white-space: pre-line; line-height: 2; font-size: 14px; }
+    .rp-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 20px 26px; margin-top: 20px; }
+    .rp-card h5 { font-weight: 700; font-size: 16px; margin-bottom: 14px; border-right: 4px solid #263238; padding-right: 10px; }
+    .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+    .rp-timeline { list-style: none; margin: 0; padding: 0; }
+    .rp-timeline li { position: relative; padding: 0 22px 16px 0; border-right: 2px solid #cfd8dc; margin-right: 6px; }
+    .rp-timeline li::before { content: ''; position: absolute; right: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #78909c; }
+    .rp-timeline li.st-resolved::before { background: #2e7d32; }
+    .rp-timeline li.st-in_progress::before { background: #1565c0; }
+    .rp-timeline li.st-hold::before { background: #f9a825; }
+    .rp-tl-head { font-weight: 700; font-size: 13.5px; color: #263238; }
+    .rp-tl-meta { font-size: 12px; color: #78909c; margin-top: 2px; }
+    .rp-tl-note { font-size: 13.5px; margin-top: 4px; color: #455a64; }
+    @media (max-width: 600px) { .rp-badges { align-items: flex-start; } .rp-head, .rp-body { padding: 16px; } }
+</style>
+{% endblock %}
+
 {% block Content %}
+<div class="rp-wrap">
 
-    <div class="container mt-4">
-
-        <div class="d-flex justify-content-between align-items-center">
-            <h3 class="mb-5">جزئیات گزارش سیستمی</h3>
-            <div class="mb-2">
-                <!-- BUTTON -->
-                {% if not report.is_resolved or user.is_superuser %}
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
-                        افزودن وضعیت/ثبت پیگیری
-                    </button>
-                {% endif %}
-                <a href="{% url 'public:index' %}" class="btn btn-secondary">
-                    خانه
-                </a>
-            </div>
+    <div class="rp-head prio-{{ report.priority }}">
+        <div>
+            <div class="rp-kicker">گزارش سیستمی · {{ report.get_category_display }} · شماره {{ report.pk }}</div>
+            <h1 class="rp-title">{{ report.title }}</h1>
         </div>
-
-        <!-- TABLE -->
-        <table class="table table-bordered">
-            <tbody>
-            <tr>
-                <th>عنوان</th>
-                <td>{{ report.title }}</td>
-            </tr>
-            <tr>
-                <th>توضیحات</th>
-                <td>{{ report.description|default:"-" }}</td>
-            </tr>
-            <tr>
-                <th>اولویت</th>
-                <td>{{ report.get_priority_display }}</td>
-            </tr>
-            <tr>
-                <th>ابیار</th>
-                <td>{% if report.waterman %}{{ report.waterman.get_full_name|default:report.waterman.username }}{% else %}-{% endif %}</td>
-            </tr>
-            <tr>
-                <th>منطقه</th>
-                <td>{{ report.outlet.plot.zone.farm.name }}</td>
-            </tr>
-            <tr>
-                <th>بخش</th>
-                <td>{{ report.outlet.plot.zone.name }}</td>
-            </tr>
-            <tr>
-                <th>زمین</th>
-                <td>{{ report.outlet.plot.name }}</td>
-            </tr>
-            <tr>
-                <th>ردیف(کیز)</th>
-                <td>{{ report.outlet.number }}</td>
-            </tr>
-            <tr>
-                <th>وضعیت فعلی</th>
-                <td>
-                    {% if report.last_status %}
-                        {{ report.last_status.get_status_display }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>حل شده؟</th>
-                <td>
-                    {% if report.is_resolved %}
-                        <span style="font-size: 110%;background: #00da5a" class="badge">بله</span>
-                    {% else %}
-                        <span style="font-size: 110%;background: #ff1b3e" class="badge">خیر</span>
-                    {% endif %}
-                </td>
-            </tr>
-            </tbody>
-        </table>
-
-        <!-- STATUS LIST -->
-        <h4>تاریخچه وضعیت‌ها</h4>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>کاربر</th>
-                <th>وضعیت</th>
-                <th>توضیحات</th>
-                <th>تاریخ</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for s in statuses %}
-                <tr>
-                    <td>{{ s.user.get_full_name|default:'سیستم' }}</td>
-                    <td>{{ s.get_status_display }}</td>
-                    <td>{{ s.note|default:"-" }}</td>
-                    <td>
-                        <span class="datetime-convert">{{ s.get_created_at }}</span>
-                        <span class="badge bg-secondary time-ago">{{ s.get_created_at }}</span>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="4">وضعیتی ثبت نشده</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-
+        <div class="rp-badges">
+            <span class="rp-badge prio-{{ report.priority }}">اولویت {{ report.get_priority_display }}</span>
+            {% if report.is_resolved %}
+                <span class="rp-badge state-ok">حل شده</span>
+            {% else %}
+                <span class="rp-badge state-open">حل نشده</span>
+            {% endif %}
+        </div>
     </div>
 
+    <div class="rp-body">
 
-    <!-- MODAL -->
-    <div class="modal" id="statusModal" tabindex="-1">
-        <div class="modal-dialog">
-            <form method="post">
-                {% csrf_token %}
-                <div class="modal-content">
+        <div class="rp-meta">
+            <div class="rp-meta-item"><div class="k">تاریخ گزارش</div><div class="v">{{ report.created_at|jalali }}</div></div>
+            <div class="rp-meta-item"><div class="k">وضعیت فعلی</div><div class="v">{% if report.last_status %}{{ report.last_status.get_status_display }}{% else %}-{% endif %}</div></div>
+            {% if report.plot %}
+                <div class="rp-meta-item"><div class="k">باغ</div><div class="v">{{ report.plot.zone.farm.name }}</div></div>
+                <div class="rp-meta-item"><div class="k">بخش</div><div class="v">{{ report.plot.zone.name }}</div></div>
+                <div class="rp-meta-item"><div class="k">زمین</div><div class="v">{{ report.plot.name }}</div></div>
+            {% endif %}
+            {% if report.outlet %}
+                <div class="rp-meta-item"><div class="k">ردیف (کیز)</div><div class="v">{{ report.outlet.number }}</div></div>
+            {% endif %}
+            {% if report.waterman %}
+                <div class="rp-meta-item"><div class="k">آبیار</div><div class="v">{{ report.waterman.get_full_name|default:report.waterman.username }}</div></div>
+            {% endif %}
+        </div>
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">ثبت وضعیت پیگیری</h5>
-                        <button type="button" class="btn-close m-0 text-danger" data-bs-dismiss="modal"></button>
+        {% if report.description %}
+            <div class="rp-section-label">خلاصه وضعیت</div>
+            <div class="rp-summary">{{ report.description }}</div>
+        {% endif %}
+
+        {% for section in report.sections %}
+            <div class="rp-sec sec-{{ section.key }}">
+                <div class="rp-sec-title">{{ section.title }}</div>
+                <ol>
+                    {% for item in section.items %}<li>{{ item }}</li>{% endfor %}
+                </ol>
+            </div>
+        {% empty %}
+            {% if report.final_report %}
+                <div class="rp-section-label">متن گزارش</div>
+                <div class="rp-plain">{{ report.final_report }}</div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="rp-actions">
+            {% if report.link %}
+                <a href="{{ report.link }}" class="btn btn-dark">مشاهده موضوع مرتبط</a>
+            {% endif %}
+            {% if not report.is_resolved or user.is_superuser %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
+                    افزودن وضعیت / ثبت پیگیری
+                </button>
+            {% endif %}
+            <a href="{% url 'public:index' %}" class="btn btn-secondary">خانه</a>
+        </div>
+    </div>
+
+    <div class="rp-card">
+        <h5>تاریخچه پیگیری</h5>
+        <ul class="rp-timeline">
+            {% for s in statuses %}
+                <li class="st-{{ s.status }}">
+                    <div class="rp-tl-head">{{ s.get_status_display }}</div>
+                    <div class="rp-tl-meta">{{ s.user.get_full_name|default:'سیستم' }} · {{ s.created_at|jalali }}</div>
+                    {% if s.note %}<div class="rp-tl-note">{{ s.note }}</div>{% endif %}
+                </li>
+            {% empty %}
+                <li>وضعیتی ثبت نشده</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="modal" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="post">
+            {% csrf_token %}
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">ثبت وضعیت پیگیری</h5>
+                    <button type="button" class="btn-close m-0 text-danger" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label>وضعیت</label>
+                        <select name="status" class="form-control" required>
+                            <option value="pending">در انتظار</option>
+                            <option value="in_progress">در حال انجام</option>
+                            <option value="resolved">حل شده</option>
+                            <option value="hold">متوقف شده</option>
+                        </select>
                     </div>
 
-                    <div class="modal-body">
-
-                        <div class="mb-3">
-                            <label>وضعیت</label>
-                            <select name="status" class="form-control" required>
-                                <option value="pending">در انتظار</option>
-                                <option value="in_progress">در حال انجام</option>
-                                <option value="resolved">حل شده</option>
-                                <option value="hold">متوقف شده</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label>توضیحات</label>
-                            <textarea name="note" class="form-control" required></textarea>
-                        </div>
-
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success px-5">ثبت</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                    <div class="mb-3">
+                        <label>توضیحات</label>
+                        <textarea name="note" class="form-control" required></textarea>
                     </div>
 
                 </div>
-            </form>
-        </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success px-5">ثبت</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                </div>
+
+            </div>
+        </form>
     </div>
+</div>
 {% endblock %}

@@ -10,8 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 from django.urls import reverse_lazy
@@ -43,7 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Third-party
-    'django_q',
+    'django_celery_beat',
+    'django_celery_results',
     'pwa',
 
     # Apps
@@ -66,6 +69,8 @@ MIDDLEWARE = [
     'apps.core.auth.middlewares.UserHostRestrict',
     'apps.core.auth.middlewares.UserIsAuthenticated',
 ]
+
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 ROOT_URLCONF = 'config.urls'
 
@@ -96,10 +101,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            # django-q workers + web requests hit the same SQLite file
+            # celery workers + web requests hit the same SQLite file
             # concurrently; without WAL + a longer busy timeout, writers
-            # collide and raise "database is locked" (seen failing
-            # apps.public.tasks.analyze_plot in django_q Task log).
+            # collide and raise "database is locked".
             'timeout': 30,
             'init_command': (
                 'PRAGMA journal_mode=WAL;'
@@ -175,16 +179,37 @@ LOGOUT_URL = reverse_lazy('account:logout')
 EXCEPT_USER_AUTH_URLS = [LOGIN_URL, '/manifest.json', '/serviceworker.js', '/offline']
 EXCEPT_USER_PROFILE_URLS = []
 
-# Django-Q2 cluster config
-Q_CLUSTER = {
-    'name': 'aquadar',
-    'workers': 6,
-    'recycle': 500,
-    'timeout': 300,
-    'retry': 900,
-    'queue_limit': 50,
-    'bulk': 10,
-    'orm': 'default',
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_EXTENDED = True
+CELERY_RESULT_EXPIRES = timedelta(days=3)
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = False
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_SOFT_TIME_LIMIT = 540
+CELERY_TASK_TIME_LIMIT = 600
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', '').lower() in ('1', 'true', 'yes')
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+DJANGO_CELERY_BEAT_TZ_AWARE = False
+CELERY_BEAT_SCHEDULE = {
+    'retry_weather_fetch': {
+        'task': 'apps.public.tasks.retry_failed_weather_fetches',
+        'schedule': crontab(minute=0),
+    },
+    'analyze_all_plots_every_3_days': {
+        'task': 'apps.public.tasks.analyze_all_plots',
+        'schedule': timedelta(days=3),
+    },
+    'fetch_plot_weather_daily': {
+        'task': 'apps.public.tasks.fetch_weather_all_plots',
+        'schedule': crontab(hour=18, minute=0),
+    },
+    'fetch_vegetation_all_plots_every_3_days': {
+        'task': 'apps.public.tasks.fetch_vegetation_all_plots',
+        'schedule': timedelta(days=3),
+    },
 }
 
 NOTIFICATION_SMS_PROVIDER_CONFIG = {
@@ -196,10 +221,19 @@ NOTIFICATION_SMS_PROVIDER_CONFIG = {
     'LINE_NUMBER': os.environ.get('SMS_LINE_NUMBER') or '',
 }
 
+SITE_BASE_URL = os.environ.get('SITE_BASE_URL', 'http://localhost:8000')
+
+NOTIFICATION_RUBIKA_PROVIDER_CONFIG = {
+    'API_URL': os.environ.get('RUBIKA_API_URL', 'https://botapi.rubika.ir/v3'),
+    'BOT_TOKEN': os.environ.get('RUBIKA_BOT_TOKEN', ''),
+    'TIMEOUT': int(os.environ.get('RUBIKA_TIMEOUT', '15')),
+}
+
 NOTIFICATION_CONFIG = {
     'PROVIDERS': [
         # 'apps.notification.utils.providers.email.EmailProvider',
         'apps.notification.utils.providers.sms.SMSProvider',
+        'apps.notification.utils.providers.rubika.RubikaProvider',
     ],
 }
 
@@ -258,14 +292,15 @@ PWA_APP_ORIENTATION = 'any'
 PWA_APP_START_URL = '/'
 PWA_APP_STATUS_BAR_COLOR = 'default'
 PWA_APP_ICONS = [
-    {'src': '/static/img/logo.png', 'sizes': '160x160'},
+    {'src': '/static/img/icon-192.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+    {'src': '/static/img/icon-512-maskable.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
+    {'src': '/static/img/icon-512.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
 ]
 PWA_APP_ICONS_APPLE = [
-    {'src': '/static/img/logo.png', 'sizes': '160x160'},
+    {'src': '/static/img/apple-touch-icon.png', 'sizes': '180x180'},
 ]
-PWA_APP_SPLASH_SCREEN = [
-    {'src': '/static/img/logo.png', 'media': '(device-width: 320px)'},
-]
+PWA_APP_SPLASH_SCREEN = []
+PWA_APP_DEBUG_MODE = False
 PWA_APP_DIR = 'rtl'
 PWA_APP_LANG = 'fa-IR'
 PWA_SERVICE_WORKER_PATH = BASE_DIR / 'static' / 'js' / 'serviceworker.js'

@@ -10,47 +10,79 @@
 {% block Style %}
 <style>
     body { background: #f4f6f9; }
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 14px;
-        border-bottom: 2px solid #e0e7ef;
-    }
-    .page-header h3 { margin: 0; font-size: 22px; font-weight: bold; }
-    .run-table { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden; }
-    .run-table table { margin: 0; font-size: 13px; }
-    .run-table thead th { background: #f0f4fa; font-weight: 700; color: #555; border: none; padding: 10px 8px; }
-    .run-table tbody tr:hover { background: #f8faff; }
-    .badge-running { background: #d4edda; color: #155724; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
-    .badge-completed { background: #cce5ff; color: #004085; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
-    .badge-canceled { background: #f8d7da; color: #721c24; border-radius: 8px; padding: 3px 9px; font-size: 11px; }
-    .anomaly-badge { background: #fff3cd; color: #856404; border-radius: 6px; padding: 2px 6px; font-size: 11px; }
-    .weather-info { font-size: 11px; color: #555; white-space: nowrap; }
-    a.link-subtle { color: #1a73e8; text-decoration: none; }
-    a.link-subtle:hover { text-decoration: underline; }
+    .rl-wrap { max-width: 1280px; margin: 28px auto; }
+    .rl-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 22px 26px; margin-bottom: 20px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #0f766e, #0e7490); }
+    .rl-head h1 { margin: 0; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .rl-head .sub { opacity: .85; font-size: 13px; margin-top: 4px; }
+    .rl-back { background: rgba(255,255,255,.18); color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 13px; text-decoration: none; }
+    .rl-back:hover { background: rgba(255,255,255,.3); color: #fff; text-decoration: none; }
+    .rl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .rl-stat { --c: #0e7490; background: #fff; border: 1px solid #e8ecf1; border-top: 3px solid var(--c); border-radius: 12px; padding: 14px 16px; }
+    .rl-stat .v { font-size: 26px; font-weight: 800; color: var(--c); line-height: 1.2; }
+    .rl-stat .l { font-size: 12px; color: #64748b; font-weight: 600; margin-top: 2px; }
+    .rl-stat.run { --c: #0d9488; }
+    .rl-stat.done { --c: #2563eb; }
+    .rl-stat.cancel { --c: #dc2626; }
+    .rl-stat.anom { --c: #d97706; }
+    .rl-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; overflow: hidden; }
+    .rl-card table { margin: 0; font-size: 13px; width: 100%; }
+    .rl-card thead th { background: #f8fafc; font-weight: 700; color: #475569; border: none; border-bottom: 1px solid #e8ecf1; padding: 12px 12px; white-space: nowrap; }
+    .rl-card tbody td { padding: 12px; vertical-align: middle; border-bottom: 1px solid #f1f4f8; border-top: none; }
+    .rl-card tbody tr:last-child td { border-bottom: none; }
+    .rl-card tbody tr:hover { background: #f8fafc; }
+    .rl-id { font-weight: 800; color: #0e7490; text-decoration: none; }
+    .rl-key { display: inline-block; min-width: 34px; text-align: center; padding: 3px 10px; border-radius: 6px; background: #f3e8ff; color: #6b21a8; font-weight: 800; text-decoration: none; }
+    .rl-key:hover { background: #6b21a8; color: #fff; text-decoration: none; }
+    .rl-loc a { font-weight: 700; color: #1e293b; text-decoration: none; }
+    .rl-loc a:hover { color: #0e7490; }
+    .rl-loc .path { font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+    .rl-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .rl-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .rl-badge.running { background: #ccfbf1; color: #0f766e; }
+    .rl-badge.running::before { animation: rl-pulse 1.4s infinite; }
+    .rl-badge.completed { background: #dbeafe; color: #1d4ed8; }
+    .rl-badge.canceled { background: #fee2e2; color: #b91c1c; }
+    @keyframes rl-pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    .rl-dur { display: inline-block; padding: 3px 10px; border-radius: 6px; background: #f1f5f9; color: #334155; font-weight: 700; white-space: nowrap; }
+    .rl-date { color: #475569; white-space: nowrap; direction: ltr; unicode-bidi: plaintext; }
+    .rl-weather { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rl-w { padding: 2px 8px; border-radius: 6px; background: #f8fafc; border: 1px solid #e8ecf1; font-size: 11.5px; color: #475569; white-space: nowrap; }
+    .rl-flag { display: inline-block; padding: 2px 8px; border-radius: 6px; background: #fef3c7; color: #92400e; font-size: 11.5px; font-weight: 700; }
+    .rl-none { color: #cbd5e1; }
+    .rl-empty { text-align: center; padding: 50px 20px; color: #94a3b8; }
+    .rl-pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; }
+    .rl-pager a, .rl-pager span { padding: 7px 16px; border-radius: 8px; background: #fff; border: 1px solid #e8ecf1; color: #334155; font-size: 13px; font-weight: 600; text-decoration: none; }
+    .rl-pager a:hover { background: #0e7490; border-color: #0e7490; color: #fff; }
+    .rl-pager span { background: #f8fafc; color: #64748b; }
 </style>
 {% endblock %}
 
 {% block Content %}
-<div class="container mt-4">
-    <div class="page-header">
-        <h3><i class="icon-tint" style="color:#6c3cd1;"></i> لیست آبیاری‌ها</h3>
-        <a href="{% url 'public:index' %}" class="btn btn-sm btn-secondary">
-            <i class="icon-arrow-right"></i> بازگشت
-        </a>
+<div class="container rl-wrap">
+    <div class="rl-head">
+        <div>
+            <h1><i class="icon-tint"></i> لیست آبیاری‌ها</h1>
+            <div class="sub">آبیاری‌های ثبت‌شده توسط آبیاران</div>
+        </div>
+        <a href="{% url 'public:index' %}" class="rl-back"><i class="icon-arrow-right"></i> بازگشت</a>
     </div>
 
-    <div class="run-table">
-        <table class="table table-hover table-bordered">
+    <div class="rl-stats">
+        <div class="rl-stat"><div class="v">{{ run_stats.total }}</div><div class="l">کل آبیاری‌ها</div></div>
+        <div class="rl-stat run"><div class="v">{{ run_stats.running }}</div><div class="l">در حال اجرا</div></div>
+        <div class="rl-stat done"><div class="v">{{ run_stats.completed }}</div><div class="l">تکمیل شده</div></div>
+        <div class="rl-stat cancel"><div class="v">{{ run_stats.canceled }}</div><div class="l">لغو شده</div></div>
+        <div class="rl-stat anom"><div class="v">{{ run_stats.anomalous }}</div><div class="l">دارای نشانه</div></div>
+    </div>
+
+    <div class="rl-card">
+        <div class="table-responsive">
+        <table class="table">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>کیز</th>
                     <th>زمین</th>
-                    <th>بخش</th>
-                    <th>ناحیه</th>
                     <th>آبیار</th>
                     <th>وضعیت</th>
                     <th>مدت</th>
@@ -61,98 +93,65 @@
             </thead>
             <tbody>
                 {% for run in page_obj %}
-                {% with start_rs=run.status_start end_rs=run.status_end %}
+                {% with start_rs=run.status_start %}
                 <tr>
-                    <td><a class="link-subtle" href="{% url 'public:run_detail' run.pk %}">{{ run.id }}</a></td>
-                    <td><a class="link-subtle" href="{% url 'public:outlet_detail' run.outlet.pk %}">{{ run.outlet.number }}</a></td>
-                    <td>
-                        <a class="link-subtle" href="{{ run.outlet.plot.get_absolute_url }}">
-                            {{ run.outlet.plot.name }}
-                        </a>
+                    <td><a class="rl-id" href="{% url 'public:run_detail' run.pk %}">{{ run.id }}</a></td>
+                    <td><a class="rl-key" href="{% url 'public:outlet_detail' run.outlet.pk %}">{{ run.outlet.number }}</a></td>
+                    <td class="rl-loc">
+                        <a href="{{ run.outlet.plot.get_absolute_url }}">{{ run.outlet.plot.name }}</a>
+                        <div class="path">{{ run.outlet.plot.zone.farm.name }} / {{ run.outlet.plot.zone.name }}</div>
                     </td>
                     <td>
-                        <a class="link-subtle" href="{{ run.outlet.plot.zone.get_absolute_url }}">
-                            {{ run.outlet.plot.zone.name }}
-                        </a>
-                    </td>
-                    <td>{{ run.outlet.plot.zone.farm.name }}</td>
-                    <td>
-                        {% if run.created_by %}
-                            {{ run.created_by.get_full_name|default:run.created_by.username }}
-                        {% else %}—{% endif %}
+                        {% if run.created_by %}{{ run.created_by.get_full_name|default:run.created_by.username }}{% else %}<span class="rl-none">—</span>{% endif %}
                     </td>
                     <td>
                         {% if run.group.status == 'canceled' %}
-                            <span class="badge-canceled">لغو شده</span>
+                            <span class="rl-badge canceled">لغو شده</span>
                         {% elif run.status == 'open' %}
-                            <span class="badge-running">در حال اجرا</span>
+                            <span class="rl-badge running">در حال اجرا</span>
                         {% else %}
-                            <span class="badge-completed">تکمیل شده</span>
+                            <span class="rl-badge completed">تکمیل شده</span>
                         {% endif %}
                     </td>
                     <td>
                         {% if run.duration_seconds %}
-                            {% widthratio run.duration_seconds 60 1 %} دقیقه
+                            <span class="rl-dur">{% widthratio run.duration_seconds 60 1 %} دقیقه</span>
                         {% else %}
-                            <span style="color:#aaa;">ثبت نشده</span>
+                            <span class="rl-none">ثبت نشده</span>
                         {% endif %}
+                    </td>
+                    <td class="rl-date">{% if start_rs %}{{ start_rs.created_at|jalali }}{% else %}<span class="rl-none">—</span>{% endif %}</td>
+                    <td>
+                        <div class="rl-weather">
+                            {% if start_rs and start_rs.temperature_c %}<span class="rl-w" title="دما">دما {{ start_rs.temperature_c }}°</span>{% endif %}
+                            {% if start_rs and start_rs.wind_speed %}<span class="rl-w" title="باد">باد {{ start_rs.wind_speed }}</span>{% endif %}
+                            {% if start_rs and start_rs.humidity %}<span class="rl-w" title="رطوبت">رطوبت {{ start_rs.humidity }}%</span>{% endif %}
+                            {% if not start_rs or not start_rs.temperature_c %}<span class="rl-none">—</span>{% endif %}
+                        </div>
                     </td>
                     <td>
-                        {% if start_rs %}
-                            {{ start_rs.created_at|jalali }}
-                        {% else %}—{% endif %}
-                    </td>
-                    <td class="weather-info">
-                        {% if start_rs and start_rs.temperature_c %}
-                            <span title="دما">🌡 {{ start_rs.temperature_c }}°</span>
-                        {% endif %}
-                        {% if start_rs and start_rs.wind_speed %}
-                            <span title="باد">💨 {{ start_rs.wind_speed }}</span>
-                        {% endif %}
-                        {% if start_rs and start_rs.humidity %}
-                            <span title="رطوبت">💧 {{ start_rs.humidity }}%</span>
-                        {% endif %}
-                        {% if not start_rs or not start_rs.temperature_c %}
-                            <span style="color:#aaa;">—</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if run.is_anomalous_short %}<span class="anomaly-badge">کوتاه</span>{% endif %}
-                        {% if run.is_anomalous_long %}<span class="anomaly-badge">طولانی</span>{% endif %}
-                        {% if not run.is_anomalous_short and not run.is_anomalous_long %}
-                            <span style="color:#aaa;">—</span>
-                        {% endif %}
+                        {% if run.is_anomalous_short %}<span class="rl-flag">کوتاه</span>{% endif %}
+                        {% if run.is_anomalous_long %}<span class="rl-flag">طولانی</span>{% endif %}
+                        {% if not run.is_anomalous_short and not run.is_anomalous_long %}<span class="rl-none">—</span>{% endif %}
                     </td>
                 </tr>
                 {% endwith %}
                 {% empty %}
                 <tr>
-                    <td colspan="11" class="text-center text-muted py-4">هیچ آبیاری ثبت نشده است.</td>
+                    <td colspan="9" class="rl-empty">هیچ آبیاری ثبت نشده است.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
 
     {% if page_obj.has_other_pages %}
-        <nav style="margin-top:20px;">
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
-                    </li>
-                {% endif %}
-                <li class="page-item disabled">
-                    <span class="page-link">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
-                </li>
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
+    <div class="rl-pager">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">قبلی</a>{% endif %}
+        <span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">بعدی</a>{% endif %}
+    </div>
     {% endif %}
-
 </div>
 {% endblock %}

@@ -1188,3 +1188,7 @@ pre {
     text-align: center;
     font-size: 23px;
 }
+
+.form-card {
+    max-width: 775px;
+}

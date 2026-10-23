@@ -2,12 +2,30 @@ from django.db import models
 
 from apps.core.models import BaseModel
 
-from .providers.registry import PROVIDER_CHOICES
+from .providers.registry import PROVIDER_TYPE_CHOICES, get_provider_labels
+
+
+class AIProviderConfig(BaseModel):
+    key = models.SlugField(max_length=32, unique=True, verbose_name='شناسه')
+    label = models.CharField(max_length=64, verbose_name='عنوان')
+    provider_type = models.CharField(max_length=32, choices=PROVIDER_TYPE_CHOICES, verbose_name='نوع سرویس')
+    api_key = models.CharField(max_length=512, blank=True, default='', verbose_name='کلید API')
+    model = models.CharField(max_length=128, blank=True, default='', verbose_name='مدل')
+    base_url = models.URLField(max_length=255, blank=True, default='', verbose_name='آدرس سرویس')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+
+    class Meta:
+        ordering = ('key',)
+        verbose_name = 'ارائه‌دهنده هوش مصنوعی'
+        verbose_name_plural = 'ارائه‌دهندگان هوش مصنوعی'
+
+    def __str__(self):
+        return f'{self.label} ({self.key})'
 
 
 class AISettings(BaseModel):
     main_provider = models.CharField(
-        max_length=32, choices=PROVIDER_CHOICES, blank=True, default='',
+        max_length=32, blank=True, default='',
         verbose_name='ارائه‌دهنده اصلی هوش مصنوعی',
         help_text='در صورت خالی بودن، مقدار پیش‌فرض فایل تنظیمات استفاده می‌شود',
     )
@@ -52,13 +70,14 @@ class ExperimentAnalysis(BaseModel):
     requested_by = models.ForeignKey(
         'account.User', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='experiment_analyses', verbose_name='درخواست‌کننده')
-    provider = models.CharField(max_length=32, choices=PROVIDER_CHOICES, verbose_name='ارائه‌دهنده')
+    provider = models.CharField(max_length=32, verbose_name='ارائه‌دهنده')
     model_name = models.CharField(max_length=128, blank=True, default='', verbose_name='مدل')
     status = models.CharField(
         max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING, verbose_name='وضعیت')
     urgency = models.CharField(max_length=16, choices=URGENCY_CHOICES, blank=True, default='', verbose_name='اولویت')
     summary = models.TextField(blank=True, default='', verbose_name='خلاصه')
     result = models.JSONField(default=dict, blank=True, verbose_name='نتیجه تحلیل')
+    final_report = models.TextField(blank=True, default='', verbose_name='گزارش نهایی')
     raw_response = models.TextField(blank=True, default='', verbose_name='پاسخ خام')
     error_message = models.TextField(blank=True, default='', verbose_name='پیام خطا')
     analyzed_at = models.DateTimeField(null=True, blank=True, verbose_name='زمان تحلیل')
@@ -69,7 +88,12 @@ class ExperimentAnalysis(BaseModel):
         verbose_name_plural = 'تحلیل آزمایشات'
 
     def __str__(self):
-        return f'{self.experiment} | {self.get_provider_display()}'
+        return f'{self.experiment} | {self.provider_label}'
+
+    @property
+    def provider_label(self):
+        labels = getattr(self, 'provider_labels', None) or get_provider_labels()
+        return labels.get(self.provider, self.provider)
 
     @property
     def is_finished(self):

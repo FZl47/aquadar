@@ -14,6 +14,13 @@ class AISettingsAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(models.AIProviderConfig)
+class AIProviderConfigAdmin(admin.ModelAdmin):
+    list_display = ('key', 'label', 'provider_type', 'model', 'is_active')
+    list_filter = ('provider_type', 'is_active')
+    search_fields = ('key', 'label')
+
+
 @admin.register(models.ExperimentAnalysis)
 class ExperimentAnalysisAdmin(admin.ModelAdmin):
     list_display = ('experiment', 'provider', 'model_name', 'status', 'urgency', 'requested_by', 'created_at')

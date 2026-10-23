@@ -35,6 +35,57 @@ def _parse_jalali_date(value):
         raise forms.ValidationError(_('Invalid date. Use format: 1404/04/20'))
 
 
+class RunSettingsForm(forms.ModelForm):
+
+    class Meta:
+        model = models.RunSettings
+        fields = [
+            'wind_speed_more_t', 'wind_speed_less_t', 'temp_value_more_t', 'temp_value_less_t',
+            'expiration_run_time', 'avg_tolerance_run_duration', 'min_health_score',
+            'create_report_to_supervisor_if_has_problem', 'require_gps', 'allow_code_entry',
+        ]
+        widgets = {
+            'wind_speed_more_t': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'wind_speed_less_t': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'temp_value_more_t': forms.NumberInput(attrs={'class': 'form-control'}),
+            'temp_value_less_t': forms.NumberInput(attrs={'class': 'form-control'}),
+            'expiration_run_time': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'avg_tolerance_run_duration': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'min_health_score': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100}),
+            'create_report_to_supervisor_if_has_problem': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'require_gps': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'allow_code_entry': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_min_health_score(self):
+        score = self.cleaned_data['min_health_score']
+        if not 0 <= score <= 100:
+            raise forms.ValidationError(_('Min health score must be between 0 and 100'))
+        return score
+
+    def clean_expiration_run_time(self):
+        hours = self.cleaned_data['expiration_run_time']
+        if hours < 1:
+            raise forms.ValidationError(_('Expiration run time must be at least 1 hour'))
+        return hours
+
+    def clean_avg_tolerance_run_duration(self):
+        minutes = self.cleaned_data['avg_tolerance_run_duration']
+        if minutes < 0:
+            raise forms.ValidationError(_('Tolerance cannot be negative'))
+        return minutes
+
+    def clean(self):
+        cleaned = super().clean()
+        wind_max, wind_min = cleaned.get('wind_speed_more_t'), cleaned.get('wind_speed_less_t')
+        if wind_max is not None and wind_min is not None and wind_min > wind_max:
+            self.add_error('wind_speed_less_t', _('Min wind speed cannot exceed max wind speed'))
+        temp_max, temp_min = cleaned.get('temp_value_more_t'), cleaned.get('temp_value_less_t')
+        if temp_max is not None and temp_min is not None and temp_min > temp_max:
+            self.add_error('temp_value_less_t', _('Min temperature cannot exceed max temperature'))
+        return cleaned
+
+
 class FertilizationRecordForm(forms.ModelForm):
     """Waterman / compact form to register fertilization on a known plot."""
     due_date = forms.CharField(
@@ -480,6 +531,8 @@ class ExperimentForm(forms.ModelForm):
             'class': 'form-control',
             'placeholder': '1404/04/20',
             'dir': 'ltr',
+            'autocomplete': 'off',
+            'data-jalali-datepicker': '1',
         }),
     )
 

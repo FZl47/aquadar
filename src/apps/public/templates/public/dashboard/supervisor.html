@@ -12,20 +12,76 @@
 
 {% block Style %}
 <style>
-body { font-family: 'YekanBakhFaNum', monospace; background: #f4f6f9; margin: 0; padding: 20px; }
+body { font-family: 'Vazir', sans-serif; background: #f3f5f8; margin: 0; padding: 20px; }
 .container { max-width: 1400px; margin: 30px auto; }
-.card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-.stat-number { font-size: 28px; font-weight: bold; margin-top: 5px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
-.chart-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-.chart-title { font-weight: bold; margin-bottom: 10px; }
-canvas { width: 100%; height: 300px; }
+.card { background: #fff; border-radius: 14px; padding: 20px; border: 1px solid #e8ecf1; box-shadow: 0 1px 3px rgba(16,24,40,.04); }
+.dash-head { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 16px 22px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.dash-head h1 { font-size: 20px; font-weight: 800; color: #1a2332; margin: 0; }
+.dash-head .sub { font-size: 12px; color: #8a96a8; margin-top: 2px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.kpi { --c: #3b82f6; position: relative; display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 16px 18px; text-decoration: none; overflow: hidden; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.kpi::after { content: ''; position: absolute; inset-inline-start: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--c); }
+.kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,24,40,.08); border-color: var(--c); text-decoration: none; }
+.kpi-icon { flex: 0 0 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, #fff); }
+.kpi-body { min-width: 0; }
+.kpi-value { font-size: 26px; font-weight: 800; color: #1a2332; line-height: 1.1; }
+.kpi-label { font-size: 12.5px; color: #6b778c; margin-top: 4px; font-weight: 600; }
+.kpi.kpi-live { background: linear-gradient(135deg, #0f766e, #0d9488); border-color: transparent; }
+.kpi.kpi-live .kpi-icon { background: rgba(255,255,255,.18); color: #fff; }
+.kpi.kpi-live .kpi-value, .kpi.kpi-live .kpi-label { color: #fff; }
+.kpi.kpi-live::after { background: rgba(255,255,255,.5); }
+.kpi.kpi-alert { background: #fff5f5; border-color: #fde2e2; }
+.kpi.kpi-alert .kpi-icon { background: #fee2e2; color: #dc2626; }
+.kpi.kpi-alert .kpi-value { color: #b91c1c; }
+.kpi.kpi-alert::after { background: #f87171; }
+.stat-pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #5eead4; margin-inline-start: 6px; animation: dashPulse 1.6s infinite; }
+@keyframes dashPulse { 0% { box-shadow: 0 0 0 0 rgba(94,234,212,.7); } 100% { box-shadow: 0 0 0 9px rgba(94,234,212,0); } }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 18px; }
+.chart-box { background: #fff; padding: 18px 20px 14px; border-radius: 14px; border: 1px solid #e8ecf1; box-shadow: 0 1px 3px rgba(16,24,40,.04); }
+.chart-title { font-weight: 700; font-size: 14px; color: #1a2332; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.chart-title::before { content: ''; width: 4px; height: 14px; border-radius: 3px; background: #94a3b8; }
+.chart-wrap { position: relative; height: 250px; }
+.chart-wrap.chart-wrap-lg { height: 290px; }
 .btn-crud { font-size: 12px; padding: 3px 8px; border-radius: 6px; border: none; cursor: pointer; }
 .btn-edit { background: #e3f2fd; color: #1565c0; }
 .btn-del { background: #fce4ec; color: #b71c1c; }
 .modal-body .form-label { font-weight: 600; font-size: 13px; }
-.active-irr-row { background: #fff; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.active-irr-row { background: #f8fafc; border: 1px solid #eef1f5; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.sr-card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; overflow: hidden; margin-bottom: 22px; font-family: 'Vazir', sans-serif; }
+.sr-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 16px 22px; color: #fff; background: linear-gradient(135deg, #0f766e, #0d9488); }
+.sr-card.has-open .sr-head { background: #fff5f5; color: #b91c1c; border-bottom: 1px solid #fde2e2; }
+.sr-card.has-open .sr-chip { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+.sr-head-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.sr-head-title i { font-size: 20px; }
+.sr-head-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.sr-chip { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; font-weight: 700; }
+.sr-item { --p: #94a3b8; display: flex; gap: 14px; align-items: center; padding: 16px 22px; border-bottom: 1px solid #f0f2f5; border-inline-start: 5px solid var(--p); color: inherit; text-decoration: none; transition: background .12s ease, transform .12s ease; cursor: pointer; }
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: #f8fafc; color: inherit; text-decoration: none; }
+.sr-item:hover .sr-go { background: var(--p); color: #fff; transform: translateX(-3px); }
+.sr-item.p-high { --p: #f87171; }
+.sr-item.p-high:hover { background: #fff8f8; }
+.sr-item.p-medium { --p: #f59e0b; }
+.sr-item.p-low { --p: #22c55e; }
+.sr-main { flex: 1; min-width: 0; }
+.sr-title { font-size: 15.5px; font-weight: 700; color: #1f2937; line-height: 1.8; margin: 0 0 8px; overflow-wrap: anywhere; letter-spacing: 0; }
+.sr-item.p-high .sr-title { color: #7f1d1d; }
+.sr-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12px; }
+.sr-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 6px; background: #f1f5f9; color: #475569; font-weight: 600; }
+.sr-pill.date { background: #eff6ff; color: #1d4ed8; }
+.sr-pill.place { background: #f1f5f9; color: #475569; }
+.sr-pill.cat { background: #f5f3ff; color: #6d28d9; }
+.sr-pill.high { background: #fee2e2; color: #b91c1c; font-weight: 800; }
+.sr-pill.medium { background: #fef3c7; color: #92400e; font-weight: 800; }
+.sr-pill.low { background: #dcfce7; color: #166534; font-weight: 800; }
+.sr-side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.sr-age { display: inline-block; padding: 2px 10px; border-radius: 999px; background: #f1f5f9; color: #475569; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.sr-age.warn { background: #fef3c7; color: #92400e; }
+.sr-age.old { background: #fee2e2; color: #b91c1c; }
+.sr-go { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #f1f5f9; color: #64748b; transition: all .15s ease; }
+.sr-empty { padding: 34px 22px; text-align: center; color: #15803d; font-weight: 700; }
+.sr-empty i { font-size: 26px; display: block; margin-bottom: 8px; }
+@media (max-width: 640px) { .sr-item { padding: 14px 16px; flex-wrap: wrap; } .sr-go { display: none; } .sr-side { flex-direction: row; align-items: center; } }
 </style>
 {% endblock %}
 
@@ -33,8 +89,11 @@ canvas { width: 100%; height: 300px; }
 <div class="container">
 
     <!-- Page Actions -->
-    <div style="background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-        <div style="font-size:20px;font-weight:bold;color:#1a1a2e;">{% trans "Management Dashboard" %}</div>
+    <div class="dash-head">
+        <div>
+            <h1>{% trans "Management Dashboard" %}</h1>
+            <div class="sub">{% trans "Farms" %} · {% trans "Irrigators" %} · {% trans "System Reports" %}</div>
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-sm" style="background:#00796b;color:#fff;border-radius:8px;" onclick="document.getElementById('editFarmForm').action='{% url 'public:farm_create' %}';document.getElementById('editFarmForm').reset();new bootstrap.Modal(document.getElementById('editFarmModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Farm" %}</button>
             <button class="btn btn-sm" style="background:#e65100;color:#fff;border-radius:8px;" onclick="document.getElementById('editZoneForm').action='{% url 'public:zone_create' %}';document.getElementById('editZoneForm').reset();new bootstrap.Modal(document.getElementById('editZoneModal')).show()"><i class="fa fa-plus"></i> {% trans "Add Zone" %}</button>
@@ -45,60 +104,52 @@ canvas { width: 100%; height: 300px; }
     </div>
 
     <!-- Stats -->
-    <div class="stats">
-        <a href="{% url 'public:farm_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #3498db;">
-                <div style="color:#3498db;font-size:13px;font-weight:600;">{% trans "Farms" %}</div>
-                <div class="stat-number" style="color:#3498db;">{{ total_farms }}</div>
+    <div class="kpis">
+        <a href="{% url 'public:run_list' %}" class="kpi kpi-live">
+            <div class="kpi-icon"><i class="icon-tint"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ active_runs }}{% if active_runs %}<span class="stat-pulse"></span>{% endif %}</div>
+                <div class="kpi-label">{% trans "Active Irrigations" %}</div>
             </div>
         </a>
-        <a href="{% url 'public:zone_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #9b59b6;">
-                <div style="color:#9b59b6;font-size:13px;font-weight:600;">{% trans "Zones" %}</div>
-                <div class="stat-number" style="color:#9b59b6;">{{ total_zones }}</div>
+        <a href="#system-reports" class="kpi {% if unresolved_reports_total %}kpi-alert{% endif %}" style="--c:#16a34a;">
+            <div class="kpi-icon"><i class="{% if unresolved_reports_total %}icon-warning-sign{% else %}icon-ok-sign{% endif %}"></i></div>
+            <div class="kpi-body">
+                <div class="kpi-value">{{ unresolved_reports_total }}</div>
+                <div class="kpi-label">گزارش سیستمی حل‌نشده</div>
             </div>
         </a>
-        <a href="{% url 'public:plot_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #27ae60;">
-                <div style="color:#27ae60;font-size:13px;font-weight:600;">{% trans "Plots" %}</div>
-                <div class="stat-number" style="color:#27ae60;">{{ total_plots }}</div>
-            </div>
+        <a href="{% url 'public:farm_list' %}" class="kpi" style="--c:#3b82f6;">
+            <div class="kpi-icon"><i class="icon-home"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_farms }}</div><div class="kpi-label">{% trans "Farms" %}</div></div>
         </a>
-        <a href="{% url 'public:outlet_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #e67e22;">
-                <div style="color:#e67e22;font-size:13px;font-weight:600;">{% trans "Outlets" %}</div>
-                <div class="stat-number" style="color:#e67e22;">{{ total_outlets }}</div>
-            </div>
+        <a href="{% url 'public:zone_list' %}" class="kpi" style="--c:#8b5cf6;">
+            <div class="kpi-icon"><i class="icon-th-large"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_zones }}</div><div class="kpi-label">{% trans "Zones" %}</div></div>
         </a>
-        <a href="{% url 'public:run_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #1abc9c;">
-                <div style="color:#1abc9c;font-size:13px;font-weight:600;">{% trans "Active Irrigations" %}</div>
-                <div class="stat-number" style="color:#1abc9c;">{{ active_runs }}</div>
-            </div>
+        <a href="{% url 'public:plot_list' %}" class="kpi" style="--c:#16a34a;">
+            <div class="kpi-icon"><i class="icon-leaf"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_plots }}</div><div class="kpi-label">{% trans "Plots" %}</div></div>
         </a>
-        <a href="{% url 'public:report_activity__list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #2980b9;">
-                <div style="color:#2980b9;font-size:13px;font-weight:600;">{% trans "Reports" %}</div>
-                <div class="stat-number" style="color:#2980b9;">{{ total_reports }}</div>
-            </div>
+        <a href="{% url 'public:outlet_list' %}" class="kpi" style="--c:#ea580c;">
+            <div class="kpi-icon"><i class="icon-filter"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_outlets }}</div><div class="kpi-label">{% trans "Outlets" %}</div></div>
         </a>
-        <a href="{% url 'public:fertilization_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #8e44ad;">
-                <div style="color:#8e44ad;font-size:13px;font-weight:600;">{% trans "Fertilization" %}</div>
-                <div class="stat-number" style="color:#8e44ad;">{{ total_fertilization_reports }}</div>
-            </div>
+        <a href="{% url 'public:report_activity__list' %}" class="kpi" style="--c:#0369a1;">
+            <div class="kpi-icon"><i class="icon-file-alt"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_reports }}</div><div class="kpi-label">{% trans "Reports" %}</div></div>
         </a>
-        <a href="{% url 'public:foliar_spray_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #00897b;">
-                <div style="color:#00897b;font-size:13px;font-weight:600;">{% trans "Foliar Spray" %}</div>
-                <div class="stat-number" style="color:#00897b;">{{ total_foliar_spray_reports }}</div>
-            </div>
+        <a href="{% url 'public:fertilization_list' %}" class="kpi" style="--c:#9333ea;">
+            <div class="kpi-icon"><i class="icon-beaker"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_fertilization_reports }}</div><div class="kpi-label">{% trans "Fertilization" %}</div></div>
         </a>
-        <a href="{% url 'public:manual_irrigation_list' %}" style="text-decoration:none;">
-            <div class="card" style="border-right:4px solid #0288d1;">
-                <div style="color:#0288d1;font-size:13px;font-weight:600;">آبیاری دستی</div>
-                <div class="stat-number" style="color:#0288d1;">{{ total_manual_irrigations }}</div>
-            </div>
+        <a href="{% url 'public:foliar_spray_list' %}" class="kpi" style="--c:#0d9488;">
+            <div class="kpi-icon"><i class="icon-medkit"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_foliar_spray_reports }}</div><div class="kpi-label">{% trans "Foliar Spray" %}</div></div>
+        </a>
+        <a href="{% url 'public:manual_irrigation_list' %}" class="kpi" style="--c:#0284c7;">
+            <div class="kpi-icon"><i class="icon-hand-up"></i></div>
+            <div class="kpi-body"><div class="kpi-value">{{ total_manual_irrigations }}</div><div class="kpi-label">آبیاری دستی</div></div>
         </a>
     </div>
 
@@ -126,50 +177,42 @@ canvas { width: 100%; height: 300px; }
     {% endif %}
 
     <!-- System Reports -->
-    <div class="card" style="margin-bottom:20px;padding:0;overflow:hidden;">
-        <div style="padding:14px 18px;font-weight:bold;font-size:15px;border-bottom:1px solid #f0f0f0;color:#1a1a2e;display:flex;justify-content:space-between;align-items:center;">
-            <span>{% trans "System Reports" %}</span>
+    <div class="sr-card {% if unresolved_reports_total %}has-open{% endif %}" id="system-reports">
+        <div class="sr-head">
+            <div class="sr-head-title">
+                <i class="{% if unresolved_reports_total %}icon-warning-sign{% else %}icon-ok-sign{% endif %}"></i>
+                <span>{% trans "System Reports" %}</span>
+            </div>
+            <div class="sr-head-chips">
+                {% if unresolved_reports_total %}
+                    <span class="sr-chip">{{ unresolved_reports_total }} گزارش حل‌نشده</span>
+                    {% if unresolved_reports_high %}<span class="sr-chip">{{ unresolved_reports_high }} اولویت بالا</span>{% endif %}
+                {% else %}
+                    <span class="sr-chip">همه گزارش‌ها رسیدگی شده‌اند</span>
+                {% endif %}
+            </div>
         </div>
-        <div class="table-responsive">
-        <table class="table table-hover" style="margin:0;font-size:13px;">
-            <thead>
-            <tr style="background:#f8f9fa;">
-                <th style="padding:10px 12px;">#</th>
-                <th style="padding:10px 12px;">{% trans "Title" %}</th>
-                <th class="d-none d-md-table-cell" style="padding:10px 12px;">{% trans "Location" %}</th>
-                <th style="padding:10px 12px;">{% trans "Priority" %}</th>
-                <th class="d-none d-sm-table-cell" style="padding:10px 12px;">{% trans "Resolved" %}</th>
-                <th class="d-none d-lg-table-cell" style="padding:10px 12px;">{% trans "Date" %}</th>
-                <th style="padding:10px 12px;">{% trans "Actions" %}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for report in unresolved_system_reports|slice:':8' %}
-            <tr>
-                <td style="padding:10px 12px;">{{ forloop.counter }}</td>
-                <td style="padding:10px 12px;">
-                    <div style="font-weight:600;">{{ report.title|truncatechars:25 }}</div>
-                    <div class="d-md-none" style="font-size:11px;color:#888;margin-top:2px;">{{ report.outlet.plot.zone.farm.name }} / {{ report.outlet.plot.name }}</div>
-                </td>
-                <td class="d-none d-md-table-cell" style="padding:10px 12px;font-size:12px;color:#666;">{{ report.outlet.plot.zone.farm.name }} / {{ report.outlet.plot.zone.name }} / {{ report.outlet.plot.name }} / {{ report.outlet.number }}</td>
-                <td style="padding:10px 12px;">
-                    {% if report.priority == 'high' %}<span class="badge bg-danger">{% trans "High" %}</span>
-                    {% elif report.priority == 'medium' %}<span class="badge bg-warning text-dark">{% trans "Medium" %}</span>
-                    {% else %}<span class="badge bg-secondary">{% trans "Low" %}</span>
-                    {% endif %}
-                </td>
-                <td class="d-none d-sm-table-cell" style="padding:10px 12px;">
-                    {% if report.is_resolved %}<span class="badge bg-success">{% trans "Resolved" %}</span>{% else %}<span class="badge bg-danger">{% trans "Unresolved" %}</span>{% endif %}
-                </td>
-                <td class="d-none d-lg-table-cell" style="padding:10px 12px;font-size:12px;color:#888;white-space:nowrap;"><span class="datetime-convert">{{ report.get_created_at }}</span></td>
-                <td style="padding:10px 12px;"><a href="{{ report.get_absolute_url }}" class="btn btn-sm btn-primary" style="border-radius:6px;font-size:12px;">{% trans "View" %}</a></td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="7" class="text-center" style="padding:30px;color:#aaa;">{% trans "No reports" %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
-        </div>
+        {% for report in unresolved_system_reports %}
+        <a href="{{ report.get_absolute_url }}" class="sr-item p-{{ report.priority }}">
+            <div class="sr-main">
+                <h3 class="sr-title">{{ report.title }}</h3>
+                <div class="sr-meta">
+                    {% if report.priority == 'high' %}<span class="sr-pill high">{% trans "High" %}</span>
+                    {% elif report.priority == 'medium' %}<span class="sr-pill medium">{% trans "Medium" %}</span>
+                    {% else %}<span class="sr-pill low">{% trans "Low" %}</span>{% endif %}
+                    <span class="sr-pill cat">{{ report.get_category_display }}</span>
+                    {% if report.plot %}<span class="sr-pill place"><i class="icon-map-marker"></i>{{ report.plot.zone.farm.name }} / {{ report.plot.zone.name }} / {{ report.plot.name }}{% if report.outlet %} / {% trans "Outlet" %} {{ report.outlet.number }}{% endif %}</span>{% endif %}
+                </div>
+            </div>
+            <div class="sr-side">
+                <span class="sr-pill date"><i class="icon-calendar"></i><span class="datetime-convert">{{ report.get_created_at }}</span></span>
+                <span class="sr-age" data-created="{{ report.created_at|date:'Y-m-d\TH:i:s' }}"></span>
+            </div>
+            <span class="sr-go"><i class="icon-chevron-left"></i></span>
+        </a>
+        {% empty %}
+        <div class="sr-empty"><i class="icon-ok-sign"></i>{% trans "No reports" %}</div>
+        {% endfor %}
     </div>
 
     <!-- Charts Row -->
@@ -177,18 +220,18 @@ canvas { width: 100%; height: 300px; }
         <div class="col-12 col-lg-8 mb-3">
             <div class="chart-box">
                 <div class="chart-title">{% trans "Irrigations in last 30 days" %}</div>
-                <canvas id="runsChart"></canvas>
+                <div class="chart-wrap chart-wrap-lg"><canvas id="runsChart"></canvas></div>
             </div>
         </div>
         <div class="col-12 col-lg-4 mb-3">
-            <div class="chart-box">
+            <div class="chart-box" style="height:100%;">
                 <div class="chart-title">{% trans "Irrigators" %}</div>
-                <ul class="list-group">
+                <ul class="list-group list-group-flush">
                     {% for waterman_user in waterman_users %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3" style="font-weight:600;color:#334155;">
                         {{ waterman_user.get_full_name }}
                         {% if waterman_user.has_run_active %}
-                        <span class="badge bg-primary rounded-pill">{% trans "Irrigating" %}</span>
+                        <span class="badge rounded-pill" style="background:#ccfbf1;color:#0f766e;">{% trans "Irrigating" %}</span>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -200,19 +243,19 @@ canvas { width: 100%; height: 300px; }
     <div class="grid">
         <div class="chart-box">
             <div class="chart-title">{% trans "Irrigation Status" %}</div>
-            <div style="max-width:300px;text-align:center;margin:auto"><canvas id="statusChart"></canvas></div>
+            <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
         </div>
         <div class="chart-box">
             <div class="chart-title">{% trans "Average Duration per Zone (minutes)" %}</div>
-            <canvas id="durationChart"></canvas>
+            <div class="chart-wrap"><canvas id="durationChart"></canvas></div>
         </div>
         <div class="chart-box">
             <div class="chart-title">{% trans "Irrigations by Temperature" %}</div>
-            <canvas id="tempChart"></canvas>
+            <div class="chart-wrap"><canvas id="tempChart"></canvas></div>
         </div>
         <div class="chart-box">
             <div class="chart-title">{% trans "Fertilization by Category" %}</div>
-            <div style="max-width:400px;text-align:center;margin:auto"><canvas id="fertilizationChart"></canvas></div>
+            <div class="chart-wrap"><canvas id="fertilizationChart"></canvas></div>
         </div>
     </div>
 
@@ -244,7 +287,7 @@ canvas { width: 100%; height: 300px; }
                 <option value="">{% trans "Select..." %}</option>
             </select>
         </div>
-        <div id="leafUploadArea" data-upload-url-tpl="{% url 'public:plot_leaf_upload' 0 %}" style="border:2px dashed #ccc;border-radius:10px;padding:24px;text-align:center;cursor:pointer;" ondragover="event.preventDefault();" ondrop="handleLeafModalDrop(event);" onclick="document.getElementById('leafFileInput').click()">
+        <div id="leafUploadArea" data-upload-url-tpl="{% url 'ai_assistant:plot_leaf_upload' 0 %}" style="border:2px dashed #ccc;border-radius:10px;padding:24px;text-align:center;cursor:pointer;" ondragover="event.preventDefault();" ondrop="handleLeafModalDrop(event);" onclick="document.getElementById('leafFileInput').click()">
             <div style="font-size:32px;">🍃</div>
             <div style="color:#888;font-size:14px;">{% trans "Drag or click to upload leaf image" %}</div>
             <input id="leafFileInput" type="file" accept="image/*" style="display:none;" onchange="uploadLeafFromModal(this.files[0])">
@@ -258,6 +301,29 @@ canvas { width: 100%; height: 300px; }
 
 {% block Script %}
 <script>
+function formatReportAge(created) {
+    const diffMs = Date.now() - created.getTime();
+    if (diffMs < 0) return {text: 'لحظاتی پیش', level: ''};
+    const totalHours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    const fa = function (n) { return n.toLocaleString('fa-IR'); };
+    let text;
+    if (days > 0 && hours > 0) text = fa(days) + ' روز و ' + fa(hours) + ' ساعت پیش';
+    else if (days > 0) text = fa(days) + ' روز پیش';
+    else if (hours > 0) text = fa(hours) + ' ساعت پیش';
+    else text = 'کمتر از یک ساعت پیش';
+    return {text: text, level: days >= 3 ? 'old' : days >= 1 ? 'warn' : ''};
+}
+
+document.querySelectorAll('.sr-age').forEach(function (el) {
+    const created = new Date(el.dataset.created);
+    if (isNaN(created.getTime())) return;
+    const age = formatReportAge(created);
+    el.textContent = age.text;
+    if (age.level) el.classList.add(age.level);
+});
+
 const runsLabels = JSON.parse("{{ runs_labels|escapejs }}");
 const runsData = JSON.parse("{{ runs_data|escapejs }}");
 const runsManualData = JSON.parse("{{ runs_manual_data|escapejs }}");
@@ -270,45 +336,69 @@ const tempData = JSON.parse("{{ temp_data|escapejs }}");
 const fertilizationLabels = JSON.parse("{{ fertilization_labels|escapejs }}");
 const fertilizationData = JSON.parse("{{ fertilization_data|escapejs }}");
 
+Chart.defaults.font.family = "'Vazir', sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#8a96a8';
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.plugins.legend.position = 'bottom';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.tooltip.backgroundColor = '#1a2332';
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+const PALETTE = ['#3b82f6', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e', '#ec4899', '#0ea5e9', '#a3a3a3'];
+const quietScales = {
+    x: { grid: { display: false }, border: { display: false } },
+    y: { beginAtZero: true, border: { display: false }, grid: { color: '#eef1f5' }, ticks: { precision: 0 } }
+};
+
+function areaFill(ctx, rgb) {
+    const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+    g.addColorStop(0, 'rgba(' + rgb + ',0.22)');
+    g.addColorStop(1, 'rgba(' + rgb + ',0)');
+    return g;
+}
+
 new Chart(document.getElementById('runsChart'), {
     type: 'line',
     data: {
         labels: runsLabels,
         datasets: [
-            { label: '{% trans "Irrigations" %}', data: runsData, borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.4, borderWidth: 2 },
-            { label: 'آبیاری دستی', data: runsManualData, borderColor: '#0288d1', backgroundColor: 'rgba(2,136,209,0.08)', fill: true, tension: 0.4, borderWidth: 2, borderDash: [5,4] }
+            { label: '{% trans "Irrigations" %}', data: runsData, borderColor: '#3b82f6', backgroundColor: function (c) { return areaFill(c, '59,130,246'); }, fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5 },
+            { label: 'آبیاری دستی', data: runsManualData, borderColor: '#14b8a6', backgroundColor: function (c) { return areaFill(c, '20,184,166'); }, fill: true, tension: 0.4, borderWidth: 2, borderDash: [5, 4], pointRadius: 0, pointHoverRadius: 5 }
         ]
     },
-    options: { responsive: true, plugins: { legend: { display: true } } }
+    options: { interaction: { mode: 'index', intersect: false }, scales: quietScales }
 });
 
 new Chart(document.getElementById('statusChart'), {
-    type: 'pie',
-    data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: ['#4fa0ff', '#08da7d', '#ff7675'] }] },
-    options: { responsive: true }
+    type: 'doughnut',
+    data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: ['#3b82f6', '#22c55e', '#ef4444'], borderWidth: 3, borderColor: '#fff', hoverOffset: 4 }] },
+    options: { cutout: '68%' }
 });
 
 if (durationLabels.length > 0) {
     new Chart(document.getElementById('durationChart'), {
         type: 'bar',
-        data: { labels: durationLabels, datasets: [{ label: '{% trans "Minutes" %}', data: durationData, backgroundColor: '#a44fff', borderRadius: 8 }] },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        data: { labels: durationLabels, datasets: [{ label: '{% trans "Minutes" %}', data: durationData, backgroundColor: '#8b5cf6', borderRadius: 6, maxBarThickness: 28 }] },
+        options: { plugins: { legend: { display: false } }, scales: quietScales }
     });
 }
 
 if (tempLabels.length > 0) {
     new Chart(document.getElementById('tempChart'), {
         type: 'bar',
-        data: { labels: tempLabels, datasets: [{ label: '{% trans "Count" %}', data: tempData, backgroundColor: '#ff9a24', borderRadius: 8 }] },
-        options: { responsive: true, plugins: { legend: { display: false } } }
+        data: { labels: tempLabels, datasets: [{ label: '{% trans "Count" %}', data: tempData, backgroundColor: '#f59e0b', borderRadius: 6, maxBarThickness: 28 }] },
+        options: { plugins: { legend: { display: false } }, scales: quietScales }
     });
 }
 
 if (fertilizationLabels.length > 0) {
     new Chart(document.getElementById('fertilizationChart'), {
         type: 'doughnut',
-        data: { labels: fertilizationLabels, datasets: [{ data: fertilizationData, backgroundColor: fertilizationLabels.map(function() { return '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6,'0'); }) }] },
-        options: { responsive: true }
+        data: { labels: fertilizationLabels, datasets: [{ data: fertilizationData, backgroundColor: fertilizationLabels.map(function (_, i) { return PALETTE[i % PALETTE.length]; }), borderWidth: 3, borderColor: '#fff', hoverOffset: 4 }] },
+        options: { cutout: '68%' }
     });
 }
 

@@ -127,8 +127,8 @@ class PlotAdmin(admin.ModelAdmin):
               <script>
                 (function(){{
                   var map = L.map('plot-map').setView([{}, {}], 13);
-                  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',
-                    {{attribution:'© OpenStreetMap', maxZoom:18}}).addTo(map);
+                  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{{z}}/{{y}}/{{x}}',
+                    {{attribution:'© Esri', maxZoom:18}}).addTo(map);
                   var hasMarker = {};
                   var marker = null;
                   if (hasMarker) {{
@@ -288,8 +288,8 @@ class RunSettingsAdmin(admin.ModelAdmin):
 
 @admin.register(models.SystemReport)
 class SystemReportAdmin(admin.ModelAdmin):
-    list_display = ('title', 'waterman', 'outlet', 'priority', 'is_resolved', 'created_at')
-    list_filter = ('priority',)
+    list_display = ('title', 'category', 'waterman', 'plot', 'outlet', 'priority', 'is_resolved', 'created_at')
+    list_filter = ('priority', 'category')
     search_fields = ('title', 'description')
     date_hierarchy = 'created_at'
 

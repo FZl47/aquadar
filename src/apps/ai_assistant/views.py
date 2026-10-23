@@ -1,16 +1,18 @@
 from django.contrib import messages
-from django.http import JsonResponse
-from django.shortcuts import redirect
-from django.urls import reverse_lazy
-from django.views.generic import DeleteView, DetailView, FormView, ListView, UpdateView, View
-from django_q.tasks import async_task
+from django.http import Http404, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils.translation import gettext as _
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, RedirectView, UpdateView, View
 
 from apps.core.auth.mixins import PermissionMixin
+from apps.public.models import Farm, Outlet, Plot, PlotLeafAnalysis, Zone
 
 from . import forms
-from .models import AISettings, ExperimentAnalysis
-from .providers.registry import get_provider, list_providers
+from .models import AIProviderConfig, AISettings, ExperimentAnalysis
+from .providers.registry import BUILTIN_PROVIDER_NAMES, PROVIDER_CLASSES, get_provider, get_provider_labels, list_providers
 from .services import get_main_provider_name
+from .tasks import analyze_experiment, analyze_leaf
 
 
 class ExperimentAnalyzeView(PermissionMixin, FormView):
@@ -39,7 +41,7 @@ class ExperimentAnalyzeView(PermissionMixin, FormView):
             provider=provider_name,
             model_name=provider.model,
         )
-        async_task('apps.ai_assistant.tasks.analyze_experiment', analysis.pk)
+        analyze_experiment.delay(analysis.pk)
         messages.success(self.request, 'درخواست تحلیل ثبت شد و در حال پردازش است')
         return redirect('ai_assistant:analysis_detail', pk=analysis.pk)
 
@@ -58,6 +60,13 @@ class ExperimentAnalysisListView(PermissionMixin, ListView):
 
     def get_queryset(self):
         return ExperimentAnalysis.objects.select_related('experiment', 'requested_by').order_by('-id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        labels = get_provider_labels()
+        for analysis in context['analyses']:
+            analysis.provider_labels = labels
+        return context
 
 
 class ExperimentAnalysisDetailView(PermissionMixin, DetailView):
@@ -91,22 +100,111 @@ class ExperimentAnalysisDeleteView(PermissionMixin, DeleteView):
         return response
 
 
-class AISettingsView(PermissionMixin, UpdateView):
+class AISettingsView(PermissionMixin, RedirectView):
+    permissions = ('ai_assistant.change_aisettings',)
+    pattern_name = 'public:settings'
+
+
+class AIMainProviderView(PermissionMixin, UpdateView):
     permissions = ('ai_assistant.change_aisettings',)
     form_class = forms.AISettingsForm
-    template_name = 'ai_assistant/settings.html'
-    success_url = reverse_lazy('ai_assistant:settings')
+    http_method_names = ['post']
+    success_url = reverse_lazy('public:settings')
 
     def get_object(self, queryset=None):
         return AISettings.get_solo()
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        messages.success(self.request, 'تنظیمات ذخیره شد')
+        messages.success(self.request, 'ارائه‌دهنده اصلی ذخیره شد')
         return response
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['providers'] = list_providers()
-        context['effective_provider'] = get_main_provider_name()
-        return context
+    def form_invalid(self, form):
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(self.request, error)
+        return redirect(self.success_url)
+
+
+class AIProviderFormMixin(PermissionMixin):
+    permissions = ('ai_assistant.change_aisettings',)
+    model = AIProviderConfig
+    form_class = forms.AIProviderConfigForm
+    template_name = 'ai_assistant/provider_form.html'
+    success_url = reverse_lazy('public:settings')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'ارائه‌دهنده ذخیره شد')
+        return response
+
+
+class AIProviderCreateView(AIProviderFormMixin, CreateView):
+
+    def get_initial(self):
+        initial = super().get_initial()
+        key = self.request.GET.get('key', '')
+        if key in BUILTIN_PROVIDER_NAMES:
+            initial.update({'key': key, 'provider_type': key, 'label': PROVIDER_CLASSES[key].label})
+        return initial
+
+
+class AIProviderUpdateView(AIProviderFormMixin, UpdateView):
+    pass
+
+
+class AIProviderDeleteView(PermissionMixin, DeleteView):
+    permissions = ('ai_assistant.change_aisettings',)
+    model = AIProviderConfig
+    http_method_names = ['post']
+    success_url = reverse_lazy('public:settings')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'ارائه‌دهنده حذف شد')
+        return response
+
+
+LEAF_ENTITY_MODELS = {
+    'farm': Farm,
+    'zone': Zone,
+    'plot': Plot,
+    'outlet': Outlet,
+}
+LEAF_DETAIL_URLS = {
+    'farm': 'public:farm_detail',
+    'zone': 'public:zone__detail',
+    'plot': 'public:plot_detail',
+    'outlet': 'public:outlet_detail',
+}
+
+
+def _get_leaf_entity(entity, pk):
+    model = LEAF_ENTITY_MODELS.get(entity)
+    if model is None:
+        raise Http404('Unknown leaf entity')
+    return get_object_or_404(model, pk=pk)
+
+
+def leaf_upload(request, pk, entity='plot'):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+    obj = _get_leaf_entity(entity, pk)
+    image = request.FILES.get('image')
+    if not image:
+        return JsonResponse({'success': False, 'error': str(_('No image provided'))})
+    analysis = PlotLeafAnalysis.objects.create(image=image, status='analyzing', **{entity: obj})
+    analyze_leaf.delay(analysis.pk)
+    return JsonResponse({'success': True, 'queued': True, 'id': analysis.pk})
+
+
+def leaf_list(request, pk, entity='plot'):
+    obj = _get_leaf_entity(entity, pk)
+    analyses = PlotLeafAnalysis.objects.filter(**{entity: obj}).order_by('-created_at')[:20]
+    return render(request, 'ai_assistant/leaf_list.html', {
+        'target': obj,
+        'target_name': str(obj),
+        'entity': entity,
+        'analyses': analyses,
+        'back_url': reverse(LEAF_DETAIL_URLS[entity], args=[obj.pk]),
+    })

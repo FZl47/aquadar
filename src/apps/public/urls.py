@@ -68,18 +68,10 @@ urlpatterns = [
     path('plots/<int:pk>/update/', views.PlotUpdateView.as_view(), name='plot_update'),
     path('plots/<int:pk>/boundary/', views.PlotBoundaryUpdateView.as_view(), name='plot_boundary_update'),
     path('plots/<int:pk>/delete/', views.PlotDeleteView.as_view(), name='plot_delete'),
-    path('plots/<int:pk>/leaf/upload/', views.leaf_upload, {'entity': 'plot'}, name='plot_leaf_upload'),
-    path('plots/<int:pk>/leaf/', views.leaf_list, {'entity': 'plot'}, name='plot_leaf_list'),
     path('plots/<int:pk>/analyze/', views.plot_condition_analyze, name='plot_condition_analyze'),
     path('plots/<int:pk>/weather/fetch/', views.PlotWeatherFetchView.as_view(), name='plot_weather_fetch'),
     path('tasks/<str:task_id>/status/', views.task_status, name='task_status'),
 
-    path('farms/<int:pk>/leaf/upload/', views.leaf_upload, {'entity': 'farm'}, name='farm_leaf_upload'),
-    path('farms/<int:pk>/leaf/', views.leaf_list, {'entity': 'farm'}, name='farm_leaf_list'),
-    path('zones/<int:pk>/leaf/upload/', views.leaf_upload, {'entity': 'zone'}, name='zone_leaf_upload'),
-    path('zones/<int:pk>/leaf/', views.leaf_list, {'entity': 'zone'}, name='zone_leaf_list'),
-    path('outlets/<int:pk>/leaf/upload/', views.leaf_upload, {'entity': 'outlet'}, name='outlet_leaf_upload'),
-    path('outlets/<int:pk>/leaf/', views.leaf_list, {'entity': 'outlet'}, name='outlet_leaf_list'),
 
     path('irrigation/<int:pk>/stop/', views.SupervisorStopIrrigationView.as_view(), name='stop_irrigation'),
 
@@ -87,6 +79,9 @@ urlpatterns = [
     path('manual-irrigation/create/', views.ManualIrrigationCreateView.as_view(), name='manual_irrigation_create'),
     path('manual-irrigation/<int:pk>/delete/', views.ManualIrrigationDeleteView.as_view(), name='manual_irrigation_delete'),
 
+    path('settings/', views.SettingsView.as_view(), name='settings'),
+    path('settings/irrigation/', views.RunSettingsUpdateView.as_view(), name='settings_irrigation'),
+    path('settings/notifications/', views.NotificationConfigUpdateView.as_view(), name='settings_notifications'),
     path('experiments/', views.ExperimentListView.as_view(), name='experiment_list'),
     path('experiments/create/', views.ExperimentCreateView.as_view(), name='experiment_create'),
     path('experiments/<int:pk>/', views.ExperimentDetailView.as_view(), name='experiment_detail'),

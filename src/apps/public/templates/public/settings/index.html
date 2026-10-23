@@ -1,0 +1,230 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block Title %}تنظیمات{% endblock %}
+
+{% block Breadcrumbs %}{% aq_breadcrumb "تنظیمات" %}{% endblock %}
+
+{% block Style %}
+<style>
+    body { background: #f4f6f9; font-family: 'Vazir', sans-serif; }
+    .page-header {
+        background: linear-gradient(135deg, #455a64, #263238);
+        border-radius: 14px; padding: 24px 28px; margin-bottom: 24px; color: #fff;
+    }
+    .settings-layout { display: flex; gap: 20px; align-items: flex-start; }
+    .settings-tabs { width: 220px; flex-shrink: 0; background: #fff; border-radius: 12px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    .settings-tab { display: flex; align-items: center; gap: 8px; width: 100%; border: none; background: none; text-align: right; padding: 10px 12px; border-radius: 8px; font-weight: 600; font-size: 14px; color: #455a64; cursor: pointer; }
+    .settings-tab.active, .settings-tab:hover { background: #eceff1; color: #263238; }
+    .settings-body { flex: 1; min-width: 0; }
+    .settings-section { display: none; }
+    .settings-section.active { display: block; }
+    .form-card { background: #fff; border-radius: 12px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+    .form-card h5 { font-weight: 700; margin-bottom: 12px; border-right: 4px solid #5e35b1; padding-right: 10px; }
+    .hint { font-size: 12px; color: #888; margin-top: 4px; }
+    .badge-ok { background: #e8f5e9; color: #2e7d32; border-radius: 8px; padding: 2px 10px; font-size: 12px; }
+    .badge-no { background: #ffebee; color: #c62828; border-radius: 8px; padding: 2px 10px; font-size: 12px; }
+    .badge-main { background: #ede7f6; color: #4527a0; border-radius: 8px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+    @media (max-width: 768px) {
+        .settings-layout { flex-direction: column; }
+        .settings-tabs { width: 100%; display: flex; }
+    }
+</style>
+{% endblock %}
+
+{% block Content %}
+<div class="container" style="max-width:1000px;margin:30px auto;">
+    <div class="page-header">
+        <div style="font-size:22px;font-weight:bold;">تنظیمات</div>
+        <div style="opacity:.8;font-size:13px;margin-top:4px;">مدیریت تنظیمات سامانه</div>
+    </div>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{% if msg.tags == 'error' %}danger{% else %}{{ msg.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="settings-layout">
+        <div class="settings-tabs">
+            {% if perms.ai_assistant.change_aisettings %}
+            <button type="button" class="settings-tab" data-section="ai"><i class="icon-magic"></i> تنظیمات هوش مصنوعی</button>
+            {% endif %}
+            {% if perms.public.change_runsettings %}
+            <button type="button" class="settings-tab" data-section="irrigation"><i class="icon-tint"></i> تنظیمات آبیاری</button>
+            {% endif %}
+            {% if perms.notification.change_notificationconfig %}
+            <button type="button" class="settings-tab" data-section="notifications"><i class="icon-bell"></i> تنظیمات اعلان‌ها</button>
+            {% endif %}
+        </div>
+
+        <div class="settings-body">
+            {% if perms.ai_assistant.change_aisettings %}
+            <div class="settings-section" id="section-ai">
+                <div class="form-card">
+                    <h5>ارائه‌دهنده اصلی</h5>
+                    <form method="post" action="{% url 'ai_assistant:main_provider' %}">
+                        {% csrf_token %}
+                        {{ main_provider_form.main_provider }}
+                        <div class="hint">در صورت انتخاب نشدن، مقدار پیش‌فرض فایل تنظیمات سرور (AI_DEFAULT_PROVIDER) استفاده می‌شود.</div>
+                        <div style="margin-top:14px;">
+                            <button type="submit" class="btn btn-primary" style="background:#5e35b1;border-color:#5e35b1;border-radius:8px;font-weight:600;">ذخیره</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="form-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <h5 style="margin:0;">ارائه‌دهندگان</h5>
+                        <a href="{% url 'ai_assistant:provider_create' %}" class="btn btn-sm btn-primary" style="background:#5e35b1;border-color:#5e35b1;border-radius:8px;">+ تعریف ارائه‌دهنده</a>
+                    </div>
+                    <div class="table-responsive">
+                    <table class="table table-sm" style="font-size:13px;">
+                        <thead><tr><th>ارائه‌دهنده</th><th>مدل</th><th>کلید API</th><th>وضعیت</th><th></th></tr></thead>
+                        <tbody>
+                            {% for provider in providers %}
+                            <tr>
+                                <td>{{ provider.label }}<div class="hint" style="direction:ltr;text-align:right;">{{ provider.name }}</div></td>
+                                <td style="direction:ltr;text-align:left;">{{ provider.model }}</td>
+                                <td>{% if provider.is_configured %}<span class="badge-ok">تنظیم شده</span>{% else %}<span class="badge-no">تنظیم نشده</span>{% endif %}</td>
+                                <td>{% if provider.name == effective_provider %}<span class="badge-main">اصلی</span>{% endif %}</td>
+                                <td style="white-space:nowrap;">
+                                    {% if provider.config_row %}
+                                    <a href="{% url 'ai_assistant:provider_update' provider.config_row.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">ویرایش</a>
+                                    <form method="post" action="{% url 'ai_assistant:provider_delete' provider.config_row.pk %}" style="display:inline;" onsubmit="return confirm('این ارائه‌دهنده حذف شود؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;">{% if provider.is_custom %}حذف{% else %}بازنشانی{% endif %}</button>
+                                    </form>
+                                    {% else %}
+                                    <a href="{% url 'ai_assistant:provider_create' %}?key={{ provider.name }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">تنظیم</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for row in inactive_providers %}
+                            <tr style="opacity:.6;">
+                                <td>{{ row.label }}<div class="hint" style="direction:ltr;text-align:right;">{{ row.key }}</div></td>
+                                <td style="direction:ltr;text-align:left;">{{ row.model }}</td>
+                                <td></td>
+                                <td>غیرفعال</td>
+                                <td style="white-space:nowrap;">
+                                    <a href="{% url 'ai_assistant:provider_update' row.pk %}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">ویرایش</a>
+                                    <form method="post" action="{% url 'ai_assistant:provider_delete' row.pk %}" style="display:inline;" onsubmit="return confirm('این ارائه‌دهنده حذف شود؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:8px;">حذف</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="hint">مقدار پیش‌فرض کلید و مدل هر ارائه‌دهنده از متغیرهای محیطی خوانده می‌شود؛ مقادیر واردشده در این صفحه جایگزین آن‌ها می‌شوند. هر سرویس سازگار با OpenAI را می‌توانید با نوع «ChatGPT» و آدرس دلخواه تعریف کنید.</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if perms.public.change_runsettings %}
+            <div class="settings-section" id="section-irrigation">
+                <form method="post" action="{% url 'public:settings_irrigation' %}">
+                    {% csrf_token %}
+                    <div class="form-card">
+                        <h5>شرایط آب‌وهوا</h5>
+                        <div class="row g-3">
+                            {% for field in run_settings_form %}
+                            {% if field.name == 'wind_speed_more_t' or field.name == 'wind_speed_less_t' or field.name == 'temp_value_more_t' or field.name == 'temp_value_less_t' %}
+                            <div class="col-md-6">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="hint">در صورت خارج بودن باد یا دما از این بازه‌ها، هنگام آبیاری هشدار ثبت می‌شود.</div>
+                    </div>
+
+                    <div class="form-card">
+                        <h5>زمان‌بندی و کیفیت</h5>
+                        <div class="row g-3">
+                            {% for field in run_settings_form %}
+                            {% if field.name == 'expiration_run_time' or field.name == 'avg_tolerance_run_duration' or field.name == 'min_health_score' %}
+                            <div class="col-md-4">
+                                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <h5>رفتار سامانه</h5>
+                        {% for field in run_settings_form %}
+                        {% if field.name == 'create_report_to_supervisor_if_has_problem' or field.name == 'require_gps' or field.name == 'allow_code_entry' %}
+                        <div class="form-check form-switch" style="margin-bottom:10px;">
+                            {{ field }}
+                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        <div style="margin-top:14px;">
+                            <button type="submit" class="btn btn-primary" style="background:#5e35b1;border-color:#5e35b1;border-radius:8px;font-weight:600;">ذخیره</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if perms.notification.change_notificationconfig %}
+            <div class="settings-section" id="section-notifications">
+                <form method="post" action="{% url 'public:settings_notifications' %}">
+                    {% csrf_token %}
+                    <div class="form-card">
+                        <h5>کانال‌های اعلان</h5>
+                        {% for field in notification_config_form %}
+                        <div class="form-check form-switch" style="margin-bottom:10px;">
+                            {{ field }}
+                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        </div>
+                        {% endfor %}
+                        <div class="hint">اعلان‌ها از طریق کانال‌های فعال ارسال می‌شوند.</div>
+                        <div style="margin-top:14px;">
+                            <button type="submit" class="btn btn-primary" style="background:#5e35b1;border-color:#5e35b1;border-radius:8px;font-weight:600;">ذخیره</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block Script %}
+<script>
+(function () {
+    var tabs = document.querySelectorAll('.settings-tab');
+    function activate(name) {
+        var target = null;
+        tabs.forEach(function (t) { if (t.dataset.section === name) { target = t; } });
+        if (!target) { target = tabs[0]; }
+        if (!target) { return; }
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.settings-section').forEach(function (s) { s.classList.remove('active'); });
+        target.classList.add('active');
+        document.getElementById('section-' + target.dataset.section).classList.add('active');
+    }
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            activate(tab.dataset.section);
+            history.replaceState(null, '', '#' + tab.dataset.section);
+        });
+    });
+    activate(window.location.hash.replace('#', ''));
+})();
+</script>
+{% endblock %}

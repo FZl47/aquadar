@@ -1,17 +1,8 @@
-import io
-import json
 import logging
 
 import requests
-from google import genai
-from google.genai import types
-from PIL import Image
-
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
-
-GEMINI_MODEL = 'gemini-2.5-flash'
 
 _OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast'
 _WEATHER_CURRENT_VARS = (
@@ -75,70 +66,3 @@ def save_plot_weather(plot, weather_data, source='scheduled'):
     except Exception as exc:
         logger.error('Failed to save PlotWeather for plot %s: %s', plot.id, exc)
         return None
-
-
-def _strip_json_fences(text):
-    text = text.strip()
-    if text.startswith('```'):
-        parts = text.split('```')
-        text = parts[1] if len(parts) > 1 else text.strip('`')
-        if text.startswith('json'):
-            text = text[4:]
-    return text.strip()
-
-
-def _gemini_client():
-    api_key = getattr(settings, 'GEMINI_API_KEY', '')
-    if not api_key:
-        logger.error('GEMINI_API_KEY not configured')
-        return None
-    return genai.Client(api_key=api_key)
-
-
-def _image_to_part(image_path, max_dim=1600, jpeg_quality=85):
-    try:
-        img = Image.open(image_path)
-    except Exception as exc:
-        raise ValueError(f'Cannot open image {image_path}: {exc}') from exc
-    if img.mode not in ('RGB', 'L'):
-        img = img.convert('RGB')
-    img.thumbnail((max_dim, max_dim))
-    buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=jpeg_quality, optimize=True)
-    return types.Part.from_bytes(data=buf.getvalue(), mime_type='image/jpeg')
-
-
-def analyze_plot_leaf(image_path):
-    client = _gemini_client()
-    if client is None:
-        return {}
-
-    prompt = (
-        'You are an expert agricultural analyst specializing in pistachio trees. '
-        'Analyze this leaf image and respond ONLY with valid JSON in this exact format:\n'
-        '{\n'
-        '  "health_score": <integer 0-100>,\n'
-        '  "diseases": [<list of disease names in Persian>],\n'
-        '  "deficiencies": [<list of nutrient deficiencies in Persian>],\n'
-        '  "pests": [<list of pest names in Persian>],\n'
-        '  "recommendations": [<list of treatment recommendations in Persian>],\n'
-        '  "prevention": [<list of prevention measures in Persian>],\n'
-        '  "urgency": "<low|medium|high|critical>",\n'
-        '  "treatment_time": "<timeframe in Persian>",\n'
-        '  "summary": "<brief overall assessment in Persian>"\n'
-        '}'
-    )
-
-    try:
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[prompt, _image_to_part(image_path)],
-        )
-    except Exception as exc:
-        logger.error('Gemini API call failed: %s', exc)
-        return {}
-    try:
-        return json.loads(_strip_json_fences(response.text))
-    except json.JSONDecodeError as exc:
-        logger.error('Gemini response not valid JSON: %s | raw: %.200s', exc, response.text)
-        return {}

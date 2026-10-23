@@ -1,19 +1,20 @@
-const CACHE_NAME = 'aquadar-pwa-v1';
+const CACHE_NAME = 'aquadar-pwa-v3';
+const OFFLINE_URL = '/offline/';
 const PRECACHE_URLS = [
-    '/',
+    OFFLINE_URL,
+    '/static/img/logo.png',
+    '/static/img/icon-192.png',
+    '/static/img/icon-512.png',
     '/static/css/base.css',
     '/static/css/style.css',
     '/static/css/bootstrap5-2.min.css',
-    '/static/css/leaflet.css',
-    '/static/js/jquery.js',
-    '/static/js/bootstrap.min.js',
-    '/static/js/leaflet.js',
-    '/static/img/logo.png',
 ];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS).catch(() => null))
+        caches.open(CACHE_NAME).then((cache) => Promise.all(
+            PRECACHE_URLS.map((url) => cache.add(url).catch(() => null))
+        ))
     );
     self.skipWaiting();
 });
@@ -28,13 +29,31 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    if (event.request.method !== 'GET') return;
-    event.respondWith(
-        caches.match(event.request).then((cached) => cached || fetch(event.request).then((resp) => {
-            if (!resp || resp.status !== 200 || resp.type === 'opaque') return resp;
-            const clone = resp.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => null);
-            return resp;
-        }).catch(() => cached))
-    );
+    const request = event.request;
+    if (request.method !== 'GET') return;
+
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request).catch(() => caches.match(OFFLINE_URL))
+        );
+        return;
+    }
+
+    if (url.pathname.startsWith('/static/')) {
+        event.respondWith(
+            caches.match(request).then((cached) => {
+                const network = fetch(request).then((resp) => {
+                    if (resp && resp.status === 200 && resp.type === 'basic') {
+                        const clone = resp.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => null);
+                    }
+                    return resp;
+                });
+                return cached || network;
+            })
+        );
+    }
 });

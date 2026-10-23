@@ -15,6 +15,7 @@ def upload_notification_src(instance, path):
 class NotificationConfig(BaseModel):
     send_sms_notify = models.BooleanField(default=True, verbose_name=_('Send SMS Notification'))
     send_email_notify = models.BooleanField(default=True, verbose_name=_('Send Email Notification'))
+    send_rubika_notify = models.BooleanField(default=True, verbose_name=_('Send Rubika Notification'))
 
     class Meta:
         verbose_name = _('Notification Config')
